@@ -530,9 +530,9 @@ tbody tr:hover td{background:var(--bg3)}
       </div>
     </div>
 
-    <div class="theme-btn" id="themeBtn" title="Toggle theme">
-      <div class="theme-thumb" id="thumb"><span id="themeIcon">🌙</span></div>
-    </div>
+    <div class="theme-btn" id="themeBtn" title="Toggle theme" onclick="toggleTheme()">
+  <div class="theme-thumb" id="thumb"><span id="themeIcon">🌙</span></div>
+</div>
 
     <!-- USER AVATAR / LOGIN SIGNUP -->
 <div style="position:relative;">
@@ -1047,6 +1047,30 @@ function renderFirmList() {
     </div>
   `).join('');
 }
+
+/* ── THEME TOGGLE ── */
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const newTheme = isDark ? 'light' : 'dark';
+  
+  html.setAttribute('data-theme', newTheme);
+  localStorage.setItem('ip_theme', newTheme);
+  
+  const icon = document.getElementById('themeIcon');
+  if (icon) {
+    icon.textContent = newTheme === 'dark' ? '🌙' : '☀️';
+  }
+}
+
+// Set correct icon on page load
+document.addEventListener('DOMContentLoaded', () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const icon = document.getElementById('themeIcon');
+  if (icon) {
+    icon.textContent = isDark ? '🌙' : '☀️';
+  }
+});
 
 function switchFirm(id) {
   activeFirmId = String(id);
