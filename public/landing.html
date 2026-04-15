@@ -141,7 +141,15 @@ body{min-height:100vh;display:flex;flex-direction:column;transition:background .
 }
 .fd-add-btn:hover{background:var(--accent-glow2)}
 .fd-add-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2;}
-
+.fi-delete-btn {
+  width: 26px; height: 26px; background: transparent; border: none; 
+  color: var(--text3); border-radius: 4px; cursor: pointer; 
+  display: flex; align-items: center; justify-content: center; 
+  transition: var(--transition); opacity: 0; margin-left: 4px; flex-shrink: 0;
+}
+.firm-item:hover .fi-delete-btn { opacity: 1; }
+.fi-delete-btn:hover { background: var(--red-soft); color: var(--red); }
+.fi-delete-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
 .fd-count{font-size:10.5px;color:var(--text3);padding:6px 14px 10px;display:flex;justify-content:space-between;align-items:center;}
 
 /* ── ADD FIRM MODAL ── */
@@ -1034,8 +1042,6 @@ function renderFirmList() {
     list.innerHTML = '<div style="padding:16px;text-align:center;font-size:12px;color:var(--text3);">No firms yet. Add your first firm!</div>';
     return;
   }
-  
-  // Ensure we compare strings properly for the active check
   list.innerHTML = firms.map(f => `
     <div class="firm-item ${String(f.id) === String(activeFirmId) ? 'active' : ''}" onclick="switchFirm('${f.id}')">
       <div class="fi-logo" style="background:${f.color}">${f.initial}</div>
@@ -1044,8 +1050,50 @@ function renderFirmList() {
         <div class="fi-type">${f.type}</div>
       </div>
       ${String(f.id) === String(activeFirmId) ? '<div class="fi-check"><svg viewBox="0 0 16 16"><path d="M3 8l4 4 6-7"/></svg></div>' : ''}
+      <button class="fi-delete-btn" onclick="deleteFirmFromHub('${f.id}', event)" title="Delete Firm">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+      </button>
     </div>
   `).join('');
+}
+
+async function deleteFirmFromHub(id, event) {
+  // Stop the click from also triggering the "switchFirm" click event
+  if (event) event.stopPropagation(); 
+  
+  if (!confirm('Are you sure you want to delete this firm?')) return;
+
+  const token = localStorage.getItem('invoicepro_token');
+  
+  try {
+    // Delete from MongoDB/Backend
+    if (token) {
+      await fetch(`/api/firms/${id}`, { 
+        method: 'DELETE', 
+        headers: { 'Authorization': `Bearer ${token}` } 
+      });
+    }
+  } catch(e) {
+    console.error('Failed to delete from DB', e);
+  }
+  
+  // Remove from local array
+  firms = firms.filter(f => String(f.id) !== String(id));
+  
+  // If we deleted the currently active firm, switch to the next available one
+  if (String(activeFirmId) === String(id)) {
+    activeFirmId = firms.length > 0 ? String(firms[0].id) : null;
+    if (activeFirmId) {
+      localStorage.setItem('ip_active_firm', activeFirmId);
+    } else {
+      localStorage.removeItem('ip_active_firm');
+    }
+  }
+  
+  // Save new list and update UI
+  localStorage.setItem('ip_firms', JSON.stringify(firms));
+  updateFirmPill();
+  renderFirmList();
 }
 
 /* ── THEME TOGGLE ── */
