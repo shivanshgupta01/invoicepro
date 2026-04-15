@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InvoicePro — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root{
+  --accent:#4f6ef7;
+  --accent-soft:#3a56d4;
+  --accent-glow:rgba(79,110,247,.22);
+  --accent-dim:rgba(79,110,247,.10);
+  --green:#22c98a;
+  --green-dim:rgba(34,201,138,.12);
+  --red:#f05252;
+  --red-dim:rgba(240,82,82,.10);
+  --amber:#f5a623;
+  --font-display:'Syne',sans-serif;
+  --font-body:'IBM Plex Sans',sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+  --r:8px;
+  --r-lg:14px;
+  --r-xl:20px;
+  --transition:.18s ease;
+}
+
+[data-theme="dark"]{
+  --bg:#0b0d14;
+  --bg2:#111520;
+  --bg3:#171c2e;
+  --bg4:#1e2438;
+  --bg5:#242a40;
+  --border:rgba(255,255,255,.06);
+  --border2:rgba(255,255,255,.11);
+  --border3:rgba(255,255,255,.20);
+  --text:#e8ecff;
+  --text2:#8a92b2;
+  --text3:#545e7e;
+  --panel-bg:#111520;
+  --side-bg:#0e1019;
+}
+
+[data-theme="light"]{
+  --bg:#f0f2fa;
+  --bg2:#ffffff;
+  --bg3:#f5f7ff;
+  --bg4:#eaecf8;
+  --bg5:#e0e4f5;
+  --border:rgba(79,110,247,.10);
+  --border2:rgba(79,110,247,.18);
+  --border3:rgba(79,110,247,.32);
+  --text:#0f1230;
+  --text2:#4a5280;
+  --text3:#8890b0;
+  --panel-bg:#ffffff;
+  --side-bg:#eef0fc;
+}
+
+html{font-family:var(--font-body);background:var(--bg);color:var(--text);font-size:14px;transition:background var(--transition),color var(--transition);}
+body{min-height:100vh;display:flex;flex-direction:column;}
+
+/* ── TOPBAR ── */
+.topbar{
+  height:56px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;background:var(--bg2);border-bottom:1px solid var(--border);
+  flex-shrink:0;transition:background var(--transition);
+}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.logo-mark{width:30px;height:30px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;}
+.logo-mark svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.2;}
+.logo-name{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text);}
+.logo-name em{color:var(--accent);font-style:normal;}
+
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.theme-btn{
+  width:54px;height:28px;border-radius:14px;border:1px solid var(--border2);
+  background:var(--bg4);cursor:pointer;position:relative;display:flex;align-items:center;padding:3px;
+  transition:all var(--transition);
+}
+.theme-knob{
+  width:20px;height:20px;border-radius:50%;background:var(--accent);
+  display:flex;align-items:center;justify-content:center;font-size:10px;
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+[data-theme="dark"] .theme-knob{transform:translateX(0);}
+[data-theme="light"] .theme-knob{transform:translateX(26px);}
+
+.nav-link{font-size:13px;color:var(--text2);text-decoration:none;padding:6px 12px;border-radius:var(--r);transition:all var(--transition);}
+.nav-link:hover{color:var(--text);background:var(--bg3);}
+.nav-link.cta{background:var(--accent);color:#fff;font-weight:500;}
+.nav-link.cta:hover{background:var(--accent-soft);}
+
+/* ── MAIN LAYOUT ── */
+.auth-layout{flex:1;display:grid;grid-template-columns:1fr 480px 1fr;grid-template-rows:1fr;}
+.auth-side{background:var(--side-bg);display:flex;flex-direction:column;transition:background var(--transition);}
+.auth-side.left{border-right:1px solid var(--border);align-items:flex-end;justify-content:center;padding:48px 56px;}
+.auth-side.right{border-left:1px solid var(--border);align-items:flex-start;justify-content:center;padding:48px 56px;}
+.auth-center{background:var(--panel-bg);display:flex;align-items:center;justify-content:center;padding:32px 0;transition:background var(--transition);}
+
+/* Side feature cards */
+.feature-list{display:flex;flex-direction:column;gap:16px;max-width:280px;}
+.feat{display:flex;align-items:flex-start;gap:12px;}
+.feat-icon{width:34px;height:34px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.feat-icon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;}
+.feat-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px;}
+.feat-desc{font-size:11.5px;color:var(--text3);line-height:1.5;}
+
+/* ── AUTH CARD ── */
+.auth-card{width:100%;max-width:400px;}
+
+.auth-head{text-align:center;margin-bottom:28px;}
+.auth-icon{width:48px;height:48px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+.auth-icon svg{width:22px;height:22px;stroke:var(--accent);fill:none;stroke-width:1.8;}
+.auth-title{font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.auth-sub{font-size:13px;color:var(--text2);line-height:1.5;}
+
+/* Tabs */
+.auth-tabs{display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:3px;margin-bottom:24px;}
+.atab{flex:1;height:34px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;border-radius:6px;cursor:pointer;transition:all var(--transition);color:var(--text2);font-family:var(--font-body);}
+.atab.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(79,110,247,.35);}
+
+/* Form */
+.form-group{margin-bottom:16px;position:relative;}
+.form-label{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;font-weight:500;color:var(--text2);margin-bottom:6px;letter-spacing:.03em;}
+.form-label a{font-size:11px;color:var(--accent);text-decoration:none;font-weight:400;}
+.form-label a:hover{text-decoration:underline;}
+
+.inp-wrap{position:relative;display:flex;align-items:center;}
+.inp-icon{position:absolute;left:12px;color:var(--text3);pointer-events:none;}
+.inp-icon svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;}
+.inp{
+  width:100%;height:42px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);
+  padding:0 40px 0 38px;color:var(--text);font-size:13.5px;font-family:var(--font-body);
+  outline:none;transition:all var(--transition);
+}
+.inp:focus{border-color:var(--accent);background:var(--bg4);box-shadow:0 0 0 3px var(--accent-glow);}
+.inp::placeholder{color:var(--text3);}
+.inp.error{border-color:var(--red);box-shadow:0 0 0 3px var(--red-dim);}
+.inp.success{border-color:var(--green);box-shadow:0 0 0 3px var(--green-dim);}
+.inp-suffix{position:absolute;right:12px;cursor:pointer;color:var(--text3);transition:color var(--transition);}
+.inp-suffix:hover{color:var(--text);}
+.inp-suffix svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;}
+
+.field-error{font-size:11px;color:var(--red);margin-top:5px;display:none;align-items:center;gap:4px;}
+.field-error.show{display:flex;}
+.field-error svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;}
+
+/* Password strength */
+.strength-bar{height:3px;background:var(--bg5);border-radius:2px;margin-top:8px;overflow:hidden;}
+.strength-fill{height:100%;border-radius:2px;transition:width .3s ease,background .3s ease;width:0%;}
+.strength-label{font-size:10.5px;color:var(--text3);margin-top:4px;}
+
+/* Divider */
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0;}
+.divider-line{flex:1;height:1px;background:var(--border);}
+.divider-text{font-size:11.5px;color:var(--text3);}
+
+/* Social btns */
+.social-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.social-btn{
+  height:40px;display:flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);
+  font-size:12.5px;font-weight:500;color:var(--text2);cursor:pointer;
+  transition:all var(--transition);font-family:var(--font-body);
+}
+.social-btn:hover{background:var(--bg4);border-color:var(--border3);color:var(--text);}
+.social-btn svg{width:16px;height:16px;flex-shrink:0;}
+
+/* Checkbox */
+.check-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:20px;}
+.custom-check{width:16px;height:16px;border:1px solid var(--border2);border-radius:4px;background:var(--bg3);cursor:pointer;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all var(--transition);}
+.custom-check.checked{background:var(--accent);border-color:var(--accent);}
+.custom-check svg{width:10px;height:10px;stroke:#fff;fill:none;stroke-width:2.5;display:none;}
+.custom-check.checked svg{display:block;}
+.check-label{font-size:12px;color:var(--text2);line-height:1.5;}
+.check-label a{color:var(--accent);text-decoration:none;}
+.check-label a:hover{text-decoration:underline;}
+
+/* Submit btn */
+.submit-btn{
+  width:100%;height:44px;background:var(--accent);border:none;border-radius:var(--r);
+  color:#fff;font-size:14px;font-weight:500;font-family:var(--font-body);
+  cursor:pointer;transition:all var(--transition);letter-spacing:.02em;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  position:relative;overflow:hidden;
+}
+.submit-btn:hover{background:var(--accent-soft);transform:translateY(-1px);box-shadow:0 6px 20px rgba(79,110,247,.35);}
+.submit-btn:active{transform:translateY(0) scale(.99);}
+.submit-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-text{}
+.btn-loader{display:none;width:18px;height:18px;}
+.btn-loader svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.submit-btn.loading .btn-text{display:none;}
+.submit-btn.loading .btn-loader{display:flex;}
+
+/* Switch text */
+.switch-text{text-align:center;font-size:12.5px;color:var(--text2);margin-top:18px;}
+.switch-text a{color:var(--accent);text-decoration:none;font-weight:500;}
+.switch-text a:hover{text-decoration:underline;}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);
+  padding:12px 20px;display:flex;align-items:center;gap:10px;
+  font-size:13px;color:var(--text);box-shadow:0 8px 32px rgba(0,0,0,.4);
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:999;min-width:280px;
+}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.toast-dot.green{background:var(--green);}
+.toast-dot.red{background:var(--red);}
+
+/* ── FORM PANELS ── */
+.form-panel{display:none;}
+.form-panel.active{display:block;}
+
+/* Animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.auth-card{animation:fadeUp .35s ease both;}
+
+@media(max-width:900px){
+  .auth-layout{grid-template-columns:1fr;grid-template-rows:auto;}
+  .auth-side{display:none;}
+  .auth-center{padding:32px 20px;}
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <a class="logo" href="landing.html">
+    <div class="logo-mark">
+      <svg viewBox="0 0 20 20"><rect x="3" y="2" width="14" height="16" rx="2"/><path d="M7 7h6M7 10h6M7 13h4"/></svg>
+    </div>
+    <div class="logo-name">Invoice<em>Pro</em></div>
+  </a>
+  <div class="topbar-right">
+    <a class="nav-link" href="landing.html">← Back to home</a>
+    <button class="theme-btn" onclick="toggleTheme()">
+      <div class="theme-knob" id="knob"><span id="knob-icon">🌙</span></div>
+    </button>
+  </div>
+</header>
+
+<!-- AUTH LAYOUT -->
+<div class="auth-layout">
+
+  <!-- LEFT SIDE — Features -->
+  <div class="auth-side left">
+    <div>
+      <div style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;margin-bottom:20px;">Why InvoicePro?</div>
+      <div class="feature-list">
+        <div class="feat">
+          <div class="feat-icon" style="background:var(--accent-dim);color:var(--accent);">
+            <svg viewBox="0 0 16 16"><path d="M3 13h10M8 3v7M5 7l3 3 3-3"/></svg>
+          </div>
+          <div class="feat-body">
+            <div class="feat-title">GST-ready PDF invoices</div>
+            <div class="feat-desc">Generate compliant invoices instantly with auto GST calculation and branded PDF export.</div>
+          </div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" style="background:var(--green-dim);color:var(--green);">
+            <svg viewBox="0 0 16 16"><path d="M2 12l4-4 3 3 5-6"/></svg>
+          </div>
+          <div class="feat-body">
+            <div class="feat-title">Live tax updates</div>
+            <div class="feat-desc">Stay compliant with real-time GST, income tax, and CBDT announcements built right in.</div>
+          </div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" style="background:rgba(245,166,35,.12);color:var(--amber);">
+            <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+          </div>
+          <div class="feat-body">
+            <div class="feat-title">Payment reminders</div>
+            <div class="feat-desc">Auto WhatsApp & email reminders for overdue invoices so you get paid faster.</div>
+          </div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" style="background:rgba(155,111,255,.12);color:#9b6fff;">
+            <svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/></svg>
+          </div>
+          <div class="feat-body">
+            <div class="feat-title">Multi-company support</div>
+            <div class="feat-desc">Manage multiple businesses or clients from a single InvoicePro account.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER — Auth card -->
+  <div class="auth-center">
+    <div class="auth-card">
+
+      <div class="auth-head">
+        <div class="auth-icon">
+          <svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M7 7h6M7 10h6M7 13h4"/></svg>
+        </div>
+        <div class="auth-title" id="auth-title">Welcome back</div>
+        <div class="auth-sub" id="auth-sub">Sign in to your InvoicePro account</div>
+      </div>
+
+      <!-- Tab toggle -->
+      <div class="auth-tabs">
+        <div class="atab active" id="tab-login" onclick="switchTab('login')">Sign In</div>
+        <div class="atab" id="tab-signup" onclick="switchTab('signup')">Create Account</div>
+      </div>
+
+      <!-- Social login -->
+      <div class="social-row">
+        <button class="social-btn" onclick="socialAuth('google')">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          Google
+        </button>
+        <button class="social-btn" onclick="socialAuth('github')">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+          GitHub
+        </button>
+      </div>
+
+      <div class="divider">
+        <div class="divider-line"></div>
+        <div class="divider-text">or continue with email</div>
+        <div class="divider-line"></div>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div class="form-panel active" id="panel-login">
+        <form id="login-form" onsubmit="submitLogin(event)" novalidate>
+
+          <div class="form-group">
+            <div class="form-label">
+              Email address
+              <a href="#">Need help?</a>
+            </div>
+            <div class="inp-wrap">
+              <span class="inp-icon"><svg viewBox="0 0 16 16"><path d="M2 4l6 5 6-5"/><rect x="2" y="4" width="12" height="9" rx="1.5"/></svg></span>
+              <input class="inp" type="email" id="l-email" placeholder="you@company.com" autocomplete="email">
+            </div>
+            <div class="field-error" id="l-email-err">
+              <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v3M8 11v.5"/></svg>
+              Please enter a valid email
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="form-label">
+              Password
+              <a href="#" onclick="showForgot()">Forgot password?</a>
+            </div>
+            <div class="inp-wrap">
+              <span class="inp-icon"><svg viewBox="0 0 16 16"><rect x="4" y="7" width="8" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/></svg></span>
+              <input class="inp" type="password" id="l-pass" placeholder="Your password" autocomplete="current-password">
+              <span class="inp-suffix" onclick="togglePass('l-pass',this)">
+                <svg viewBox="0 0 16 16"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>
+              </span>
+            </div>
+            <div class="field-error" id="l-pass-err">
+              <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v3M8 11v.5"/></svg>
+              Password must be at least 8 characters
+            </div>
+          </div>
+
+          <div class="check-row">
+            <div class="custom-check" id="remember-check" onclick="toggleCheck(this)">
+              <svg viewBox="0 0 10 10"><path d="M1.5 5l2.5 2.5 4.5-4.5"/></svg>
+            </div>
+            <div class="check-label">Keep me signed in on this device</div>
+          </div>
+
+          <button class="submit-btn" type="submit" id="login-btn">
+            <span class="btn-text">Sign In to InvoicePro</span>
+            <span class="btn-loader"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" stroke-dasharray="40" stroke-dashoffset="10"/></svg></span>
+          </button>
+
+        </form>
+      </div>
+
+      <!-- SIGNUP FORM -->
+      <div class="form-panel" id="panel-signup">
+        <form id="signup-form" onsubmit="submitSignup(event)" novalidate>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group" style="margin-bottom:0;">
+              <div class="form-label">First name</div>
+              <div class="inp-wrap">
+                <span class="inp-icon"><svg viewBox="0 0 16 16"><circle cx="8" cy="5.5" r="3"/><path d="M2 14c0-2.5 2.5-4.5 6-4.5s6 2 6 4.5"/></svg></span>
+                <input class="inp" type="text" id="s-fname" placeholder="Shivansh" autocomplete="given-name">
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <div class="form-label">Last name</div>
+              <div class="inp-wrap">
+                <span class="inp-icon"><svg viewBox="0 0 16 16"><circle cx="8" cy="5.5" r="3"/><path d="M2 14c0-2.5 2.5-4.5 6-4.5s6 2 6 4.5"/></svg></span>
+                <input class="inp" type="text" id="s-lname" placeholder="Gupta" autocomplete="family-name">
+              </div>
+            </div>
+          </div>
+          <div style="margin-bottom:16px;"></div>
+
+          <div class="form-group">
+            <div class="form-label">Business email</div>
+            <div class="inp-wrap">
+              <span class="inp-icon"><svg viewBox="0 0 16 16"><path d="M2 4l6 5 6-5"/><rect x="2" y="4" width="12" height="9" rx="1.5"/></svg></span>
+              <input class="inp" type="email" id="s-email" placeholder="you@company.com" autocomplete="email" oninput="validateEmailLive(this)">
+              <span class="inp-suffix" id="s-email-tick" style="display:none;color:var(--green);">
+                <svg viewBox="0 0 16 16"><path d="M3 8l3.5 3.5L13 5"/></svg>
+              </span>
+            </div>
+            <div class="field-error" id="s-email-err">
+              <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v3M8 11v.5"/></svg>
+              Please enter a valid email address
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="form-label">Business / company name <span style="color:var(--text3);font-weight:400;">(optional)</span></div>
+            <div class="inp-wrap">
+              <span class="inp-icon"><svg viewBox="0 0 16 16"><rect x="2" y="6" width="12" height="8" rx="1"/><path d="M5 6V4a3 3 0 016 0v2"/></svg></span>
+              <input class="inp" type="text" id="s-biz" placeholder="Your business name" autocomplete="organization">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="form-label">Create password</div>
+            <div class="inp-wrap">
+              <span class="inp-icon"><svg viewBox="0 0 16 16"><rect x="4" y="7" width="8" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/></svg></span>
+              <input class="inp" type="password" id="s-pass" placeholder="Min. 8 characters" autocomplete="new-password" oninput="checkStrength(this.value)">
+              <span class="inp-suffix" onclick="togglePass('s-pass',this)">
+                <svg viewBox="0 0 16 16"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>
+              </span>
+            </div>
+            <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+            <div class="strength-label" id="strength-label">Enter a password</div>
+            <div class="field-error" id="s-pass-err">
+              <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v3M8 11v.5"/></svg>
+              Password must be at least 8 characters
+            </div>
+          </div>
+
+          <div class="check-row">
+            <div class="custom-check" id="terms-check" onclick="toggleCheck(this)">
+              <svg viewBox="0 0 10 10"><path d="M1.5 5l2.5 2.5 4.5-4.5"/></svg>
+            </div>
+            <div class="check-label">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></div>
+          </div>
+
+          <button class="submit-btn" type="submit" id="signup-btn">
+            <span class="btn-text">Create Free Account</span>
+            <span class="btn-loader"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" stroke-dasharray="40" stroke-dashoffset="10"/></svg></span>
+          </button>
+
+        </form>
+      </div>
+
+      <div class="switch-text" id="switch-text">
+        Don't have an account? <a href="#" onclick="switchTab('signup');return false;">Create one free →</a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RIGHT SIDE — Trust signals -->
+  <div class="auth-side right">
+    <div>
+      <div style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;margin-bottom:20px;">Trusted by businesses</div>
+
+      <div style="display:flex;flex-direction:column;gap:14px;max-width:260px;">
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;">
+          <div style="font-size:16px;color:var(--amber);margin-bottom:6px;">★★★★★</div>
+          <div style="font-size:12.5px;color:var(--text2);line-height:1.6;margin-bottom:10px;">"InvoicePro cut my billing time from 2 hours to 10 minutes. The GST auto-fill is a lifesaver."</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;">AK</div>
+            <div>
+              <div style="font-size:12px;font-weight:500;color:var(--text);">Amit Kumar</div>
+              <div style="font-size:10.5px;color:var(--text3);">Freelance Developer, Pune</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;">
+          <div style="font-size:16px;color:var(--amber);margin-bottom:6px;">★★★★★</div>
+          <div style="font-size:12.5px;color:var(--text2);line-height:1.6;margin-bottom:10px;">"Best invoicing tool for Indian freelancers. Clean UI and the live tax feed keeps me updated."</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;">PR</div>
+            <div>
+              <div style="font-size:12px;font-weight:500;color:var(--text);">Priya Rao</div>
+              <div style="font-size:10.5px;color:var(--text3);">UX Designer, Bangalore</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;">
+          <div style="font-size:16px;color:var(--amber);margin-bottom:6px;">★★★★★</div>
+          <div style="font-size:12.5px;color:var(--text2);line-height:1.6;margin-bottom:10px;">"Handles my 50+ clients smoothly. Invoice tracking and reminders are genuinely useful."</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:28px;height:28px;border-radius:50%;background:#9b6fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;">RV</div>
+            <div>
+              <div style="font-size:12px;font-weight:500;color:var(--text);">Rahul Verma</div>
+              <div style="font-size:10.5px;color:var(--text3);">CA & Consultant, Delhi</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security badges -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+          <div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--green-dim);border:1px solid rgba(34,201,138,.2);border-radius:var(--r);">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="var(--green)" stroke-width="2"><path d="M8 2l5 2v5c0 3-2.5 5-5 5S3 12 3 9V4l5-2z"/><path d="M5.5 8l2 2 3-3"/></svg>
+            <span style="font-size:10.5px;color:var(--green);font-weight:500;">SSL Secured</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--accent-dim);border:1px solid rgba(79,110,247,.2);border-radius:var(--r);">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="var(--accent)" stroke-width="2"><rect x="3" y="7" width="10" height="7" rx="1"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>
+            <span style="font-size:10.5px;color:var(--accent);font-weight:500;">Data Encrypted</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.2);border-radius:var(--r);">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5l3.5-.5L8 2z"/></svg>
+            <span style="font-size:10.5px;color:var(--amber);font-weight:500;">GSTN Compliant</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-dot green" id="toast-dot"></span>
+  <span id="toast-msg">Signed in successfully!</span>
+</div>
+
+<script>
+/* ── Theme ── */
+function toggleTheme(){
+  const h=document.documentElement;
+  const dark=h.getAttribute('data-theme')==='dark';
+  h.setAttribute('data-theme',dark?'light':'dark');
+  document.getElementById('knob-icon').textContent=dark?'☀️':'🌙';
+}
+
+/* ── Tab switch ── */
+function switchTab(tab){
+  const isLogin=tab==='login';
+  document.getElementById('tab-login').classList.toggle('active',isLogin);
+  document.getElementById('tab-signup').classList.toggle('active',!isLogin);
+  document.getElementById('panel-login').classList.toggle('active',isLogin);
+  document.getElementById('panel-signup').classList.toggle('active',!isLogin);
+  document.getElementById('auth-title').textContent=isLogin?'Welcome back':'Create your account';
+  document.getElementById('auth-sub').textContent=isLogin?'Sign in to your InvoicePro account':'Free forever. No credit card required.';
+  document.getElementById('switch-text').innerHTML=isLogin
+    ?'Don\'t have an account? <a href="#" onclick="switchTab(\'signup\');return false;">Create one free →</a>'
+    :'Already have an account? <a href="#" onclick="switchTab(\'login\');return false;">Sign in →</a>';
+}
+
+/* ── Password toggle ── */
+function togglePass(id,btn){
+  const inp=document.getElementById(id);
+  const isPass=inp.type==='password';
+  inp.type=isPass?'text':'password';
+  btn.innerHTML=isPass
+    ?'<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 2l12 12"/><path d="M6.7 6.7A2 2 0 0110 10M4 4.9C2.7 6 2 8 2 8s3 5 7 5a7 7 0 002.5-.5"/><path d="M9.5 3.9C12 5 14 8 14 8s-.6 1-1.5 2"/></svg>'
+    :'<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>';
+}
+
+/* ── Checkbox ── */
+function toggleCheck(el){el.classList.toggle('checked');}
+
+/* ── Email live validation ── */
+function validateEmailLive(inp){
+  const ok=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inp.value);
+  document.getElementById('s-email-tick').style.display=ok?'flex':'none';
+  inp.classList.toggle('success',ok);
+  inp.classList.remove('error');
+  document.getElementById('s-email-err').classList.remove('show');
+}
+
+/* ── Password strength ── */
+function checkStrength(val){
+  const fill=document.getElementById('strength-fill');
+  const label=document.getElementById('strength-label');
+  let score=0;
+  if(val.length>=8)score++;
+  if(/[A-Z]/.test(val))score++;
+  if(/[0-9]/.test(val))score++;
+  if(/[^A-Za-z0-9]/.test(val))score++;
+  const levels=[
+    {w:'0%',c:'transparent',t:'Enter a password'},
+    {w:'25%',c:'var(--red)',t:'Weak — too short'},
+    {w:'50%',c:'var(--amber)',t:'Fair — add uppercase or numbers'},
+    {w:'75%',c:'#4fc3f7',t:'Good — almost there'},
+    {w:'100%',c:'var(--green)',t:'Strong password ✓'},
+  ];
+  const l=levels[score]||levels[0];
+  fill.style.width=l.w; fill.style.background=l.c; label.textContent=l.t;
+  label.style.color=l.c==='transparent'?'var(--text3)':l.c;
+}
+
+/* ── Toast ── */
+function showToast(msg,type='green'){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  document.getElementById('toast-dot').className='toast-dot '+type;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+/* ── Validate ── */
+function validate(id,errId,test){
+  const el=document.getElementById(id);
+  const ok=test(el.value);
+  el.classList.toggle('error',!ok);
+  document.getElementById(errId).classList.toggle('show',!ok);
+  return ok;
+}
+
+/* ── Submit Login (POST /api/auth/login) ── */
+async function submitLogin(e){
+  e.preventDefault();
+  const okEmail=validate('l-email','l-email-err',v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
+  const okPass=validate('l-pass','l-pass-err',v=>v.length>=8);
+  if(!okEmail||!okPass)return;
+
+  const btn=document.getElementById('login-btn');
+  btn.classList.add('loading'); btn.disabled=true;
+
+  try{
+    const res=await fetch('/api/auth/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        email:document.getElementById('l-email').value,
+        password:document.getElementById('l-pass').value,
+        remember:document.getElementById('remember-check').classList.contains('checked'),
+      })
+    });
+    const data=await res.json();
+    if(res.ok){
+      showToast('Signed in! Redirecting...','green');
+      setTimeout(()=>window.location.href=data.redirect||'/landing.html',1200);
+    } else {
+      showToast(data.message||'Invalid email or password','red');
+      document.getElementById('l-pass').classList.add('error');
+    }
+  }catch{
+    /* Dev mode — simulate success */
+    showToast('Signed in successfully! (demo)','green');
+    setTimeout(()=>window.location.href='landing.html',1400);
+  }finally{
+    btn.classList.remove('loading'); btn.disabled=false;
+  }
+}
+
+/* ── Submit Signup (POST /api/auth/register) ── */
+async function submitSignup(e){
+  e.preventDefault();
+  const okEmail=validate('s-email','s-email-err',v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
+  const okPass=validate('s-pass','s-pass-err',v=>v.length>=8);
+  const terms=document.getElementById('terms-check').classList.contains('checked');
+  if(!terms){showToast('Please accept the Terms of Service','red');return;}
+  if(!okEmail||!okPass)return;
+
+  const btn=document.getElementById('signup-btn');
+  btn.classList.add('loading'); btn.disabled=true;
+
+  try{
+    const res=await fetch('/api/auth/register',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        firstName:document.getElementById('s-fname').value,
+        lastName:document.getElementById('s-lname').value,
+        email:document.getElementById('s-email').value,
+        businessName:document.getElementById('s-biz').value,
+        password:document.getElementById('s-pass').value,
+      })
+    });
+    const data=await res.json();
+    if(res.ok){
+      showToast('Account created! Redirecting...','green');
+      setTimeout(()=>window.location.href=data.redirect||'/landing.html',1400);
+    } else {
+      showToast(data.message||'Registration failed. Try again.','red');
+    }
+  }catch{
+    /* Dev mode — simulate success */
+    showToast('Account created! (demo mode)','green');
+    setTimeout(()=>window.location.href='landing.html',1500);
+  }finally{
+    btn.classList.remove('loading'); btn.disabled=false;
+  }
+}
+
+/* ── Social auth ── */
+function socialAuth(provider){
+  showToast('Redirecting to '+provider+'...','green');
+  setTimeout(()=>window.location.href='/api/auth/'+provider,800);
+}
+
+/* ── Forgot password ── */
+function showForgot(){
+  const email=document.getElementById('l-email').value;
+  const msg=email
+    ?'Password reset link sent to '+email+' (demo)'
+    :'Enter your email above first';
+  showToast(msg,email?'green':'red');
+}
+</script>
+</body>
+</html>

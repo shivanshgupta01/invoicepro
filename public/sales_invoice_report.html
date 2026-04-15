@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>InvoicePro | Sales Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const savedTheme = localStorage.getItem('ip_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+</script>
+<style>
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blue: #4f6ef7; --green: #10b981; --red: #ef4444; --amber: #f59e0b;
+  --r: 6px; --r-panel: 8px;
+}
+[data-theme="dark"] {
+  --bg: #11141e; --panel: #1b202e; --input-bg: #11141e;
+  --border: #2a3143; --border-focus: #4f6ef7;
+  --text: #e2e8f0; --text-dim: #8c96a8;
+}
+[data-theme="light"] {
+  --bg: #f1f5f9; --panel: #ffffff; --input-bg: #f8fafc;
+  --border: #cbd5e1; --border-focus: #4f6ef7;
+  --text: #0f172a; --text-dim: #64748b;
+}
+
+body {
+  font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+  height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+
+.topbar {
+  height: 50px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.brand { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 6px; }
+.brand em { color: var(--blue); font-style: normal; }
+.brand-sub { color: var(--text-dim); font-size: 13px; font-weight: 400; }
+.top-actions { display: flex; align-items: center; gap: 10px; }
+.btn {
+  padding: 6px 12px; border-radius: var(--r); border: 1px solid var(--border);
+  background: transparent; color: var(--text); cursor: pointer;
+  font-size: 12px; font-weight: 500; transition: 0.2s;
+}
+.btn:hover { background: var(--border); }
+.btn.green { background: #0e9f6e; border-color: #0e9f6e; color: #fff; }
+.btn.green:hover { background: #057a55; }
+.btn.outline-red { color: var(--red); border-color: transparent; }
+.btn.outline-red:hover { background: rgba(239,68,68,0.1); }
+
+.main-content { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 10px; overflow-y: auto; }
+
+.report-selector {
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel);
+  padding: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; flex-shrink: 0;
+}
+
+.report-card {
+  padding: 16px; border: 2px solid var(--border); border-radius: var(--r-panel);
+  background: transparent; cursor: pointer; transition: 0.2s; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.report-card:hover { border-color: var(--blue); background: rgba(79,110,247,0.05); }
+.report-card.active { border-color: var(--blue); background: rgba(79,110,247,0.1); }
+.report-card-icon { font-size: 24px; }
+.report-card-title { font-weight: 600; font-size: 13px; color: var(--text); }
+.report-card-desc { font-size: 11px; color: var(--text-dim); }
+
+.filter-section {
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel);
+  padding: 12px; display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-label { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; }
+.filter-input {
+  background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--r);
+  color: var(--text); padding: 0 10px; height: 32px; font-size: 13px; outline: none;
+}
+.filter-input:focus { border-color: var(--blue); }
+.filter-btn {
+  padding: 6px 14px; border-radius: var(--r); border: none; background: var(--blue);
+  color: #fff; cursor: pointer; font-weight: 600; font-size: 12px;
+}
+.filter-btn:hover { background: #3a56e0; }
+
+.report-container { flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); padding: 16px; overflow-y: auto; display: none; }
+.report-container.active { display: flex; flex-direction: column; }
+
+.chart-container { position: relative; height: 300px; margin-bottom: 20px; }
+
+.table-section { width: 100%; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th {
+  background: var(--bg); font-size: 10px; font-weight: 600; color: var(--text-dim);
+  text-transform: uppercase; padding: 10px; text-align: left; border-bottom: 1px solid var(--border);
+}
+td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
+tbody tr:hover { background: var(--input-bg); }
+
+.summary-box {
+  background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 12px; margin-bottom: 16px;
+}
+.summary-row { display: flex; justify-content: space-between; padding: 6px 0; }
+.summary-label { font-weight: 600; color: var(--text-dim); }
+.summary-value { font-weight: 700; color: var(--text); }
+
+.export-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+.export-btn {
+  padding: 8px 14px; border-radius: var(--r); border: 1px solid var(--border);
+  background: transparent; color: var(--blue); cursor: pointer; font-weight: 600; font-size: 12px;
+}
+.export-btn:hover { background: rgba(79,110,247,0.1); }
+
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 200px; color: var(--text-dim);
+}
+
+@media(max-width: 900px) {
+  .report-selector { grid-template-columns: 1fr; }
+  .filter-section { flex-direction: column; align-items: stretch; }
+  .filter-group { width: 100%; }
+  .filter-input { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">Invoice<em>Pro</em> <span class="brand-sub">| Sales Report</span></div>
+  <div class="top-actions">
+    <button class="btn" onclick="window.location.href='landing.html'">← Back to Hub</button>
+    <button class="btn outline-red" onclick="logout()">Log out</button>
+  </div>
+</header>
+
+<div class="main-content">
+  <!-- Report Selector -->
+  <div class="report-selector">
+    <div class="report-card active" onclick="selectReport('party')">
+      <div class="report-card-icon">👥</div>
+      <div class="report-card-title">Party Wise Ledger</div>
+      <div class="report-card-desc">Sales by customer</div>
+    </div>
+    <div class="report-card" onclick="selectReport('date')">
+      <div class="report-card-icon">📅</div>
+      <div class="report-card-title">Date Wise Sales</div>
+      <div class="report-card-desc">Sales timeline & trends</div>
+    </div>
+    <div class="report-card" onclick="selectReport('item')">
+      <div class="report-card-icon">📦</div>
+      <div class="report-card-title">Item Wise Sales</div>
+      <div class="report-card-desc">Product performance</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-section">
+    <div class="filter-group">
+      <label class="filter-label">From Date</label>
+      <input type="date" class="filter-input" id="reportFromDate">
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">To Date</label>
+      <input type="date" class="filter-input" id="reportToDate">
+    </div>
+    <button class="filter-btn" onclick="generateReport()">Generate Report</button>
+  </div>
+
+  <!-- Party Wise Ledger Report -->
+  <div class="report-container active" id="partyReport">
+    <div class="chart-container">
+      <canvas id="partyChart"></canvas>
+    </div>
+    <div class="summary-box">
+      <div class="summary-row">
+        <span class="summary-label">Total Sales:</span>
+        <span class="summary-value" id="partyTotalSales">₹0.00</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Total Customers:</span>
+        <span class="summary-value" id="partyCustomerCount">0</span>
+      </div>
+    </div>
+    <div class="table-section">
+      <table>
+        <thead>
+          <tr>
+            <th>Party Name</th>
+            <th>Invoices</th>
+            <th>Taxable (₹)</th>
+            <th>Tax (₹)</th>
+            <th>Total (₹)</th>
+          </tr>
+        </thead>
+        <tbody id="partyTableBody"></tbody>
+      </table>
+    </div>
+    <div class="export-btns">
+      <button class="export-btn" onclick="exportPartyReport()">📥 Export CSV</button>
+      <button class="export-btn" onclick="printReport('party')">🖨️ Print</button>
+    </div>
+  </div>
+
+  <!-- Date Wise Sales Report -->
+  <div class="report-container" id="dateReport">
+    <div class="chart-container">
+      <canvas id="dateChart"></canvas>
+    </div>
+    <div class="summary-box">
+      <div class="summary-row">
+        <span class="summary-label">Total Sales:</span>
+        <span class="summary-value" id="dateTotalSales">₹0.00</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Average Daily Sales:</span>
+        <span class="summary-value" id="dateAverageSales">₹0.00</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Total Invoices:</span>
+        <span class="summary-value" id="dateTotalInvoices">0</span>
+      </div>
+    </div>
+    <div class="table-section">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Invoices</th>
+            <th>Taxable (₹)</th>
+            <th>Tax (₹)</th>
+            <th>Total (₹)</th>
+          </tr>
+        </thead>
+        <tbody id="dateTableBody"></tbody>
+      </table>
+    </div>
+    <div class="export-btns">
+      <button class="export-btn" onclick="exportDateReport()">📥 Export CSV</button>
+      <button class="export-btn" onclick="printReport('date')">🖨️ Print</button>
+    </div>
+  </div>
+
+  <!-- Item Wise Sales Report -->
+  <div class="report-container" id="itemReport">
+    <div class="chart-container">
+      <canvas id="itemChart"></canvas>
+    </div>
+    <div class="summary-box">
+      <div class="summary-row">
+        <span class="summary-label">Total Sales Value:</span>
+        <span class="summary-value" id="itemTotalSales">₹0.00</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Total Items Sold:</span>
+        <span class="summary-value" id="itemTotalQty">0</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Unique Items:</span>
+        <span class="summary-value" id="itemCount">0</span>
+      </div>
+    </div>
+    <div class="table-section">
+      <table>
+        <thead>
+          <tr>
+            <th>Item Description</th>
+            <th>HSN/SAC</th>
+            <th>Qty Sold</th>
+            <th>Unit Price (₹)</th>
+            <th>Total (₹)</th>
+          </tr>
+        </thead>
+        <tbody id="itemTableBody"></tbody>
+      </table>
+    </div>
+    <div class="export-btns">
+      <button class="export-btn" onclick="exportItemReport()">📥 Export CSV</button>
+      <button class="export-btn" onclick="printReport('item')">🖨️ Print</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let allInvoices = [];
+let currentReport = 'party';
+let db = null;
+let charts = {};
+
+function initDB() {
+  const request = indexedDB.open('InvoiceProDB', 1);
+  request.onerror = () => console.error('DB init failed');
+  request.onsuccess = (e) => {
+    db = e.target.result;
+    loadInvoices();
+    setDateDefaults();
+  };
+  request.onupgradeneeded = (e) => {
+    const database = e.target.result;
+    if (!database.objectStoreNames.contains('invoices')) {
+      database.createObjectStore('invoices', { keyPath: 'id' });
+    }
+  };
+}
+
+function setDateDefaults() {
+  const today = new Date().toISOString().split('T')[0];
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  
+  document.getElementById('reportFromDate').value = thirtyDaysAgo;
+  document.getElementById('reportToDate').value = today;
+}
+
+function loadInvoices() {
+  const transaction = db.transaction(['invoices'], 'readonly');
+  const store = transaction.objectStore('invoices');
+  const request = store.getAll();
+  
+  request.onsuccess = (e) => {
+    allInvoices = e.target.result;
+    generateReport();
+  };
+}
+
+function selectReport(type) {
+  currentReport = type;
+  
+  document.querySelectorAll('.report-card').forEach(card => card.classList.remove('active'));
+  event.target.closest('.report-card').classList.add('active');
+  
+  document.querySelectorAll('.report-container').forEach(container => container.classList.remove('active'));
+  document.getElementById(type + 'Report').classList.add('active');
+  
+  generateReport();
+}
+
+function generateReport() {
+  const fromDate = document.getElementById('reportFromDate').value;
+  const toDate = document.getElementById('reportToDate').value;
+  
+  const filtered = allInvoices.filter(inv => {
+    const invDate = inv.date;
+    return invDate >= fromDate && invDate <= toDate;
+  });
+  
+  if (currentReport === 'party') {
+    generatePartyReport(filtered);
+  } else if (currentReport === 'date') {
+    generateDateReport(filtered);
+  } else if (currentReport === 'item') {
+    generateItemReport(filtered);
+  }
+}
+
+function generatePartyReport(invoices) {
+  const partyData = {};
+  
+  invoices.forEach(inv => {
+    const party = inv.partyName || 'Unknown';
+    if (!partyData[party]) {
+      partyData[party] = { count: 0, taxable: 0, tax: 0, total: 0 };
+    }
+    partyData[party].count++;
+    partyData[party].taxable += inv.totals?.taxable || 0;
+    partyData[party].tax += (inv.totals?.cgst || 0) + (inv.totals?.sgst || 0) + (inv.totals?.igst || 0);
+    partyData[party].total += inv.totals?.grandTotal || 0;
+  });
+  
+  const sortedParties = Object.entries(partyData).sort((a, b) => b[1].total - a[1].total);
+  
+  // Update Summary
+  const totalSales = sortedParties.reduce((sum, [, data]) => sum + data.total, 0);
+  document.getElementById('partyTotalSales').textContent = '₹' + totalSales.toLocaleString('en-IN', {maximumFractionDigits: 2});
+  document.getElementById('partyCustomerCount').textContent = sortedParties.length;
+  
+  // Render Table
+  const tbody = document.getElementById('partyTableBody');
+  tbody.innerHTML = sortedParties.map(([party, data]) => `
+    <tr>
+      <td><strong>${party}</strong></td>
+      <td>${data.count}</td>
+      <td>₹${data.taxable.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
+      <td>₹${data.tax.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
+      <td>₹${data.total.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
+    </tr>
+  `).join('');
+  
+  // Render Chart
+  const labels = sortedParties.map(([party]) => party.substring(0, 15));
+  const data = sortedParties.map(([, d]) => d.total);
+  
+  renderChart('partyChart', labels, data, 'Party Wise Sales', 'bar');
+}
+
+function generateDateReport(invoices) {
+  const dateData = {};
+  
+  invoices.forEach(inv => {
+    const date = inv.date;
+    if (!dateData[date]) {
+      dateData[date] = { count: 0, taxable: 0, tax: 0, total: 0 };
+    }
+    dateData[date].count++;
+    dateData[date].taxable += inv.totals?.taxable || 0;
+    dateData[date].tax += (inv.totals?.cgst || 0) + (inv.totals?.sgst || 0) + (inv.totals?.igst || 0);
+    dateData[date].total += inv.totals?.grandTotal || 0;
+  });
+  
+  const sortedDates = Object.entries(dateData).sort((a, b) => new Date(a[0]) - new Date(b[0]));
+  
+  // Update Summary
+  const totalSales = sortedDates.reduce((sum, [, data]) => sum + data.total, 0);
+  const avgSales = sortedDates.length > 0 ? totalSales / sortedDates.length : 0;
+  const totalInvoices = sortedDates.reduce((sum, [, data]) => sum + data.count, 0);
+  
+  document.getElementById('dateTotalSales').textContent = '₹' + totalSales.toLocaleString('en-IN', {maximumFractionDigits: 2});
+  document.getElementById('dateAverageSales').textContent = '₹' + avgSales.toLocaleString('en-IN', {maximumFractionDigits: 2});
+  document.getElementById('dateTotalInvoices').textContent = totalInvoices;
+  
+  // Render Table
+  const tbody = document.getElementById('dateTableBody');
+  tbody.innerHTML = sortedDates.map(([date, data]) => `
+    <tr>
+      <td>${new Date(date).toLocaleDateString('en-IN')}</td>
+      <td>${data.count}</td>
+      <td>₹${data.taxable.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
+      <td>₹${data.tax.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
+      <td>₹${data.total.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
+    </tr>
+  `).join('');
+  
+  // Render Chart
+  const labels = sortedDates.map(([date]) => new Date(date).toLocaleDateString('en-IN'));
+  const data = sortedDates.map(([, d]) => d.total);
+  
+  renderChart('dateChart', labels, data, 'Date Wise Sales', 'line');
+}
+
+function generateItemReport(invoices) {
+  const itemData = {};
+  
+  invoices.forEach(inv => {
+    (inv.items || []).forEach(item => {
+      const key = item.description + (item.hsn ? '|' + item.hsn : '');
+      if (!itemData[key]) {
+        itemData[key] = { hsn: item.hsn, qty: 0, rate: 0, total: 0, count: 0 };
+      }
+      itemData[key].qty += item.qty || 0;
+      itemData[key].rate = item.rate || 0;
+      itemData[key].total += (item.qty || 0) * (item.rate || 0);
+      itemData[key].count++;
+    });
+  });
+  
+  const sortedItems = Object.entries(itemData).sort((a, b) => b[1].total - a[1].total);
+  
+  // Update Summary
+  const totalSales = sortedItems.reduce((sum, [, data]) => sum + data.total, 0);
+  const totalQty = sortedItems.reduce((sum, [, data]) => sum + data.qty, 0);
+  
+  document.getElementById('itemTotalSales').textContent = '₹' + totalSales.toLocaleString('en-IN', {maximumFractionDigits: 2});
+  document.getElementById('itemTotalQty').textContent = totalQty.toLocaleString('en-IN', {maximumFractionDigits: 0});
+  document.getElementById('itemCount').textContent = sortedItems.length;
+  
+  // Render Table
+  const tbody = document.getElementById('itemTableBody');
+  tbody.innerHTML = sortedItems.map(([key, data]) => {
+    const [desc, hsn] = key.split('|');
+    return `
+      <tr>
+        <td>${desc}</td>
+        <td>${hsn || '-'}</td>
+        <td>${data.qty}</td>
+        <td>₹${data.rate.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
+        <td>₹${data.total.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
+      </tr>
+    `;
+  }).join('');
+  
+  // Render Chart
+  const labels = sortedItems.map(([key]) => key.split('|')[0].substring(0, 15));
+  const data = sortedItems.map(([, d]) => d.total);
+  
+  renderChart('itemChart', labels, data, 'Item Wise Sales', 'bar');
+}
+
+function renderChart(canvasId, labels, data, title, type) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  
+  if (charts[canvasId]) {
+    charts[canvasId].destroy();
+  }
+  
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const textColor = isDark ? '#e2e8f0' : '#0f172a';
+  const gridColor = isDark ? '#2a3143' : '#cbd5e1';
+  const bgColor = isDark ? '#4f6ef7' : '#3a56e0';
+  
+  charts[canvasId] = new Chart(ctx, {
+    type: type,
+    data: {
+      labels: labels,
+      datasets: [{
+        label: title,
+        data: data,
+        backgroundColor: type === 'bar' ? bgColor : 'transparent',
+        borderColor: bgColor,
+        borderWidth: 2,
+        tension: 0.4,
+        fill: type === 'line',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: { color: textColor }
+        }
+      },
+      scales: {
+        y: {
+          ticks: { color: textColor },
+          grid: { color: gridColor },
+          beginAtZero: true
+        },
+        x: {
+          ticks: { color: textColor },
+          grid: { color: gridColor }
+        }
+      }
+    }
+  });
+}
+
+function exportPartyReport() {
+  let csv = 'Party Name,Invoices,Taxable,Tax,Total\n';
+  document.querySelectorAll('#partyTableBody tr').forEach(row => {
+    const cols = row.querySelectorAll('td');
+    csv += `"${cols[0].textContent}","${cols[1].textContent}","${cols[2].textContent}","${cols[3].textContent}","${cols[4].textContent}"\n`;
+  });
+  downloadCSV(csv, 'party_wise_report.csv');
+}
+
+function exportDateReport() {
+  let csv = 'Date,Invoices,Taxable,Tax,Total\n';
+  document.querySelectorAll('#dateTableBody tr').forEach(row => {
+    const cols = row.querySelectorAll('td');
+    csv += `"${cols[0].textContent}","${cols[1].textContent}","${cols[2].textContent}","${cols[3].textContent}","${cols[4].textContent}"\n`;
+  });
+  downloadCSV(csv, 'date_wise_report.csv');
+}
+
+function exportItemReport() {
+  let csv = 'Item,HSN,Qty,Unit Price,Total\n';
+  document.querySelectorAll('#itemTableBody tr').forEach(row => {
+    const cols = row.querySelectorAll('td');
+    csv += `"${cols[0].textContent}","${cols[1].textContent}","${cols[2].textContent}","${cols[3].textContent}","${cols[4].textContent}"\n`;
+  });
+  downloadCSV(csv, 'item_wise_report.csv');
+}
+
+function downloadCSV(csv, filename) {
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+
+function printReport(type) {
+  window.print();
+}
+
+function logout() {
+  localStorage.removeItem('invoicepro_token');
+  window.location.href = 'auth.html';
+}
+
+document.addEventListener('DOMContentLoaded', initDB);
+</script>
+</body>
+</html>

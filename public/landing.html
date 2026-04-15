@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InvoicePro — Smart Invoicing</title>
+<!-- INSTANT THEME LOAD: Prevents white/dark flash when navigating back -->
+<script>
+  const savedTheme = localStorage.getItem('ip_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* ── TOKENS ── */
+:root{
+  --accent:#4f6ef7;
+  --accent-soft:#3a56e0;
+  --accent-glow:rgba(79,110,247,0.18);
+  --accent-glow2:rgba(79,110,247,0.08);
+  --green:#22c55e;
+  --green-soft:rgba(34,197,94,0.12);
+  --amber:#f59e0b;
+  --amber-soft:rgba(245,158,11,0.12);
+  --red:#ef4444;
+  --red-soft:rgba(239,68,68,0.12);
+  --purple:#8b5cf6;
+  --purple-soft:rgba(139,92,246,0.12);
+  --teal:#14b8a6;
+  --font:'Plus Jakarta Sans',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --r:10px;
+  --r-sm:7px;
+  --r-lg:14px;
+  --transition:all .2s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{
+  --bg:#0b0d14;--bg2:#11141f;--bg3:#181c2a;--bg4:#1e2235;--bg5:#242840;
+  --surface:#1a1e30;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
+  --border3:rgba(255,255,255,0.18);--text:#e8eaf6;--text2:#9398b5;--text3:#5c6180;
+  --shadow:rgba(0,0,0,0.4);
+}
+[data-theme="light"]{
+  --bg:#f0f2fa;--bg2:#ffffff;--bg3:#f5f6fd;--bg4:#eaecf8;--bg5:#e2e5f5;
+  --surface:#ffffff;--border:rgba(79,110,247,0.1);--border2:rgba(79,110,247,0.18);
+  --border3:rgba(79,110,247,0.28);--text:#0f1130;--text2:#4a4f7a;--text3:#8b90b8;
+  --shadow:rgba(79,110,247,0.08);
+}
+
+html{font-family:var(--font);font-size:14px;background:var(--bg);color:var(--text);line-height:1.5;transition:background .3s,color .3s}
+body{min-height:100vh;display:flex;flex-direction:column;transition:background .3s}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:4px}
+
+/* ══ TOPBAR ══ */
+.topbar{
+  height:58px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px;background:var(--bg2);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:200;transition:background .3s,border-color .3s;
+}
+.logo-wrap{display:flex;flex-direction:column;gap:1px}
+.logo{font-size:19px;font-weight:700;letter-spacing:-.5px;color:var(--text)}
+.logo em{font-style:normal;color:var(--accent)}
+.logo-tagline{font-size:10.5px;color:var(--text3);font-weight:400}
+.topbar-right{
+  display:flex;
+  align-items:center;
+  gap:12px;  /* Increased from 8px */
+  position:relative;
+}
+.icon-btn{
+  width:34px;height:34px;border-radius:var(--r-sm);background:var(--bg3);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);transition:var(--transition);
+}
+.icon-btn:hover{background:var(--bg4);border-color:var(--border2);color:var(--text)}
+.icon-btn svg{width:15px;height:15px}
+.notif-btn{position:relative}
+.notif-dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--accent);border:1.5px solid var(--bg2);}
+
+/* ── THEME BTN ── */
+.theme-btn{width:54px;height:28px;border-radius:14px;background:var(--bg4);border:1px solid var(--border2);position:relative;cursor:pointer;transition:var(--transition);flex-shrink:0;}
+.theme-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;transition:transform .25s cubic-bezier(.4,0,.2,1);box-shadow:0 2px 8px rgba(79,110,247,.4);}
+[data-theme="light"] .theme-thumb{transform:translateX(26px)}
+
+/* ══ FIRM SWITCHER ══ */
+.firm-pill{
+  display:flex;align-items:center;gap:7px;padding:5px 10px 5px 6px;
+  background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);
+  cursor:pointer;transition:var(--transition);color:var(--text);font-size:12.5px;font-weight:500;
+  position:relative;user-select:none;max-width:180px;
+}
+.firm-pill:hover{background:var(--bg4);border-color:var(--border3)}
+.firm-logo{
+  width:24px;height:24px;border-radius:5px;background:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.firm-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px;}
+.firm-pill svg{width:12px;height:12px;color:var(--text3);flex-shrink:0;transition:transform .2s;}
+.firm-pill.open svg{transform:rotate(180deg);}
+
+/* Firm dropdown */
+.firm-dropdown{
+  position:absolute;top:calc(100% + 8px);left:0;
+  width:260px;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:var(--r);box-shadow:0 12px 40px var(--shadow);
+  z-index:500;overflow:hidden;display:none;
+}
+.firm-dropdown.open{display:block;animation:dropIn .18s ease both;}
+@keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+.fd-head{padding:10px 14px;border-bottom:1px solid var(--border);}
+.fd-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;}
+
+.firm-list{max-height:240px;overflow-y:auto;}
+.firm-item{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  cursor:pointer;transition:background .12s;
+}
+.firm-item:hover{background:var(--bg3)}
+.firm-item.active{background:var(--accent-glow2);}
+.fi-logo{
+  width:30px;height:30px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.fi-info{flex:1;min-width:0;}
+.fi-name{font-size:12.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fi-type{font-size:10.5px;color:var(--text3);}
+.fi-check{width:16px;height:16px;color:var(--accent);flex-shrink:0;}
+.fi-check svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.5;}
+
+.fd-divider{height:1px;background:var(--border);margin:4px 0;}
+
+.fd-add-btn{
+  display:flex;align-items:center;gap:8px;padding:11px 14px;
+  cursor:pointer;color:var(--accent);font-size:12.5px;font-weight:600;
+  transition:background .12s;
+}
+.fd-add-btn:hover{background:var(--accent-glow2)}
+.fd-add-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2;}
+
+.fd-count{font-size:10.5px;color:var(--text3);padding:6px 14px 10px;display:flex;justify-content:space-between;align-items:center;}
+
+/* ── ADD FIRM MODAL ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:800;
+  display:none;align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex;animation:fadeIn .15s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-lg);
+  padding:24px;width:100%;max-width:380px;
+  box-shadow:0 24px 60px rgba(0,0,0,.5);
+  animation:slideUp .2s ease both;
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.modal-title{font-size:15px;font-weight:700;color:var(--text);}
+.modal-close{width:28px;height:28px;border-radius:6px;background:var(--bg3);border:none;color:var(--text3);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:var(--transition);}
+.modal-close:hover{background:var(--bg4);color:var(--text);}
+.modal-field{margin-bottom:14px;}
+.modal-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.modal-input{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);
+  padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font);outline:none;transition:var(--transition);
+}
+.modal-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+.modal-input::placeholder{color:var(--text3);}
+
+.modal-btn{
+  flex:1;height:40px;background:var(--accent);border:none;border-radius:var(--r-sm);
+  color:#fff;font-size:13.5px;font-weight:600;font-family:var(--font);cursor:pointer;
+  transition:var(--transition);
+}
+.modal-btn:hover{background:var(--accent-soft);}
+.modal-btn:active{transform:scale(.98);}
+.modal-btn-cancel{background:var(--bg3);border:1px solid var(--border2);color:var(--text);}
+.modal-btn-cancel:hover{background:var(--bg4);}
+
+/* ── FIRM TYPE TABS ── */
+.firm-type-tabs{display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);padding:3px;margin-bottom:20px;}
+.fttab{flex:1;height:36px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;border-radius:5px;cursor:pointer;transition:var(--transition);color:var(--text2);}
+.fttab.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(79,110,247,.3);}
+.gstin-row{display:flex;gap:8px;align-items:flex-end;}
+.gstin-row .modal-input{flex:1;}
+.autofill-btn{height:38px;padding:0 14px;background:var(--accent);border:none;border-radius:var(--r-sm);color:#fff;font-size:12.5px;font-weight:600;font-family:var(--font);cursor:pointer;white-space:nowrap;transition:var(--transition);display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.autofill-btn:hover{background:var(--accent-soft);}
+.autofill-btn:disabled{opacity:.5;cursor:not-allowed;}
+.autofill-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;animation:none;}
+.autofill-btn.loading svg{animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.phone-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.modal-sub{font-size:11px;color:var(--text3);margin-top:3px;}
+.gst-success{font-size:11.5px;color:var(--green);background:var(--green-soft);border-radius:var(--r-sm);padding:8px 12px;margin-bottom:12px;display:none;align-items:center;gap:6px;}
+.gst-success.show{display:flex;}
+.gst-error{font-size:11.5px;color:var(--red);background:var(--red-soft);border-radius:var(--r-sm);padding:8px 12px;margin-bottom:12px;display:none;align-items:center;gap:6px;}
+.gst-error.show{display:flex;}
+
+/* ══ USER DROPDOWN ══ */
+.user-btn{
+  width:34px;height:34px;border-radius:var(--r-sm);
+  background:var(--bg3);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--text2);transition:var(--transition);position:relative;
+}
+.user-btn:hover{background:var(--bg4);border-color:var(--border2);color:var(--text)}
+.user-btn svg{width:15px;height:15px;}
+.user-avatar{
+  width:34px;height:34px;border-radius:var(--r-sm);
+  background-color:var(--accent);border:1px solid rgba(79,110,247,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:#fff;cursor:pointer;
+  transition:var(--transition);position:relative;
+  background-size:cover;background-position:center;
+}
+.user-avatar:hover{opacity:.85;}
+
+.user-dropdown{
+  position:absolute;top:calc(100% + 8px);right:0;
+  width:220px;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:var(--r);box-shadow:0 12px 40px var(--shadow);
+  z-index:500;overflow:hidden;display:none;
+}
+.user-dropdown.open{display:block;animation:dropIn .18s ease both;}
+.ud-profile{padding:14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.ud-avatar{width:36px;height:36px;border-radius:8px;background-color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;background-size:cover;background-position:center;}
+.ud-name{font-size:13px;font-weight:600;color:var(--text);}
+.ud-email{font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px;}
+.ud-menu{padding:6px;}
+.ud-item{
+  display:flex;align-items:center;gap:9px;padding:9px 10px;
+  border-radius:6px;cursor:pointer;font-size:12.5px;color:var(--text2);
+  transition:background .12s;
+}
+.ud-item:hover{background:var(--bg3);color:var(--text);}
+.ud-item svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.6;flex-shrink:0;}
+.ud-item.danger{color:var(--red);}
+.ud-item.danger:hover{background:var(--red-soft);}
+.ud-divider{height:1px;background:var(--border);margin:4px 0;}
+
+/* ══ BEAUTIFUL NAV TABS & DROPDOWNS (SUBTLE COLORS) ══ */
+.nav-strip{
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 22px; 
+  display: flex;
+  align-items: center;
+  gap: 10px; 
+  flex-wrap: wrap; 
+  transition: background .3s;
+}
+
+.ntab-wrapper {
+  position: relative;
+}
+
+.ntab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px; 
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text2);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px; 
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .2s cubic-bezier(.4,0,.2,1);
+  user-select: none;
+}
+
+.ntab svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+/* Subtle icon colors for each header */
+.tab-sales .ntab svg { color: var(--accent); }
+.tab-purchase .ntab svg { color: var(--purple); }
+.tab-quotation .ntab svg { color: var(--amber); }
+.tab-payment .ntab svg { color: var(--green); }
+.tab-receipt .ntab svg { color: var(--teal); }
+.tab-s-return .ntab svg { color: var(--red); }
+.tab-p-return .ntab svg { color: #f97316; }
+.tab-reports .ntab svg { color: var(--text3); }
+
+/* Hover animations using specific subtle colors */
+.ntab-wrapper:hover .ntab {
+  box-shadow: 0 4px 12px var(--shadow);
+  color: var(--text);
+}
+
+.tab-sales:hover .ntab { background: var(--accent-glow); border-color: rgba(79,110,247,0.2); }
+.tab-purchase:hover .ntab { background: var(--purple-soft); border-color: rgba(139,92,246,0.2); }
+.tab-quotation:hover .ntab { background: var(--amber-soft); border-color: rgba(245,158,11,0.2); }
+.tab-payment:hover .ntab { background: var(--green-soft); border-color: rgba(34,197,94,0.2); }
+.tab-receipt:hover .ntab { background: rgba(20,184,166,0.12); border-color: rgba(20,184,166,0.2); }
+.tab-s-return:hover .ntab { background: var(--red-soft); border-color: rgba(239,68,68,0.2); }
+.tab-p-return:hover .ntab { background: rgba(249,115,22,0.12); border-color: rgba(249,115,22,0.2); }
+.tab-reports:hover .ntab { background: var(--bg3); border-color: var(--border2); }
+
+/* Text swapping trick and match the hover text color to the theme */
+.show-on-hover { display: none; }
+.ntab-wrapper:hover .hide-on-hover { display: none; }
+.ntab-wrapper:hover .show-on-hover { display: block; }
+
+.tab-sales:hover .show-on-hover { color: var(--accent); }
+.tab-purchase:hover .show-on-hover { color: var(--purple); }
+.tab-quotation:hover .show-on-hover { color: var(--amber); }
+.tab-payment:hover .show-on-hover { color: var(--green); }
+.tab-receipt:hover .show-on-hover { color: var(--teal); }
+.tab-s-return:hover .show-on-hover { color: var(--red); }
+.tab-p-return:hover .show-on-hover { color: #f97316; }
+
+/* Beautiful Dropdowns */
+.tab-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+  min-width: 170px;
+  padding: 8px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: all .2s cubic-bezier(.4,0,.2,1);
+  z-index: 400;
+}
+
+.ntab-wrapper:hover .tab-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.tab-dd-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.tab-dd-item svg {
+  width: 15px;
+  height: 15px;
+  stroke: var(--text3);
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.tab-dd-item:hover {
+  background: var(--bg3);
+  color: var(--text);
+}
+
+.tab-dd-item:hover svg {
+  stroke: var(--text);
+}
+
+/* ══ LAYOUT ══ */
+.layout{display:grid;grid-template-columns:1fr 300px;flex:1;min-height:0}
+.left{padding:20px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;border-right:1px solid var(--border);transition:border-color .3s}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px;cursor:default;transition:var(--transition);position:relative;overflow:hidden;}
+.stat::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:0 var(--r) 0 100%;opacity:.07;}
+.stat.s1::before{background:var(--green)}.stat.s2::before{background:var(--amber)}.stat.s3::before{background:var(--accent)}.stat.s4::before{background:var(--purple)}
+.stat:hover{border-color:var(--border2);transform:translateY(-1px)}
+.stat-top{display:flex;align-items:center;justify-content:space-between}
+.stat-tag{font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:3px 8px;border-radius:20px;}
+.stat-tag.green{background:var(--green-soft);color:var(--green)}.stat-tag.amber{background:var(--amber-soft);color:var(--amber)}.stat-tag.blue{background:var(--accent-glow);color:var(--accent)}.stat-tag.purple{background:var(--purple-soft);color:var(--purple)}
+.stat-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.stat-icon.green{background:var(--green-soft);color:var(--green)}.stat-icon.amber{background:var(--amber-soft);color:var(--amber)}.stat-icon.blue{background:var(--accent-glow);color:var(--accent)}.stat-icon.purple{background:var(--purple-soft);color:var(--purple)}
+.stat-icon svg{width:15px;height:15px}
+.stat-val{font-size:24px;font-weight:700;font-family:var(--mono);letter-spacing:-.8px;line-height:1}
+.stat-val.green{color:var(--green)}.stat-val.amber{color:var(--amber)}.stat-val.blue{color:var(--accent)}.stat-val.purple{color:var(--purple)}
+.stat-sub{font-size:11.5px;color:var(--text3);display:flex;align-items:center;gap:5px}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:background .3s,border-color .3s;}
+.card-head{display:flex;align-items:center;gap:10px;padding:13px 18px;border-bottom:1px solid var(--border);transition:border-color .3s;}
+.card-icon-wrap{width:34px;height:34px;border-radius:var(--r-sm);background:var(--accent-glow2);border:1px solid rgba(79,110,247,.2);display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0;}
+.card-icon-wrap svg{width:15px;height:15px}
+.card-head-title{font-size:13.5px;font-weight:600;color:var(--text)}
+.card-head-sub{font-size:11.5px;color:var(--text3);margin-left:auto}
+.card-body{padding:18px}
+
+/* ── FORM ── */
+.form-row{display:grid;grid-template-columns:1fr 110px 130px auto;gap:10px;align-items:flex-end;margin-bottom:14px}
+.fl{display:flex;flex-direction:column;gap:5px}
+.flabel{font-size:10.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+.flabel .req{color:var(--accent);margin-left:2px}
+.finput{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);padding:9px 11px;color:var(--text);font-size:13px;font-family:var(--font);outline:none;transition:var(--transition);width:100%;}
+.finput:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.finput::placeholder{color:var(--text3)}
+.finput.mono{font-family:var(--mono);text-align:right}
+.add-btn{display:flex;align-items:center;gap:6px;padding:9px 14px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-sm);font-size:12.5px;font-weight:600;font-family:var(--font);cursor:pointer;white-space:nowrap;transition:var(--transition);height:38px;}
+.add-btn:hover{background:var(--accent-soft);box-shadow:0 0 0 3px var(--accent-glow)}
+.add-btn:active{transform:scale(.97)}
+.add-btn svg{width:13px;height:13px}
+
+/* ── ITEMS ── */
+.items-zone{min-height:60px;border:1.5px dashed var(--border2);border-radius:var(--r-sm);margin-bottom:14px;overflow:hidden;transition:border-color .2s;}
+.items-zone.has-items{border-style:solid;border-color:var(--border)}
+.items-empty-msg{height:60px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text3);gap:6px;}
+.item-row{display:flex;align-items:center;gap:10px;padding:9px 13px;border-bottom:1px solid var(--border);animation:slideIn .2s ease;}
+.item-row:last-child{border-bottom:none}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.item-name{flex:1;font-size:12.5px;color:var(--text)}
+.item-qty-badge{padding:2px 8px;border-radius:4px;background:var(--bg4);font-size:11px;color:var(--text3);font-family:var(--mono);}
+.item-amt{font-size:12.5px;font-family:var(--mono);color:var(--text);min-width:70px;text-align:right}
+.item-del{width:22px;height:22px;border-radius:4px;background:transparent;border:none;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:var(--transition);}
+.item-del:hover{background:var(--red-soft);color:var(--red)}
+
+/* ── POS FOOTER ── */
+.pos-footer{display:flex;align-items:center;justify-content:space-between;padding-top:4px;}
+.total-block{display:flex;flex-direction:column;gap:2px}
+.total-lbl{font-size:11.5px;color:var(--text3);font-weight:500}
+.total-num{font-size:30px;font-weight:700;font-family:var(--mono);color:var(--text);letter-spacing:-1px;transition:color .2s;}
+.total-num.has-val{color:var(--accent)}
+.footer-btns{display:flex;gap:8px}
+.ghost-btn{display:flex;align-items:center;gap:6px;padding:9px 14px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text2);font-size:12.5px;font-weight:500;font-family:var(--font);cursor:pointer;transition:var(--transition);}
+.ghost-btn:hover{background:var(--bg4);border-color:var(--border3);color:var(--text)}
+.ghost-btn svg{width:14px;height:14px}
+.pdf-btn{display:flex;align-items:center;gap:7px;padding:9px 20px;background:var(--accent);border:none;border-radius:var(--r-sm);color:#fff;font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;transition:var(--transition);box-shadow:0 4px 14px rgba(79,110,247,.3);}
+.pdf-btn:hover{background:var(--accent-soft);box-shadow:0 4px 20px rgba(79,110,247,.45)}
+.pdf-btn:active{transform:scale(.97)}
+.pdf-btn svg{width:15px;height:15px}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{padding:9px 14px;text-align:left;font-size:10.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;transition:background .12s;}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--bg3)}
+
+/* ══ RIGHT PANEL ══ */
+.right{display:flex;flex-direction:column;background:var(--bg2);overflow:hidden;transition:background .3s;}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--border);transition:border-color .3s;}
+.panel-title{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600}
+.live-pulse{width:8px;height:8px;border-radius:50%;background:var(--green);position:relative;}
+.live-pulse::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1.5px solid var(--green);animation:ripple 2s infinite;opacity:0;}
+@keyframes ripple{0%{transform:scale(.5);opacity:.8}100%{transform:scale(1.8);opacity:0}}
+.view-all-btn{font-size:11.5px;color:var(--accent);cursor:pointer;font-weight:500;text-decoration:none;transition:opacity .15s;}
+.view-all-btn:hover{opacity:.75}
+.filter-tabs{display:flex;gap:4px;padding:10px 16px;border-bottom:1px solid var(--border);transition:border-color .3s;}
+.ftab{padding:4px 10px;border-radius:5px;font-size:11.5px;font-weight:500;cursor:pointer;color:var(--text3);transition:var(--transition);}
+.ftab:hover{background:var(--bg4);color:var(--text2)}.ftab.active{background:var(--accent-glow);color:var(--accent)}
+.feed{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg5) transparent}
+.feed-item{padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;display:flex;flex-direction:column;gap:6px;}
+.feed-item:hover{background:var(--bg3)}.feed-item:last-child{border-bottom:none}
+.feed-meta{display:flex;align-items:center;gap:7px}
+.feed-tag{font-size:9.5px;font-weight:700;letter-spacing:.07em;padding:2px 7px;border-radius:3px;text-transform:uppercase;}
+.feed-tag.gst{background:rgba(20,184,166,.15);color:var(--teal)}.feed-tag.itax{background:var(--accent-glow);color:var(--accent)}.feed-tag.cbdt{background:var(--purple-soft);color:var(--purple)}
+.feed-time{font-size:10.5px;color:var(--text3);margin-left:auto;display:flex;align-items:center;gap:3px}
+.feed-time svg{width:10px;height:10px}
+.feed-text{font-size:12.5px;color:var(--text2);line-height:1.55}
+.feed-text strong{color:var(--text);font-weight:600}
+.feed-arrow{font-size:11px;color:var(--accent);opacity:0;transition:opacity .15s}
+.feed-item:hover .feed-arrow{opacity:1}
+.quick-section{padding:14px 16px;border-top:1px solid var(--border);transition:border-color .3s;}
+.qs-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.qs-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.qs-item{display:flex;align-items:center;gap:8px;padding:9px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;transition:var(--transition);}
+.qs-item:hover{background:var(--bg4);border-color:var(--border2)}.qs-item:hover .qs-icon{background:var(--accent-glow);color:var(--accent)}
+.qs-icon{width:26px;height:26px;border-radius:6px;background:var(--bg5);color:var(--text3);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:var(--transition);}
+.qs-icon svg{width:13px;height:13px}
+.qs-text{display:flex;flex-direction:column;gap:1px}
+.qs-name{font-size:11.5px;font-weight:600;color:var(--text)}.qs-desc{font-size:10px;color:var(--text3)}
+
+/* ══ ANIMATIONS ══ */
+.fade-up{animation:fadeUp .4s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.stat{animation:fadeUp .35s ease both}
+.stat:nth-child(1){animation-delay:.05s}.stat:nth-child(2){animation-delay:.1s}.stat:nth-child(3){animation-delay:.15s}.stat:nth-child(4){animation-delay:.2s}
+
+@media(max-width:900px){.layout{grid-template-columns:1fr}.right{display:none}.stats{grid-template-columns:1fr 1fr}.form-row{grid-template-columns:1fr 1fr}.topbar-center{display:none}}
+@media(max-width:500px){.stats{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ════ TOPBAR ════ -->
+<header class="topbar">
+  <div class="logo-wrap">
+    <div class="logo">Invoice<em>Pro</em></div>
+    <div class="logo-tagline">Rapid invoicing &amp; compliance for growing businesses</div>
+  </div>
+
+  <div class="topbar-right">
+    <div class="icon-btn notif-btn">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a5 5 0 015 5v2l1 2H2l1-2V7a5 5 0 015-5zM6.5 13.5a1.5 1.5 0 003 0"/></svg>
+      <span class="notif-dot"></span>
+    </div>
+
+    <!-- FIRM SWITCHER -->
+    <div class="firm-pill" id="firmPill" onclick="toggleFirmDropdown()">
+      <div class="firm-logo" id="firmLogo">S</div>
+      <span class="firm-name" id="firmName">Add Your Firm</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>
+
+      <div class="firm-dropdown" id="firmDropdown">
+        <div class="fd-head"><div class="fd-label">Your Firms</div></div>
+        <div class="firm-list" id="firmList"></div>
+        <div class="fd-divider"></div>
+        <div class="fd-add-btn" id="fdAddBtn" onclick="openAddFirmModal(event)">
+          <svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg> Add New Firm
+        </div>
+        <div class="fd-count" id="fdCount"><span>0 / 10 firms</span></div>
+      </div>
+    </div>
+
+    <div class="theme-btn" id="themeBtn" title="Toggle theme">
+      <div class="theme-thumb" id="thumb"><span id="themeIcon">🌙</span></div>
+    </div>
+
+    <!-- USER AVATAR / LOGIN SIGNUP -->
+<div style="position:relative;">
+  <!-- LOGIN/SIGNUP BUTTONS (shown when not logged in) -->
+  <div id="authButtons" style="display:flex; gap:8px;">
+    <button class="icon-btn" onclick="window.location.href='auth.html'" style="background:transparent; border:none; color:var(--accent); font-weight:600; font-size:13px; padding:0 12px;">
+      Log In
+    </button>
+    <button class="icon-btn" onclick="window.location.href='auth.html'" style="background:var(--accent); border:none; color:#fff; font-weight:600; font-size:13px; padding:0 12px;">
+      Sign Up
+    </button>
+  </div>
+
+  <!-- USER AVATAR (shown when logged in) -->
+  <div id="userAvatarContainer" style="display:none; position:relative;">
+    <div class="user-btn" id="userBtn" onclick="toggleUserDropdown()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="6" r="3"/><path d="M2 14c0-3 2.7-5 6-5s6 2 6 5"/></svg>
+    </div>
+    <div class="user-dropdown" id="userDropdown">
+      <div class="ud-profile">
+        <div class="ud-avatar" id="udAvatar">?</div>
+        <div><div class="ud-name" id="udName">Guest</div><div class="ud-email" id="udEmail">Not signed in</div></div>
+      </div>
+      <div class="ud-menu">
+        <div class="ud-item" onclick="window.location.href='profile.html'"><svg viewBox="0 0 16 16"><circle cx="8" cy="6" r="3"/><path d="M2 14c0-3 2.7-5 6-5s6 2 6 5"/></svg> My Profile</div>
+        <div class="ud-item"><svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/></svg> Settings</div>
+        <div class="ud-divider"></div>
+        <div class="ud-item danger" id="logoutBtn" onclick="logout()"><svg viewBox="0 0 16 16"><path d="M6 14H3a1 1 0 01-1-1V3a1 1 0 011-1h3M10 11l3-3-3-3M13 8H6"/></svg> Logout</div>
+      </div>
+    </div>
+  </div>
+</div>
+</header>
+
+<!-- ════ ADD FIRM MODAL ════ -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">Business Profile</div>
+        <div style="font-size:11.5px;color:var(--text3);margin-top:2px;">Set up your profile to auto-fill invoices.</div>
+      </div>
+      <button class="modal-close" onclick="closeAddFirmModal()">×</button>
+    </div>
+    <div class="firm-type-tabs">
+      <div class="fttab active" id="tabIndividual" onclick="switchFirmType('individual')">Individual</div>
+      <div class="fttab" id="tabRegistered" onclick="switchFirmType('registered')">Registered Firm</div>
+    </div>
+
+    <div id="panelIndividual">
+      <div class="modal-field">
+        <div class="modal-label">Your Full Name <span style="color:var(--red)">*</span></div>
+        <input class="modal-input" id="mIndivName" placeholder="e.g. Shivansh Gupta" maxlength="60">
+      </div>
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="modal-btn modal-btn-cancel" onclick="closeAddFirmModal()">Cancel</button>
+        <button class="modal-btn" onclick="saveFirm()">Save Profile</button>
+      </div>
+    </div>
+
+    <div id="panelRegistered" style="display:none;">
+      <div class="gst-success" id="gstSuccess"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8l4 4 6-7"/></svg> GST details fetched successfully!</div>
+      <div class="gst-error" id="gstError"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="6"/><path d="M8 5v3M8 11v.5"/></svg> <span id="gstErrorMsg">Could not fetch GST details.</span></div>
+
+      <div class="modal-field">
+        <div class="modal-label">GSTIN <span style="color:var(--text3);font-weight:400;">(optional)</span></div>
+        <div class="gstin-row">
+          <input class="modal-input" id="mGstin" placeholder="15-digit GSTIN" maxlength="15" oninput="this.value=this.value.toUpperCase()" style="font-family:var(--mono);letter-spacing:.05em;">
+          <button class="autofill-btn" id="autofillBtn" onclick="fetchGSTDetails()"><svg viewBox="0 0 16 16"><path d="M2 8a6 6 0 1010.5 4.5"/><path d="M14 4v4h-4"/></svg> Auto-fill</button>
+        </div>
+      </div>
+      <div class="modal-field"><div class="modal-label">Firm's Name <span style="color:var(--red)">*</span></div><input class="modal-input" id="mFirmNameReg" placeholder="Legal Name of Business" maxlength="80"></div>
+      <div class="modal-field"><div class="modal-label">Taxpayer Type <span style="color:var(--text3);font-weight:400;">(optional)</span></div><input class="modal-input" id="mTaxpayerType" placeholder="e.g. Regular / Composition"></div>
+      <div class="modal-field"><div class="modal-label">Firm's Address <span style="color:var(--text3);font-weight:400;">(optional)</span></div><textarea class="modal-input" id="mFirmAddress" placeholder="Registered Address" rows="2" style="resize:none;height:auto;padding-top:9px;"></textarea></div>
+      <div class="modal-field"><div class="modal-label">Contact Numbers <span style="color:var(--text3);font-weight:400;">(optional)</span></div><div class="phone-row"><input class="modal-input" id="mMainMobile" placeholder="+91 Main Mobile" maxlength="15"><input class="modal-input" id="mAltMobile" placeholder="+91 Alt Mobile" maxlength="15"></div></div>
+      <div class="modal-field"><div class="modal-label">Email <span style="color:var(--text3);font-weight:400;">(optional)</span></div><input class="modal-input" id="mFirmEmail" placeholder="company@email.com" type="email"></div>
+      
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="modal-btn modal-btn-cancel" onclick="closeAddFirmModal()">Cancel</button>
+        <button class="modal-btn" onclick="saveFirm()">Save Profile</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="authModalOverlay" onclick="closeAuthModal()">
+  <div class="modal" style="max-width:340px; text-align:center; padding: 28px 24px;" onclick="event.stopPropagation()">
+    <div style="width:52px;height:52px;border-radius:50%;background:var(--accent-glow);color:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="width:24px;height:24px;"><path d="M10 2h3a1 1 0 011 1v10a1 1 0 01-1 1h-3"/><path d="M6 5l3 3-3 3M9 8H2"/></svg></div>
+    <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;">Sign In Required</div>
+    <div style="font-size:12.5px;color:var(--text3);margin-bottom:24px;line-height:1.5;">You need to sign in or create an account to add and manage business profiles. It's totally free!</div>
+    <div style="display:flex;gap:10px;">
+      <button style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;padding:10px;transition:var(--transition);" onmouseover="this.style.background='var(--bg4)'" onmouseout="this.style.background='var(--bg3)'" onclick="closeAuthModal()">Cancel</button>
+      <button style="flex:1;background:var(--accent);border:none;border-radius:var(--r-sm);color:#fff;font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;padding:10px;transition:var(--transition);" onmouseover="this.style.background='var(--accent-soft)'" onmouseout="this.style.background='var(--accent)'" onclick="window.location.href='auth.html'">Sign In</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ BEAUTIFUL NAV TABS (PILL SHAPES & UNIQUE HOVER COLORS) ════ -->
+<nav class="nav-strip">
+  
+  <!-- Sales Invoice (Blue) -->
+  <div class="ntab-wrapper tab-sales">
+    <div class="ntab" onclick="selectTab(this); window.location.href='invoice.html'">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 6h6M5 9h4"/></svg>
+      <span class="hide-on-hover">Sales Invoice</span>
+      <span class="show-on-hover">+ Add Voucher</span>
+    </div>
+    <!-- In the Sales Invoice dropdown, replace with: -->
+<div class="tab-dropdown">
+  <div class="tab-dd-item" onclick="window.location.href='sales_invoice_modify.html'">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11.5 2.5a2.121 2.121 0 013 3L6 14l-4 1 1-4 8.5-8.5z"/></svg> Modify
+  </div>
+  <div class="tab-dd-item" onclick="window.location.href='sales_invoice_list.html'">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4h8M5 8h8M5 12h8M2 4h1M2 8h1M2 12h1"/></svg> List
+  </div>
+  <div class="tab-dd-item" onclick="window.location.href='sales_invoice_report.html'">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M5 3V2m6 1V2M5 8h6M5 11h3"/></svg> Sales Report
+  </div>
+</div>
+  </div>
+
+  <!-- Purchase Invoice (Purple) -->
+  <div class="ntab-wrapper tab-purchase">
+    <div class="ntab" onclick="selectTab(this); window.location.href='purchase_invoice.html'">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 6h6M5 9h6M5 12h4"/></svg>
+      <span class="hide-on-hover">Purchase Invoice</span>
+      <span class="show-on-hover">+ Add Voucher</span>
+    </div>
+    <div class="tab-dropdown">
+      <div class="tab-dd-item" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11.5 2.5a2.121 2.121 0 013 3L6 14l-4 1 1-4 8.5-8.5z"/></svg> Modify
+      </div>
+      <div class="tab-dd-item" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4h8M5 8h8M5 12h8M2 4h1M2 8h1M2 12h1"/></svg> List
+      </div>
+      <div class="tab-dd-item" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M5 3V2m6 1V2M5 8h6M5 11h3"/></svg> Purchase Report
+      </div>
+    </div>
+  </div>
+
+  <!-- Quotation (Amber/Gold) -->
+  <div class="ntab-wrapper tab-quotation">
+    <div class="ntab" onclick="selectTab(this)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M5 3V2m6 1V2M5 8h6M5 11h3"/></svg>
+      <span class="hide-on-hover">Quotation</span>
+      <span class="show-on-hover">+ Add Voucher</span>
+    </div>
+    <div class="tab-dropdown">
+      <div class="tab-dd-item" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11.5 2.5a2.121 2.121 0 013 3L6 14l-4 1 1-4 8.5-8.5z"/></svg> Modify
+      </div>
+      <div class="tab-dd-item" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4h8M5 8h8M5 12h8M2 4h1M2 8h1M2 12h1"/></svg> List
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment (Green) -->
+  <div class="ntab-wrapper tab-payment">
+    <div class="ntab" onclick="selectTab(this)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="9" rx="1.5"/><path d="M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1M6 9h4"/></svg>
+      <span class="hide-on-hover">Payment</span>
+      <span class="show-on-hover">+ Add Voucher</span>
+    </div>
+    <div class="tab-dropdown">
+      <div class="tab-dd-item" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11.5 2.5a2.121 2.121 0 013 3L6 14l-4 1 1-4 8.5-8.5z"/></svg> Modify
+      </div>
+      <div class="tab-dd-item" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4h8M5 8h8M5 12h8M2 4h1M2 8h1M2 12h1"/></svg> List
+      </div>
+    </div>
+  </div>
+
+  <!-- Receipt (Teal) -->
+  <div class="ntab-wrapper tab-receipt">
+    <div class="ntab" onclick="selectTab(this)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 9l2 2 4-4"/></svg>
+      <span class="hide-on-hover">Receipt</span>
+      <span class="show-on-hover">+ Add Voucher</span>
+    </div>
+    <div class="tab-dropdown">
+      <div class="tab-dd-item" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11.5 2.5a2.121 2.121 0 013 3L6 14l-4 1 1-4 8.5-8.5z"/></svg> Modify
+      </div>
+      <div class="tab-dd-item" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4h8M5 8h8M5 12h8M2 4h1M2 8h1M2 12h1"/></svg> List
+      </div>
+    </div>
+  </div>
+
+  <!-- Sales Return (Red) -->
+  <div class="ntab-wrapper tab-s-return">
+    <div class="ntab" onclick="selectTab(this)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5h10M3 8h7M3 11h5"/><path d="M13 11l-2 2-2-2"/></svg>
+      <span class="hide-on-hover">Sales Return</span>
+      <span class="show-on-hover">+ Add Voucher</span>
+    </div>
+    <div class="tab-dropdown">
+      <div class="tab-dd-item" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11.5 2.5a2.121 2.121 0 013 3L6 14l-4 1 1-4 8.5-8.5z"/></svg> Modify
+      </div>
+      <div class="tab-dd-item" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4h8M5 8h8M5 12h8M2 4h1M2 8h1M2 12h1"/></svg> List
+      </div>
+    </div>
+  </div>
+
+  <!-- Purchase Return (Orange) -->
+  <div class="ntab-wrapper tab-p-return">
+    <div class="ntab" onclick="selectTab(this)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5h10M3 8h7M3 11h5"/><path d="M13 5l-2-2-2 2"/></svg>
+      <span class="hide-on-hover">Purchase Return</span>
+      <span class="show-on-hover">+ Add Voucher</span>
+    </div>
+    <div class="tab-dropdown">
+      <div class="tab-dd-item" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11.5 2.5a2.121 2.121 0 013 3L6 14l-4 1 1-4 8.5-8.5z"/></svg> Modify
+      </div>
+      <div class="tab-dd-item" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4h8M5 8h8M5 12h8M2 4h1M2 8h1M2 12h1"/></svg> List
+      </div>
+    </div>
+  </div>
+
+  <!-- Advance Reports (Gray/Standard) -->
+  <div class="ntab-wrapper tab-reports">
+    <div class="ntab" onclick="selectTab(this)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l4-4 3 3 5-7"/></svg>
+      <span>Advance Reports</span>
+    </div>
+    <div class="tab-dropdown">
+      <div class="tab-dd-item" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l4-4 3 3 5-7"/><path d="M6 14v-2M10 14v-4M14 14V6"/></svg> Profit &amp; Loss A/C
+      </div>
+      <div class="tab-dd-item" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="10" height="10" rx="1"/><path d="M3 7h10M7 7v6"/></svg> Balance Sheet
+      </div>
+    </div>
+  </div>
+
+</nav>
+
+<!-- ════ LAYOUT ════ -->
+<div class="layout">
+  <div class="left">
+    <!-- EMPTIED STATS CARDS -->
+    <div class="stats">
+      <div class="stat s1"><div class="stat-top"><span class="stat-tag green">Revenue</span><div class="stat-icon green"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 12l4-4 3 3 5-7"/></svg></div></div><div class="stat-val green">₹0</div><div class="stat-sub">No data yet</div></div>
+      <div class="stat s2"><div class="stat-top"><span class="stat-tag amber">Pending</span><div class="stat-icon amber"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg></div></div><div class="stat-val amber">₹0</div><div class="stat-sub">No overdue invoices</div></div>
+      <div class="stat s3"><div class="stat-top"><span class="stat-tag blue">Clients</span><div class="stat-icon blue"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="5" r="3"/><path d="M1 14c0-3 2.2-5 5-5"/><circle cx="12" cy="8" r="2.5"/><path d="M9 14c0-2 1.3-3.5 3-3.5s3 1.5 3 3.5"/></svg></div></div><div class="stat-val blue">0</div><div class="stat-sub">Add your first client</div></div>
+      <div class="stat s4"><div class="stat-top"><span class="stat-tag purple">GST Due</span><div class="stat-icon purple"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/></svg></div></div><div class="stat-val purple">₹0</div><div class="stat-sub">Up to date</div></div>
+    </div>
+
+    <!-- QUICK POS -->
+    <div class="card fade-up" style="animation-delay:.25s">
+      <div class="card-head"><div class="card-icon-wrap"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M8 5v6M5 8h6"/></svg></div><div class="card-head-title">Quick POS Entry</div><div class="card-head-sub">New Sales Invoice</div></div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="fl"><div class="flabel">Item / Service <span style="color:var(--text3);font-weight:400">(optional)</span></div><input class="finput" id="iname" placeholder="e.g. Logo design, Consulting…"></div>
+          <div class="fl"><div class="flabel">Qty</div><input class="finput mono" id="iqty" type="number" value="1" min="1" style="text-align:center"></div>
+          <div class="fl"><div class="flabel">Amount ₹<span class="req">*</span></div><input class="finput mono" id="iamt" type="number" placeholder="0.00" min="0"></div>
+          <button class="add-btn" onclick="addItem()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 3v10M3 8h10"/></svg>Add</button>
+        </div>
+        <div class="items-zone" id="itemsZone"><div class="items-empty-msg" id="emptyMsg"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text3)"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/></svg>Add your first item above</div></div>
+        <div class="pos-footer">
+          <div class="total-block"><div class="total-lbl">Total Payable</div><div class="total-num" id="totalNum">₹0.00</div></div>
+          <div class="footer-btns">
+            <button class="ghost-btn" onclick="clearAll()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3l10 10M13 3L3 13"/></svg>Clear</button>
+            <button class="ghost-btn"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v10M4 8l4 4 4-4"/><path d="M2 14h12"/></svg>Share</button>
+            <button class="pdf-btn" onclick="savePDF()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="1" width="10" height="14" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h3"/></svg>Save as PDF</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECENT INVOICES (EMPTIED) -->
+    <div class="card fade-up" style="animation-delay:.35s">
+      <div class="card-head"><div class="card-icon-wrap" style="background:rgba(20,184,166,.1);border-color:rgba(20,184,166,.2);color:var(--teal)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 6h6M5 9h6M5 12h4"/></svg></div><div class="card-head-title">Recent Invoices</div><div class="card-head-sub" style="cursor:pointer;color:var(--accent)">View all →</div></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Invoice #</th><th>Client</th><th>Items</th><th>Date</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <tr>
+              <td colspan="7" style="text-align:center; padding:35px 20px; color:var(--text3);">
+                No recent invoices found. Create your first invoice above!
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right">
+    <div class="panel-head">
+      <div class="panel-title"><span class="live-pulse"></span>Live Updates</div>
+      <a class="view-all-btn" href="#">View All</a>
+    </div>
+    <div class="filter-tabs">
+      <div class="ftab active" onclick="filterNews('all', this)">All</div>
+      <div class="ftab" onclick="filterNews('gst', this)">GST</div>
+      <div class="ftab" onclick="filterNews('tax', this)">Income Tax</div>
+      <div class="ftab" onclick="filterNews('finance', this)">Finance</div>
+    </div>
+    
+    <!-- LIVE NEWS FEED CONTAINER -->
+    <div class="feed" id="newsFeed">
+      <div style="padding: 30px 20px; text-align: center; color: var(--text3); display:flex; flex-direction:column; align-items:center; gap:10px;">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="width:24px;height:24px;animation:spin 1s linear infinite;"><path d="M8 2a6 6 0 106 6"/></svg>
+        Fetching live updates...
+      </div>
+    </div>
+    
+    <div class="quick-section">
+      <div class="qs-label">Quick Actions</div>
+      <div class="qs-grid">
+        <div class="qs-item" onclick="window.location.href='invoice.html'">
+          <div class="qs-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M8 5v6M5 8h6"/></svg></div>
+          <div class="qs-text"><div class="qs-name">New Invoice</div><div class="qs-desc">Sales entry</div></div>
+        </div>
+        <div class="qs-item"><div class="qs-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3 2.7-5 6-5s6 2 6 5"/><path d="M12 8v4M10 10h4"/></svg></div><div class="qs-text"><div class="qs-name">Add Client</div><div class="qs-desc">Address book</div></div></div>
+        <div class="qs-item"><div class="qs-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l4-4 3 3 5-7"/></svg></div><div class="qs-text"><div class="qs-name">GST Report</div><div class="qs-desc">Monthly GSTR</div></div></div>
+        <div class="qs-item"><div class="qs-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="1" width="10" height="14" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h4"/></svg></div><div class="qs-text"><div class="qs-name">Export PDF</div><div class="qs-desc">Batch export</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══ TABS ══ */
+function selectTab(el) {
+  document.querySelectorAll('.ntab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+/* ══ POS ITEMS ══ */
+let items = [], total = 0;
+function addItem() {
+  const name = document.getElementById('iname').value.trim() || 'Item';
+  const qty  = parseFloat(document.getElementById('iqty').value) || 1;
+  const rate = parseFloat(document.getElementById('iamt').value) || 0;
+  if (!rate) { shake(document.getElementById('iamt')); return; }
+  const amt = qty * rate;
+  items.push({ name, qty, rate, amt });
+  total += amt;
+  renderItems();
+  document.getElementById('iname').value = '';
+  document.getElementById('iqty').value = '1';
+  document.getElementById('iamt').value = '';
+  document.getElementById('iamt').focus();
+}
+function shake(el) {
+  el.style.borderColor = 'var(--red)'; el.style.boxShadow = '0 0 0 3px var(--red-soft)';
+  setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 600);
+}
+function renderItems() {
+  const zone = document.getElementById('itemsZone');
+  const tNum = document.getElementById('totalNum');
+  if (!items.length) {
+    zone.className = 'items-zone';
+    zone.innerHTML = '<div class="items-empty-msg"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text3)"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/></svg>Add your first item above</div>';
+    tNum.className = 'total-num'; tNum.textContent = '₹0.00'; return;
+  }
+  zone.className = 'items-zone has-items';
+  zone.innerHTML = items.map((it, i) => `<div class="item-row"><div class="item-name">${it.name}</div><div class="item-qty-badge">×${it.qty}</div><div class="item-amt">₹${it.amt.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</div><button class="item-del" onclick="removeItem(${i})">×</button></div>`).join('');
+  tNum.className = 'total-num has-val';
+  tNum.textContent = '₹' + total.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function removeItem(i) { total -= items[i].amt; if(total<0)total=0; items.splice(i,1); renderItems(); }
+function clearAll() { items=[]; total=0; renderItems(); }
+document.getElementById('iamt').addEventListener('keydown', e => { if(e.key==='Enter') addItem(); });
+function savePDF() { alert('Wire up jsPDF or Puppeteer here!'); }
+
+/* ══ LIVE NEWS FETCH (GOOGLE RSS) ══ */
+let allNewsItems = [];
+
+async function fetchLiveNews() {
+  const feedEl = document.getElementById('newsFeed');
+  try {
+    const rssUrl = 'https://news.google.com/rss/search?q=GST+India+OR+Income+Tax+India+OR+Business+India&hl=en-IN&gl=IN&ceid=IN:en';
+    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+    
+    const res = await fetch(apiUrl);
+    const data = await res.json();
+
+    if (data.status === 'ok' && data.items.length > 0) {
+      allNewsItems = data.items.slice(0, 15);
+      renderNews('all');
+    } else {
+      feedEl.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text3);">No recent updates available right now.</div>';
+    }
+  } catch (err) {
+    console.error('News fetch error:', err);
+    feedEl.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text3);">Failed to load live updates. Check your connection.</div>';
+  }
+}
+
+function filterNews(category, el) {
+  document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderNews(category);
+}
+
+function renderNews(filterCategory) {
+  const feedEl = document.getElementById('newsFeed');
+  
+  if (allNewsItems.length === 0) return;
+
+  const filteredItems = allNewsItems.filter(item => {
+    if (filterCategory === 'all') return true;
+    const title = item.title.toLowerCase();
+    if (filterCategory === 'gst') return title.includes('gst');
+    if (filterCategory === 'tax') return title.includes('tax') || title.includes('itr');
+    if (filterCategory === 'finance') return title.includes('bank') || title.includes('rbi') || title.includes('economy');
+    return false;
+  });
+
+  if (filteredItems.length === 0) {
+    feedEl.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text3);">No recent ${filterCategory} news found.</div>`;
+    return;
+  }
+
+  feedEl.innerHTML = filteredItems.map(item => {
+    const titleLower = item.title.toLowerCase();
+    let tag = 'Business'; let tagClass = 'cbdt';
+    if (titleLower.includes('gst')) { tag = 'GST'; tagClass = 'gst'; }
+    else if (titleLower.includes('tax')) { tag = 'Tax'; tagClass = 'itax'; }
+
+    const dateObj = new Date(item.pubDate);
+    const hoursAgo = Math.round((new Date() - dateObj) / (1000 * 60 * 60));
+    const timeStr = hoursAgo > 24 ? `${Math.round(hoursAgo/24)} days ago` : `${hoursAgo || 1} hr ago`;
+    const cleanTitle = item.title.split(' - ')[0];
+
+    return `
+      <div class="feed-item" onclick="window.open('${item.link}', '_blank')">
+        <div class="feed-meta">
+          <span class="feed-tag ${tagClass}">${tag}</span>
+          <span class="feed-time">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+            ${timeStr}
+          </span>
+        </div>
+        <div class="feed-text" style="margin-top:4px;"><strong>${cleanTitle}</strong></div>
+        <div class="feed-arrow">Read full story →</div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ══ CLOSE DROPDOWNS ON OUTSIDE CLICK ══ */
+document.addEventListener('click', (e) => {
+  if (!document.getElementById('firmPill').contains(e.target)) closeFirmDropdown();
+  if (!document.getElementById('userBtn').closest('[style]') && !document.getElementById('userDropdown').contains(e.target) && !document.getElementById('userBtn').contains(e.target)) closeUserDropdown();
+});
+
+/* ══════════════════════════════════
+   FIRM SWITCHER (LOCAL STORAGE ONLY)
+══════════════════════════════════ */
+let firms = [];
+let activeFirmId = null;
+
+// Initialize firms securely from LocalStorage
+try {
+  firms = JSON.parse(localStorage.getItem('ip_firms')) || [];
+  activeFirmId = localStorage.getItem('ip_active_firm') || null;
+  
+  // Failsafe: if activeFirmId exists but isn't in the list, fix it.
+  if (firms.length > 0 && !firms.find(f => f.id === String(activeFirmId))) {
+    activeFirmId = firms[0].id;
+    localStorage.setItem('ip_active_firm', activeFirmId);
+  }
+} catch(e) {
+  firms = [];
+}
+
+function toggleFirmDropdown() {
+  const pill = document.getElementById('firmPill');
+  const dd   = document.getElementById('firmDropdown');
+  const isOpen = dd.classList.contains('open');
+  closeFirmDropdown();
+  closeUserDropdown();
+  if (!isOpen) { dd.classList.add('open'); pill.classList.add('open'); renderFirmList(); }
+}
+
+function closeFirmDropdown() {
+  document.getElementById('firmDropdown').classList.remove('open');
+  document.getElementById('firmPill').classList.remove('open');
+}
+
+function renderFirmList() {
+  const list = document.getElementById('firmList');
+  const count = document.getElementById('fdCount');
+  count.innerHTML = `<span>${firms.length} / 10 firms</span>${firms.length>0?'<span style="color:var(--accent);cursor:pointer;font-size:11px;" onclick="window.location.href=\'profile.html\'">Manage</span>':''}`;
+
+  if (!firms.length) {
+    list.innerHTML = '<div style="padding:16px;text-align:center;font-size:12px;color:var(--text3);">No firms yet. Add your first firm!</div>';
+    return;
+  }
+  
+  // Ensure we compare strings properly for the active check
+  list.innerHTML = firms.map(f => `
+    <div class="firm-item ${String(f.id) === String(activeFirmId) ? 'active' : ''}" onclick="switchFirm('${f.id}')">
+      <div class="fi-logo" style="background:${f.color}">${f.initial}</div>
+      <div class="fi-info">
+        <div class="fi-name">${f.name}</div>
+        <div class="fi-type">${f.type}</div>
+      </div>
+      ${String(f.id) === String(activeFirmId) ? '<div class="fi-check"><svg viewBox="0 0 16 16"><path d="M3 8l4 4 6-7"/></svg></div>' : ''}
+    </div>
+  `).join('');
+}
+
+function switchFirm(id) {
+  activeFirmId = String(id);
+  localStorage.setItem('ip_active_firm', activeFirmId);
+  updateFirmPill();
+  closeFirmDropdown();
+}
+
+function updateFirmPill() {
+  const f = firms.find(f => String(f.id) === String(activeFirmId));
+  const logo = document.getElementById('firmLogo');
+  const name = document.getElementById('firmName');
+  if (f) {
+    logo.textContent = f.initial;
+    logo.style.background = f.color;
+    name.textContent = f.name;
+  } else {
+    logo.textContent = '+';
+    logo.style.background = 'var(--bg5)';
+    name.textContent = 'Add Your Firm';
+  }
+}
+
+let activeFirmType = 'individual';
+
+function switchFirmType(type) {
+  activeFirmType = type;
+  document.getElementById('tabIndividual').classList.toggle('active', type === 'individual');
+  document.getElementById('tabRegistered').classList.toggle('active', type === 'registered');
+  document.getElementById('panelIndividual').style.display = type === 'individual' ? 'block' : 'none';
+  document.getElementById('panelRegistered').style.display = type === 'registered' ? 'block' : 'none';
+  document.getElementById('gstSuccess').classList.remove('show');
+  document.getElementById('gstError').classList.remove('show');
+}
+
+function openAddFirmModal(e) {
+  if (e) e.stopPropagation();
+
+  const token = localStorage.getItem('invoicepro_token');
+  if (!token) {
+    closeFirmDropdown();
+    document.getElementById('authModalOverlay').classList.add('open');
+    return; 
+  }
+
+  if (firms.length >= 10) { alert('Maximum 10 firms allowed.'); return; }
+  closeFirmDropdown();
+  
+  document.getElementById('mIndivName').value = '';
+  document.getElementById('mGstin').value = '';
+  document.getElementById('mFirmNameReg').value = '';
+  document.getElementById('mTaxpayerType').value = '';
+  document.getElementById('mFirmAddress').value = '';
+  document.getElementById('mMainMobile').value = '';
+  document.getElementById('mAltMobile').value = '';
+  document.getElementById('mFirmEmail').value = '';
+  document.getElementById('gstSuccess').classList.remove('show');
+  document.getElementById('gstError').classList.remove('show');
+  
+  switchFirmType('individual');
+  
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('mIndivName').focus(), 150);
+}
+
+function closeAddFirmModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('modalOverlay')) {
+    closeAddFirmModal();
+  }
+}
+
+function closeAuthModal() {
+  document.getElementById('authModalOverlay').classList.remove('open');
+}
+
+async function fetchGSTDetails() {
+  const gstin = document.getElementById('mGstin').value.trim();
+  const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+
+  if (!gstin) { showGSTError('Please enter a 15-digit GSTIN first.'); return; }
+  if (!gstRegex.test(gstin)) {
+    showGSTError('Invalid GSTIN. Format: 27AAAAA0000A1Z5 (15 characters)');
+    return;
+  }
+
+  const btn = document.getElementById('autofillBtn');
+  btn.disabled = true;
+  btn.classList.add('loading');
+  btn.innerHTML = '<svg viewBox="0 0 16 16"><path d="M2 8a6 6 0 1010.5 4.5"/><path d="M14 4v4h-4"/></svg> Fetching...';
+  document.getElementById('gstSuccess').classList.remove('show');
+  document.getElementById('gstError').classList.remove('show');
+
+  try {
+    const res = await fetch(`/api/gst/verify/${gstin}`);
+    const result = await res.json();
+
+    if (result.success && result.data) {
+      const d = result.data;
+      document.getElementById('mFirmNameReg').value  = d.business_name  || '';
+      document.getElementById('mTaxpayerType').value = d.taxpayer_type  || '';
+      document.getElementById('mFirmAddress').value  = d.address        || '';
+      document.getElementById('gstSuccess').classList.add('show');
+      setTimeout(() => document.getElementById('gstSuccess').classList.remove('show'), 4000);
+    } else {
+      showGSTError(result.message || 'No data found for this GSTIN.');
+    }
+  } catch (err) {
+    showGSTError('Could not reach GST server. Check your internet connection.');
+  }
+
+  btn.disabled = false;
+  btn.classList.remove('loading');
+  btn.innerHTML = '<svg viewBox="0 0 16 16"><path d="M2 8a6 6 0 1010.5 4.5"/><path d="M14 4v4h-4"/></svg> Auto-fill';
+}
+
+function showGSTError(msg) {
+  document.getElementById('gstErrorMsg').textContent = msg;
+  document.getElementById('gstError').classList.add('show');
+  setTimeout(() => document.getElementById('gstError').classList.remove('show'), 5000);
+}
+
+function highlight(id) {
+  const el = document.getElementById(id);
+  el.style.borderColor = 'var(--red)';
+  el.style.boxShadow = '0 0 0 3px var(--red-soft)';
+  el.focus();
+  setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 1000);
+}
+
+// 100% BULLETPROOF LOCAL SAVE
+function saveFirm() {
+  let name, type, extra = {};
+  
+  const colors = ['#4f6ef7', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#ec4899'];
+  const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+  if (activeFirmType === 'individual') {
+    name = document.getElementById('mIndivName').value.trim();
+    if (!name) { highlight('mIndivName'); return; }
+    type = 'Individual / Freelancer';
+  } else {
+    name = document.getElementById('mFirmNameReg').value.trim();
+    if (!name) { highlight('mFirmNameReg'); return; }
+    type = document.getElementById('mTaxpayerType').value.trim() || 'Registered Firm';
+    extra = {
+      gstin:      document.getElementById('mGstin').value.trim(),
+      address:    document.getElementById('mFirmAddress').value.trim(),
+      mainMobile: document.getElementById('mMainMobile').value.trim(),
+      altMobile:  document.getElementById('mAltMobile').value.trim(),
+      email:      document.getElementById('mFirmEmail').value.trim(),
+    };
+  }
+
+  const token = localStorage.getItem('invoicepro_token');
+  if (!token) { 
+    closeAddFirmModal(); 
+    document.getElementById('authModalOverlay').classList.add('open'); 
+    return; 
+  }
+
+  const newId = 'f_' + Date.now();
+  const firm = {
+    id:      newId,
+    name,
+    type,
+    color:   randomColor,
+    initial: name[0].toUpperCase(),
+    firmType: activeFirmType,
+    ...extra,
+  };
+
+  // Securely save to array and LocalStorage
+  firms.push(firm);
+  localStorage.setItem('ip_firms', JSON.stringify(firms));
+  
+  activeFirmId = String(newId);
+  localStorage.setItem('ip_active_firm', activeFirmId);
+  
+  console.log("Firm successfully saved locally!", firm); // Debug log
+  
+  updateFirmPill();
+  closeAddFirmModal();
+}
+
+function toggleUserDropdown() {
+  const dd = document.getElementById('userDropdown');
+  const isOpen = dd.classList.contains('open');
+  closeUserDropdown();
+  closeFirmDropdown();
+  if (!isOpen) dd.classList.add('open');
+}
+function closeUserDropdown() { document.getElementById('userDropdown').classList.remove('open'); }
+
+function logout() {
+  // Clear only auth data, NOT firms
+  localStorage.removeItem('invoicepro_token');
+  localStorage.removeItem('ip_user_avatar');
+  
+  // Keep firms data so it persists after logout/login
+  // localStorage.removeItem('ip_active_firm');
+  // localStorage.removeItem('ip_firms');
+  
+  // Redirect to landing page
+  window.location.href = 'landing.html';
+}
+
+const urlParams = new URLSearchParams(window.location.search);
+const tokenFromUrl = urlParams.get('token');
+if (tokenFromUrl) {
+  localStorage.setItem('invoicepro_token', tokenFromUrl);
+  window.history.replaceState({}, document.title, window.location.pathname);
+}
+
+function checkAuth() {
+  const token = localStorage.getItem('invoicepro_token');
+  const authButtons = document.getElementById('authButtons');
+  const userAvatarContainer = document.getElementById('userAvatarContainer');
+  const udName     = document.getElementById('udName');
+  const udEmail    = document.getElementById('udEmail');
+  const udAvatar   = document.getElementById('udAvatar');
+  const userBtn    = document.getElementById('userBtn');
+
+  if (!token) {
+    // NOT LOGGED IN - Show Login/Signup buttons
+    if (authButtons) authButtons.style.display = 'flex';
+    if (userAvatarContainer) userAvatarContainer.style.display = 'none';
+    
+    // Reset firm pill to default
+    firms = [];
+    activeFirmId = null;
+    updateFirmPill();
+    return;
+  }
+
+  // LOGGED IN - Parse token and show user info
+  try {
+    const payloadBase64 = token.split('.')[1];
+    const decodedJson = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
+    const decoded = JSON.parse(decodedJson);
+    const user = decoded.user || decoded;
+
+    if (user && (user.firstName || user.email || user.name)) {
+      const fName = user.firstName || user.name || 'User';
+      const lName = user.lastName || '';
+      const initial = fName.charAt(0).toUpperCase();
+
+      // Show user avatar container
+      if (authButtons) authButtons.style.display = 'none';
+      if (userAvatarContainer) userAvatarContainer.style.display = 'block';
+
+      if (udName) udName.textContent = `${fName} ${lName}`.trim();
+      if (udEmail) udEmail.textContent = user.email || 'No email provided';
+      
+      // SYNC CUSTOM AVATAR FROM LOCAL STORAGE
+      const savedAvatar = localStorage.getItem('ip_user_avatar');
+      
+      if (savedAvatar) {
+        if (udAvatar) {
+          udAvatar.style.backgroundImage = `url(${savedAvatar})`;
+          udAvatar.textContent = '';
+        }
+        if (userBtn) {
+          userBtn.className = 'user-avatar';
+          userBtn.style.backgroundImage = `url(${savedAvatar})`;
+          userBtn.textContent = '';
+        }
+      } else {
+        if (udAvatar) {
+          udAvatar.style.backgroundImage = 'none';
+          udAvatar.textContent = initial;
+        }
+        if (userBtn) {
+          userBtn.className = 'user-avatar';
+          userBtn.style.backgroundImage = 'none';
+          userBtn.textContent = initial;
+        }
+      }
+      
+      // RELOAD FIRMS FROM LOCALSTORAGE when user logs back in
+      try {
+        firms = JSON.parse(localStorage.getItem('ip_firms')) || [];
+        activeFirmId = localStorage.getItem('ip_active_firm') || null;
+        
+        // Failsafe: if activeFirmId exists but isn't in the list, fix it.
+        if (firms.length > 0 && !firms.find(f => f.id === String(activeFirmId))) {
+          activeFirmId = firms[0].id;
+          localStorage.setItem('ip_active_firm', activeFirmId);
+        }
+      } catch(e) {
+        console.error('Error loading firms:', e);
+        firms = [];
+        activeFirmId = null;
+      }
+      
+      // Update the firm pill display
+      updateFirmPill();
+    }
+  } catch (err) {
+    console.error('Failed to decode token:', err);
+    localStorage.removeItem('invoicepro_token');
+    if (authButtons) authButtons.style.display = 'flex';
+    if (userAvatarContainer) userAvatarContainer.style.display = 'none';
+  }
+}
+
+// Init
+checkAuth();
+updateFirmPill();
+fetchLiveNews();
+</script>
+</body>
+</html>

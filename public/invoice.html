@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>InvoicePro | Sales Voucher</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- INSTANT THEME LOAD: Prevents white flash -->
+<script>
+  const savedTheme = localStorage.getItem('ip_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+</script>
+<style>
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blue: #4f6ef7; --green: #10b981; --red: #ef4444;
+  --r: 6px; --r-panel: 8px;
+}
+/* DARK MODE COLORS */
+[data-theme="dark"] {
+  --bg: #11141e; --panel: #1b202e; --input-bg: #11141e;
+  --border: #2a3143; --border-focus: #4f6ef7;
+  --text: #e2e8f0; --text-dim: #8c96a8;
+}
+/* LIGHT MODE COLORS */
+[data-theme="light"] {
+  --bg: #f1f5f9; --panel: #ffffff; --input-bg: #f8fafc;
+  --border: #cbd5e1; --border-focus: #4f6ef7;
+  --text: #0f172a; --text-dim: #64748b;
+}
+
+body {
+  font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+  height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+/* ─── TOP BAR ─── */
+.topbar {
+  height: 50px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.brand { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 6px; }
+.brand em { color: var(--blue); font-style: normal; }
+.brand-sub { color: var(--text-dim); font-size: 13px; font-weight: 400; }
+.top-actions { display: flex; align-items: center; gap: 10px; }
+.user-email { font-size: 12px; color: var(--text-dim); margin: 0 8px; }
+.btn {
+  padding: 6px 12px; border-radius: var(--r); border: 1px solid var(--border);
+  background: transparent; color: var(--text); cursor: pointer;
+  font-size: 12px; font-weight: 500; transition: 0.2s;
+}
+.btn:hover { background: var(--border); }
+.btn.green { background: #0e9f6e; border-color: #0e9f6e; color: #fff; }
+.btn.green:hover { background: #057a55; }
+.btn.red { background: var(--red); border-color: var(--red); color: #fff; }
+.btn.red:hover { background: #dc2626; }
+.btn.outline-red { color: var(--red); border-color: transparent; }
+.btn.outline-red:hover { background: rgba(239,68,68,0.1); }
+
+/* ─── MAIN LAYOUT ─── */
+.main-content { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 10px; min-height: 0; }
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); padding: 12px; }
+.panel-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; color: var(--text-dim); }
+.panel-title.blue { color: #3b82f6; }
+.panel-title.green { color: #10b981; }
+.grid { display: grid; gap: 10px; }
+
+/* ─── INPUTS ─── */
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; }
+.input {
+  background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--r);
+  color: var(--text); padding: 0 10px; height: 32px; font-size: 13px; width: 100%; outline: none; transition: 0.2s;
+}
+.input:focus { border-color: var(--border-focus); }
+.input::placeholder { color: #94a3b8; }
+
+/* ─── TOP PANELS ─── */
+.top-section { display: grid; grid-template-columns: 0.9fr 1.3fr 1.3fr; gap: 10px; flex-shrink: 0; }
+.price-type {
+  margin-top: 12px; font-size: 11px; font-weight: 500; color: var(--text-dim);
+  display: flex; align-items: center; gap: 14px; background: var(--input-bg);
+  padding: 6px 10px; border-radius: var(--r); border: 1px solid var(--border);
+}
+.price-type input[type="radio"] { accent-color: var(--blue); margin-right: 4px; cursor: pointer; }
+.price-type label { display: flex; align-items: center; cursor: pointer; color: var(--text); }
+
+/* ─── TABLE SECTION ─── */
+.table-section { flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); display: flex; flex-direction: column; min-height: 0; }
+.table-wrap { flex: 1; overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { position: sticky; top: 0; background: var(--bg); z-index: 10; font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+th:last-child, td:last-child { text-align: right; }
+.td-input { background: transparent; border: 1px solid transparent; color: var(--text); height: 28px; width: 100%; font-size: 13px; padding: 0 6px; outline: none; border-radius: 4px; }
+.td-input:focus, .td-input:hover { border-color: var(--border); background: var(--input-bg); }
+.td-input.right { text-align: right; }
+.table-footer { padding: 10px; border-top: 1px solid var(--border); background: var(--panel); flex-shrink: 0; }
+.add-btn { background: transparent; border: 1px solid var(--blue); color: var(--blue); padding: 6px 12px; border-radius: var(--r); font-size: 12px; font-weight: 500; cursor: pointer; transition: 0.2s; }
+.add-btn:hover { background: rgba(79,110,247,0.1); }
+
+/* Remove button */
+.del-btn { color: var(--red); cursor: pointer; background: transparent; border: none; font-size: 16px; opacity: 0.5; transition: 0.2s; }
+.del-btn:hover { opacity: 1; }
+
+/* ─── BOTTOM PANELS ─── */
+.bottom-section { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; flex-shrink: 0; }
+.summary-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.summary-row label { font-size: 12px; font-weight: 600; color: var(--text); }
+.summary-row .input { width: 110px; text-align: right; font-weight: 600; }
+.grand-total-box { display: flex; flex-direction: column; justify-content: space-between; }
+.gt-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
+.gt-title { font-size: 10px; font-weight: 700; color: var(--text-dim); letter-spacing: 0.05em; }
+.gt-amount { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; color: var(--text); }
+.gt-actions { display: flex; gap: 8px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">Invoice<em>Pro</em> <span class="brand-sub">| Sales Voucher</span></div>
+  <div class="top-actions">
+    <button class="btn" onclick="window.location.href='landing.html'">← Back to Hub</button>
+    <span class="user-email" id="topEmail">loading...</span>
+    <button class="btn green">Export in Excel</button>
+    <button class="btn outline-red" onclick="logout()">Log out</button>
+  </div>
+</header>
+
+<div class="main-content">
+  
+  <!-- TOP SECTION -->
+  <div class="top-section">
+    <div class="panel">
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="field"><label>VCH NO.</label><input class="input" id="vchNo" placeholder="Invoice No."></div>
+        <div class="field"><label>DATE</label><input class="input" type="date" id="invDate"></div>
+        <div class="field"><label>PLACE OF SUPPLY</label><input class="input" id="placeOfSupply" placeholder="09-UP"></div>
+        <div class="field"><label>REV. CHARGE</label><select class="input" id="revCharge"><option>No</option><option>Yes</option></select></div>
+      </div>
+      <div class="price-type">
+        <span>PRICE TYPE:</span>
+        <label><input type="radio" name="ptype" id="ptExclusive" checked> Without Tax</label>
+        <label><input type="radio" name="ptype" id="ptInclusive"> With Tax</label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title blue">YOUR DETAILS (SUPPLIER)</div>
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <input class="input" id="supplierName" placeholder="Company Name">
+        <input class="input" id="supplierGstin" placeholder="GSTIN">
+        <input class="input" id="supplierAddress" placeholder="Registered Address">
+        <select class="input" id="supplierState">
+          <option value="AN">Andaman & Nicobar Islands</option>
+          <option value="AP">Andhra Pradesh</option>
+          <option value="AR">Arunachal Pradesh</option>
+          <option value="AS">Assam</option>
+          <option value="BR">Bihar</option>
+          <option value="CH">Chandigarh</option>
+          <option value="CG">Chhattisgarh</option>
+          <option value="DN">Dadra & Nagar Haveli and Daman & Diu</option>
+          <option value="DL">Delhi</option>
+          <option value="GA">Goa</option>
+          <option value="GJ">Gujarat</option>
+          <option value="HR">Haryana</option>
+          <option value="HP">Himachal Pradesh</option>
+          <option value="JK">Jammu & Kashmir</option>
+          <option value="JH">Jharkhand</option>
+          <option value="KA">Karnataka</option>
+          <option value="KL">Kerala</option>
+          <option value="LA">Ladakh</option>
+          <option value="LD">Lakshadweep</option>
+          <option value="MP">Madhya Pradesh</option>
+          <option value="MH">Maharashtra</option>
+          <option value="MN">Manipur</option>
+          <option value="ML">Meghalaya</option>
+          <option value="MZ">Mizoram</option>
+          <option value="NL">Nagaland</option>
+          <option value="OR">Odisha</option>
+          <option value="PY">Puducherry</option>
+          <option value="PB">Punjab</option>
+          <option value="RJ">Rajasthan</option>
+          <option value="SK">Sikkim</option>
+          <option value="TN">Tamil Nadu</option>
+          <option value="TS">Telangana</option>
+          <option value="TR">Tripura</option>
+          <option value="UP" selected>Uttar Pradesh</option>
+          <option value="UK">Uttarakhand</option>
+          <option value="WB">West Bengal</option>
+        </select>
+        <input class="input" id="supplierPhone" placeholder="Phone No.">
+        <input class="input" id="supplierEmail" placeholder="Email ID">
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title green">PARTY DETAILS (BILLED TO)</div>
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <input class="input" id="clientName" placeholder="Client Name">
+        <input class="input" id="clientGstin" placeholder="CLIENT GSTIN" maxlength="15">
+        <input class="input" id="clientAddress" placeholder="Billing Address">
+        <select class="input" id="buyerState">
+          <option value="AN">Andaman & Nicobar Islands</option>
+          <option value="AP">Andhra Pradesh</option>
+          <option value="AR">Arunachal Pradesh</option>
+          <option value="AS">Assam</option>
+          <option value="BR">Bihar</option>
+          <option value="CH">Chandigarh</option>
+          <option value="CG">Chhattisgarh</option>
+          <option value="DN">Dadra & Nagar Haveli and Daman & Diu</option>
+          <option value="DL">Delhi</option>
+          <option value="GA">Goa</option>
+          <option value="GJ">Gujarat</option>
+          <option value="HR">Haryana</option>
+          <option value="HP">Himachal Pradesh</option>
+          <option value="JK">Jammu & Kashmir</option>
+          <option value="JH">Jharkhand</option>
+          <option value="KA">Karnataka</option>
+          <option value="KL">Kerala</option>
+          <option value="LA">Ladakh</option>
+          <option value="LD">Lakshadweep</option>
+          <option value="MP">Madhya Pradesh</option>
+          <option value="MH">Maharashtra</option>
+          <option value="MN">Manipur</option>
+          <option value="ML">Meghalaya</option>
+          <option value="MZ">Mizoram</option>
+          <option value="NL">Nagaland</option>
+          <option value="OR">Odisha</option>
+          <option value="PY">Puducherry</option>
+          <option value="PB">Punjab</option>
+          <option value="RJ">Rajasthan</option>
+          <option value="SK">Sikkim</option>
+          <option value="TN">Tamil Nadu</option>
+          <option value="TS">Telangana</option>
+          <option value="TR">Tripura</option>
+          <option value="UP" selected>Uttar Pradesh</option>
+          <option value="UK">Uttarakhand</option>
+          <option value="WB">West Bengal</option>
+        </select>
+        <input class="input" id="clientPhone" placeholder="Client Phone No.">
+        <input class="input" id="clientEmail" placeholder="Client Email ID">
+      </div>
+    </div>
+  </div>
+
+  <!-- MIDDLE SECTION (TABLE) -->
+  <div class="table-section">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 40px; text-align: center;">X</th>
+            <th>Item Description</th>
+            <th style="width: 90px;">HSN/SAC</th>
+            <th style="width: 80px;">Tax Rate</th>
+            <th style="width: 70px;">Qty</th>
+            <th style="width: 100px;">Unit</th>
+            <th style="width: 100px;">Price (₹)</th>
+            <th style="width: 110px;">Amount (₹)</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- Default Row -->
+          <tr>
+            <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
+            <td><input class="td-input" placeholder="Item Description"></td>
+            <td><input class="td-input" placeholder="HSN"></td>
+            <td>
+              <select class="td-input calc-tax">
+                <option value="0">0%</option>
+                <option value="5">5%</option>
+                <option value="12">12%</option>
+                <option value="18" selected>18%</option>
+                <option value="28">28%</option>
+              </select>
+            </td>
+            <td><input class="td-input right calc-qty" type="number" value="1" min="1"></td>
+            <td>
+              <select class="td-input">
+                <option value="Bags">Bags</option>
+                <option value="Bale">Bale</option>
+                <option value="Bundles">Bundles</option>
+                <option value="Cans">Cans</option>
+                <option value="Cartons">Cartons</option>
+                <option value="Dozen">Dozen</option>
+                <option value="Grams">Grams</option>
+                <option value="Gross">Gross</option>
+                <option value="Kgs">Kgs</option>
+                <option value="Ltrs">Ltrs</option>
+                <option value="Mtrs">Mtrs</option>
+                <option value="Nos" selected>Nos</option>
+                <option value="Pairs">Pairs</option>
+                <option value="Pcs">Pcs</option>
+                <option value="Pkt">Pkt</option>
+                <option value="Quintal">Quintal</option>
+                <option value="Rolls">Rolls</option>
+                <option value="Sets">Sets</option>
+                <option value="Sqm">Sqm</option>
+                <option value="Sqy">Sqy</option>
+                <option value="Tablets">Tablets</option>
+                <option value="Tonnes">Tonnes</option>
+                <option value="Tubes">Tubes</option>
+                <option value="Yards">Yards</option>
+              </select>
+            </td>
+            <td><input class="td-input right calc-price" type="number" placeholder="0.00"></td>
+            <td><input class="td-input right calc-amount" readonly value="0.00" style="color:var(--text); font-weight:600;"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <button class="add-btn" onclick="addRow()">+ Add Row (F2)</button>
+    </div>
+  </div>
+
+  <!-- BOTTOM SECTION -->
+  <div class="bottom-section">
+    <!-- Tax Summary -->
+    <div class="panel">
+      <div class="panel-title">TAX SUMMARY</div>
+      <div class="summary-row"><label>Taxable (₹)</label><input class="input" id="sumTaxable" value="0.00" readonly></div>
+      <div class="summary-row"><label id="lblCgst">CGST (₹)</label><input class="input" id="sumCgst" value="0.00" readonly></div>
+      <div class="summary-row" id="rowSgst" style="margin-bottom:0;"><label id="lblSgst">SGST (₹)</label><input class="input" id="sumSgst" value="0.00" readonly></div>
+    </div>
+
+    <!-- Additional -->
+    <div class="panel">
+      <div class="panel-title">ADDITIONAL DETAILS</div>
+      <div class="summary-row"><label style="color:var(--text-dim);font-size:11px;">Freight/Charges</label><input class="input" type="number" id="inFreight" placeholder="0.00"></div>
+      <div class="summary-row"><label style="color:var(--text-dim);font-size:11px;">Discount (-)</label><input class="input" type="number" id="inDiscount" placeholder="0.00"></div>
+      <div class="summary-row" style="margin-bottom:0;"><label style="color:var(--text-dim);font-size:11px;">Narration</label><input class="input" id="narration" placeholder="Remarks..."></div>
+    </div>
+
+    <!-- Transport -->
+    <div class="panel">
+      <div class="panel-title">TRANSPORT DETAILS (OPTIONAL)</div>
+      <div class="grid" style="grid-template-columns: 1fr 1fr; margin-bottom:8px;">
+        <div class="field"><label>VEHICLE NUMBER</label><input class="input" id="vehicleNumber" placeholder="UP70 AB 1234"></div>
+        <div class="field"><label>DRIVER NAME</label><input class="input" id="driverName" placeholder="Name"></div>
+      </div>
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="field"><label>TRANSPORTER ID</label><input class="input" id="transporterId" placeholder="ID / GSTIN"></div>
+        <div class="field"><label>TRANSPORTER NAME</label><input class="input" id="transporterName" placeholder="Company Name"></div>
+      </div>
+    </div>
+
+    <!-- Grand Total -->
+    <div class="panel grand-total-box">
+      <div class="gt-header">
+        <div class="gt-title">GRAND TOTAL</div>
+        <div class="gt-amount" id="grandTotal">₹0.00</div>
+      </div>
+      <div class="gt-actions">
+        <button class="btn" style="flex:1;" onclick="window.location.href='landing.html'">Cancel</button>
+        <button class="btn red" style="flex:1;" onclick="generatePDF()">PDF</button>
+        <button class="btn green" style="flex:1;" onclick="saveVoucher()">Save Voucher</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Auto-fill today's date
+document.getElementById('invDate').valueAsDate = new Date();
+
+let db = null;
+
+// Initialize IndexedDB
+function initDB() {
+  const request = indexedDB.open('InvoiceProDB', 1);
+  
+  request.onerror = () => {
+    console.error('Database initialization failed');
+  };
+  
+  request.onsuccess = (e) => {
+    db = e.target.result;
+    console.log('Database initialized successfully');
+  };
+  
+  request.onupgradeneeded = (e) => {
+    const database = e.target.result;
+    if (!database.objectStoreNames.contains('invoices')) {
+      const objectStore = database.createObjectStore('invoices', { keyPath: 'id' });
+      objectStore.createIndex('date', 'date', { unique: false });
+      objectStore.createIndex('partyName', 'partyName', { unique: false });
+      objectStore.createIndex('vchNo', 'vchNo', { unique: false });
+    }
+  };
+}
+
+// --- AUTH & INITIALIZATION ---
+document.addEventListener('DOMContentLoaded', () => {
+  initDB();
+  
+  // 1. JWT decoding for user email
+  const token = localStorage.getItem('invoicepro_token');
+  const emailEl = document.getElementById('topEmail');
+  if (token) {
+    try {
+      const payloadBase64 = token.split('.')[1];
+      const decodedJson = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
+      const decoded = JSON.parse(decodedJson);
+      const user = decoded.user || decoded;
+      if (emailEl) emailEl.textContent = user.email || 'No email';
+    } catch(e) {
+      if (emailEl) emailEl.textContent = 'Not signed in';
+    }
+  } else {
+    if (emailEl) emailEl.textContent = 'Not signed in';
+  }
+
+  // 2. Auto-fill "Supplier Details" from LocalStorage Firm
+  const firms = JSON.parse(localStorage.getItem('ip_firms') || '[]');
+  const activeFirmId = localStorage.getItem('ip_active_firm');
+
+  if (firms.length > 0 && activeFirmId) {
+    const activeFirm = firms.find(f => String(f.id) === String(activeFirmId));
+    if (activeFirm) {
+      const nameInput    = document.getElementById('supplierName');
+      const addressInput = document.getElementById('supplierAddress');
+      const gstinInput   = document.getElementById('supplierGstin');
+      const phoneInput   = document.getElementById('supplierPhone');
+      const emailInput   = document.getElementById('supplierEmail');
+
+      if (nameInput)    nameInput.value    = activeFirm.name || '';
+      if (addressInput) addressInput.value = activeFirm.address || '';
+      if (gstinInput)   gstinInput.value   = activeFirm.gstin || '';
+      if (phoneInput)   phoneInput.value   = activeFirm.mainMobile || '';
+      if (emailInput)   emailInput.value   = activeFirm.email || '';
+    }
+  }
+});
+
+function logout() {
+  localStorage.removeItem('invoicepro_token');
+  window.location.href = 'auth.html';
+}
+
+// --- CALCULATIONS ENGINE ---
+function calculateInvoice() {
+  const isExclusive = document.getElementById('ptExclusive').checked;
+  const supplierState = document.getElementById('supplierState').value;
+  const buyerState = document.getElementById('buyerState').value;
+  const isInterState = supplierState !== buyerState;
+
+  const discount = parseFloat(document.getElementById('inDiscount').value) || 0;
+  const freight = parseFloat(document.getElementById('inFreight').value) || 0;
+
+  let totalGross = 0;
+  const rowsData = [];
+  const rows = document.querySelectorAll('#tableBody tr');
+
+  rows.forEach(row => {
+    const qty = parseFloat(row.querySelector('.calc-qty').value) || 0;
+    const price = parseFloat(row.querySelector('.calc-price').value) || 0;
+    const taxRate = parseFloat(row.querySelector('.calc-tax').value) || 0;
+    const amountInput = row.querySelector('.calc-amount');
+
+    const gross = qty * price;
+    amountInput.value = gross.toFixed(2);
+    totalGross += gross;
+
+    rowsData.push({ gross, taxRate });
+  });
+
+  let totalTaxable = 0;
+  let totalTaxAmount = 0;
+
+  rowsData.forEach(row => {
+    if (row.gross > 0) {
+      const rowDiscount = totalGross > 0 ? (row.gross / totalGross) * discount : 0;
+      const rowNet = Math.max(0, row.gross - rowDiscount);
+
+      let taxable = 0;
+      let tax = 0;
+
+      if (isExclusive) {
+        taxable = rowNet;
+        tax = taxable * (row.taxRate / 100);
+      } else {
+        taxable = rowNet / (1 + (row.taxRate / 100));
+        tax = rowNet - taxable;
+      }
+
+      totalTaxable += taxable;
+      totalTaxAmount += tax;
+    }
+  });
+
+  document.getElementById('sumTaxable').value = totalTaxable.toFixed(2);
+
+  if (isInterState) {
+    document.getElementById('lblCgst').textContent = 'IGST (₹)';
+    document.getElementById('sumCgst').value = totalTaxAmount.toFixed(2);
+    document.getElementById('rowSgst').style.display = 'none';
+  } else {
+    document.getElementById('lblCgst').textContent = 'CGST (₹)';
+    document.getElementById('rowSgst').style.display = 'flex';
+    document.getElementById('sumCgst').value = (totalTaxAmount / 2).toFixed(2);
+    document.getElementById('sumSgst').value = (totalTaxAmount / 2).toFixed(2);
+  }
+
+  const grandTotal = totalTaxable + totalTaxAmount + freight;
+  document.getElementById('grandTotal').textContent = '₹' + Math.max(0, grandTotal).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+document.addEventListener('input', function(e) {
+  if (
+    e.target.classList.contains('calc-qty') ||
+    e.target.classList.contains('calc-price') ||
+    e.target.classList.contains('calc-tax') ||
+    e.target.id === 'inFreight' ||
+    e.target.id === 'inDiscount' ||
+    e.target.id === 'supplierState' ||
+    e.target.id === 'buyerState' ||
+    e.target.name === 'ptype'
+  ) {
+    calculateInvoice();
+  }
+});
+
+function addRow() {
+  const tbody = document.getElementById('tableBody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
+    <td><input class="td-input" placeholder="Item Description"></td>
+    <td><input class="td-input" placeholder="HSN"></td>
+    <td>
+      <select class="td-input calc-tax">
+        <option value="0">0%</option>
+        <option value="5">5%</option>
+        <option value="12">12%</option>
+        <option value="18" selected>18%</option>
+        <option value="28">28%</option>
+      </select>
+    </td>
+    <td><input class="td-input right calc-qty" type="number" value="1" min="1"></td>
+    <td>
+      <select class="td-input">
+        <option value="Bags">Bags</option>
+        <option value="Bale">Bale</option>
+        <option value="Bundles">Bundles</option>
+        <option value="Cans">Cans</option>
+        <option value="Cartons">Cartons</option>
+        <option value="Dozen">Dozen</option>
+        <option value="Grams">Grams</option>
+        <option value="Gross">Gross</option>
+        <option value="Kgs">Kgs</option>
+        <option value="Ltrs">Ltrs</option>
+        <option value="Mtrs">Mtrs</option>
+        <option value="Nos" selected>Nos</option>
+        <option value="Pairs">Pairs</option>
+        <option value="Pcs">Pcs</option>
+        <option value="Pkt">Pkt</option>
+        <option value="Quintal">Quintal</option>
+        <option value="Rolls">Rolls</option>
+        <option value="Sets">Sets</option>
+        <option value="Sqm">Sqm</option>
+        <option value="Sqy">Sqy</option>
+        <option value="Tablets">Tablets</option>
+        <option value="Tonnes">Tonnes</option>
+        <option value="Tubes">Tubes</option>
+        <option value="Yards">Yards</option>
+      </select>
+    </td>
+    <td><input class="td-input right calc-price" type="number" placeholder="0.00"></td>
+    <td><input class="td-input right calc-amount" readonly value="0.00" style="color:var(--text); font-weight:600;"></td>
+  `;
+  tbody.appendChild(tr);
+  
+  const wrap = document.querySelector('.table-wrap');
+  wrap.scrollTop = wrap.scrollHeight;
+  calculateInvoice();
+}
+
+function removeRow(btn) {
+  const tr = btn.closest('tr');
+  tr.remove();
+  calculateInvoice();
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'F2') {
+    e.preventDefault();
+    addRow();
+  }
+});
+
+// AUTO-FETCH GST DETAILS FUNCTION
+function setupGSTAutoFetch(gstinId, nameId, addressId, stateId) {
+  const gstinInput = document.getElementById(gstinId);
+  if (!gstinInput) return;
+
+  gstinInput.addEventListener('input', async (e) => {
+    let gstin = e.target.value.toUpperCase();
+    e.target.value = gstin;
+    
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+    
+    if (gstin.length === 15 && gstRegex.test(gstin)) {
+      const nameInput = document.getElementById(nameId);
+      const oldName = nameInput.value;
+      nameInput.value = "Fetching from GST Portal...";
+      
+      try {
+        const res = await fetch(`/api/gst/verify/${gstin}`);
+        const result = await res.json();
+        
+        if (result.success && result.data) {
+          nameInput.value = result.data.business_name || '';
+          document.getElementById(addressId).value = result.data.address || '';
+          
+          const stateCode = gstin.substring(0, 2);
+          const stateMap = { 
+            '01': 'JK', '02': 'HP', '03': 'PB', '04': 'CH', '05': 'UK', 
+            '06': 'HR', '07': 'DL', '08': 'RJ', '09': 'UP', '10': 'BR', 
+            '11': 'SK', '12': 'AR', '13': 'NL', '14': 'MN', '15': 'MZ', 
+            '16': 'TR', '17': 'ML', '18': 'AS', '19': 'WB', '20': 'JH', 
+            '21': 'OR', '22': 'CG', '23': 'MP', '24': 'GJ', '25': 'DN', 
+            '26': 'DN', '27': 'MH', '28': 'AP', '29': 'KA', '30': 'GA', 
+            '31': 'LD', '32': 'KL', '33': 'TN', '34': 'PY', '35': 'AN', 
+            '36': 'TS', '37': 'AP', '38': 'LA' 
+          };
+          
+          if (stateMap[stateCode]) {
+            document.getElementById(stateId).value = stateMap[stateCode];
+            calculateInvoice(); 
+          }
+        } else {
+          nameInput.value = oldName; 
+        }
+      } catch (err) {
+        nameInput.value = oldName;
+      }
+    }
+  });
+}
+
+// --- SAVE VOUCHER FUNCTION ---
+function saveVoucher() {
+  // Validation
+  const vchNo = document.getElementById('vchNo').value.trim();
+  const date = document.getElementById('invDate').value;
+  const placeOfSupply = document.getElementById('placeOfSupply').value.trim();
+  
+  const supplierName = document.getElementById('supplierName').value.trim();
+  const supplierGstin = document.getElementById('supplierGstin').value.trim();
+  const supplierAddress = document.getElementById('supplierAddress').value.trim();
+  const supplierState = document.getElementById('supplierState').value;
+  const supplierPhone = document.getElementById('supplierPhone').value.trim();
+  const supplierEmail = document.getElementById('supplierEmail').value.trim();
+  
+  const partyName = document.getElementById('clientName').value.trim();
+  const partyGstin = document.getElementById('clientGstin').value.trim();
+  const partyAddress = document.getElementById('clientAddress').value.trim();
+  const buyerState = document.getElementById('buyerState').value;
+  const partyPhone = document.getElementById('clientPhone').value.trim();
+  const partyEmail = document.getElementById('clientEmail').value.trim();
+  
+  const narration = document.getElementById('narration').value.trim();
+  const vehicleNumber = document.getElementById('vehicleNumber').value.trim();
+  const driverName = document.getElementById('driverName').value.trim();
+  const transporterId = document.getElementById('transporterId').value.trim();
+  const transporterName = document.getElementById('transporterName').value.trim();
+  
+  // Collect items
+  const items = [];
+  document.querySelectorAll('#tableBody tr').forEach(row => {
+    const description = row.querySelectorAll('td')[1].querySelector('.td-input').value.trim();
+    const hsn = row.querySelectorAll('td')[2].querySelector('.td-input').value.trim();
+    const taxRate = parseFloat(row.querySelector('.calc-tax').value) || 0;
+    const qty = parseFloat(row.querySelector('.calc-qty').value) || 0;
+    const unit = row.querySelectorAll('td')[5].querySelector('.td-input').value || 'Nos';
+    const price = parseFloat(row.querySelector('.calc-price').value) || 0;
+    const amount = parseFloat(row.querySelector('.calc-amount').value) || 0;
+    
+    if (description && qty > 0 && price > 0) {
+      items.push({ description, hsn, taxRate, qty, unit, price, amount });
+    }
+  });
+  
+  // Validation checks
+  if (!vchNo) {
+    alert('⚠️ Please enter Invoice Number');
+    return;
+  }
+  if (!date) {
+    alert('⚠️ Please select Invoice Date');
+    return;
+  }
+  if (!supplierName) {
+    alert('⚠️ Please enter your Company Name');
+    return;
+  }
+  if (!partyName) {
+    alert('⚠️ Please enter Party/Client Name');
+    return;
+  }
+  if (items.length === 0) {
+    alert('⚠️ Please add at least one item to the invoice');
+    return;
+  }
+  
+  // Get totals from UI
+  const totalTaxable = parseFloat(document.getElementById('sumTaxable').value) || 0;
+  const isInterState = supplierState !== buyerState;
+  const cgstSgst = isInterState ? 0 : (parseFloat(document.getElementById('sumCgst').value) || 0);
+  const igst = isInterState ? (parseFloat(document.getElementById('sumCgst').value) || 0) : 0;
+  const freight = parseFloat(document.getElementById('inFreight').value) || 0;
+  const discount = parseFloat(document.getElementById('inDiscount').value) || 0;
+  const grandTotal = parseFloat(document.getElementById('grandTotal').textContent.replace('₹', '').replace(/,/g, '')) || 0;
+  
+  const priceType = document.getElementById('ptExclusive').checked ? 'exclusive' : 'inclusive';
+  const revCharge = document.getElementById('revCharge').value;
+  
+  // Create invoice object
+  const invoice = {
+    id: 'inv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+    vchNo,
+    date,
+    placeOfSupply,
+    priceType,
+    revCharge,
+    status: 'Saved',
+    supplier: {
+      name: supplierName,
+      gstin: supplierGstin,
+      address: supplierAddress,
+      state: supplierState,
+      phone: supplierPhone,
+      email: supplierEmail
+    },
+    party: {
+      name: partyName,
+      gstin: partyGstin,
+      address: partyAddress,
+      state: buyerState,
+      phone: partyPhone,
+      email: partyEmail
+    },
+    items,
+    totals: {
+      taxable: totalTaxable,
+      cgst: cgstSgst,
+      sgst: cgstSgst,
+      igst: igst,
+      freight,
+      discount,
+      grandTotal
+    },
+    transport: {
+      vehicleNumber,
+      driverName,
+      transporterId,
+      transporterName
+    },
+    narration,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  
+  // Save to IndexedDB
+  if (!db) {
+    alert('❌ Database not initialized. Please refresh and try again.');
+    return;
+  }
+  
+  const transaction = db.transaction(['invoices'], 'readwrite');
+  const store = transaction.objectStore('invoices');
+  const request = store.add(invoice);
+  
+  request.onerror = () => {
+    showErrorModal('Error saving invoice. Please try again.');
+    console.error('Save error:', request.error);
+  };
+  
+  request.onsuccess = () => {
+    showSuccessModal(vchNo, grandTotal);
+  };
+  
+  transaction.onerror = () => {
+    showErrorModal('Transaction failed. Please try again.');
+  };
+}
+
+// Beautiful Success Modal
+function showSuccessModal(vchNo, grandTotal) {
+  // Remove existing modal if any
+  const existingModal = document.getElementById('successModal');
+  if (existingModal) existingModal.remove();
+  
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = 'successModal';
+  modalOverlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeInOverlay 0.3s ease;
+  `;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(79, 110, 247, 0.05) 100%);
+    border: 1px solid rgba(79, 110, 247, 0.3);
+    border-radius: 16px;
+    padding: 40px;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(79, 110, 247, 0.1);
+    text-align: center;
+    animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  `;
+  
+  const checkmarkSvg = `
+    <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 24px;">
+      <circle cx="40" cy="40" r="38" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="2"/>
+      <path d="M25 42L37 54L55 32" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+  `;
+  
+  const formattedAmount = grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  
+  modal.innerHTML = `
+    ${checkmarkSvg}
+    <h2 style="color: var(--text); font-size: 24px; font-weight: 700; margin: 0 0 12px 0;">Invoice Saved!</h2>
+    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 28px 0; line-height: 1.6;">Your invoice has been successfully saved to your database.</p>
+    
+    <div style="background: rgba(79, 110, 247, 0.1); border: 1px solid rgba(79, 110, 247, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 28px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div style="text-align: left;">
+          <p style="color: var(--text-dim); font-size: 12px; margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.05em;">Invoice #</p>
+          <p style="color: var(--text); font-size: 18px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">${vchNo}</p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-dim); font-size: 12px; margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.05em;">Amount</p>
+          <p style="color: #10b981; font-size: 18px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">₹${formattedAmount}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div style="display: flex; gap: 12px; justify-content: center;">
+      <button id="newInvoiceBtn" style="flex: 1; padding: 12px 20px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+        New Invoice
+      </button>
+      <button id="viewListBtn" style="flex: 1; padding: 12px 20px; background: linear-gradient(135deg, #4f6ef7 0%, #3a56e0 100%); border: none; border-radius: 8px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(79, 110, 247, 0.4);">
+        View All Invoices
+      </button>
+    </div>
+  `;
+  
+  modalOverlay.appendChild(modal);
+  document.body.appendChild(modalOverlay);
+  
+  // Add styles for animations
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeInOverlay {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideUpModal {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    #successModal button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(79, 110, 247, 0.3) !important;
+    }
+    #successModal button:active {
+      transform: translateY(0);
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // Button handlers
+  document.getElementById('newInvoiceBtn').addEventListener('click', () => {
+    modalOverlay.remove();
+    location.reload();
+  });
+  
+  document.getElementById('viewListBtn').addEventListener('click', () => {
+    modalOverlay.remove();
+    window.location.href = 'sales_invoice_list.html';
+  });
+  
+  // Close on overlay click
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) {
+      modalOverlay.remove();
+    }
+  });
+}
+
+// Error Modal (optional)
+function showErrorModal(message) {
+  const existingModal = document.getElementById('errorModal');
+  if (existingModal) existingModal.remove();
+  
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = 'errorModal';
+  modalOverlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeInOverlay 0.3s ease;
+  `;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(239, 68, 68, 0.05) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 16px;
+    padding: 40px;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  `;
+  
+  const errorSvg = `
+    <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 24px;">
+      <circle cx="40" cy="40" r="38" fill="rgba(239, 68, 68, 0.15)" stroke="#ef4444" stroke-width="2"/>
+      <path d="M28 28L52 52M52 28L28 52" stroke="#ef4444" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+  `;
+  
+  modal.innerHTML = `
+    ${errorSvg}
+    <h2 style="color: var(--text); font-size: 24px; font-weight: 700; margin: 0 0 12px 0;">Error!</h2>
+    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 28px 0; line-height: 1.6;">${message}</p>
+    <button id="closeErrorBtn" style="width: 100%; padding: 12px 20px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none; border-radius: 8px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);">
+      Try Again
+    </button>
+  `;
+  
+  modalOverlay.appendChild(modal);
+  document.body.appendChild(modalOverlay);
+  
+  document.getElementById('closeErrorBtn').addEventListener('click', () => {
+    modalOverlay.remove();
+  });
+  
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) {
+      modalOverlay.remove();
+    }
+  });
+}
+
+// PDF Generation Placeholder
+function generatePDF() {
+  alert('📄 PDF generation feature coming soon!');
+}
+
+// Hook up the Client GSTIN input on the Sales Invoice
+setupGSTAutoFetch('clientGstin', 'clientName', 'clientAddress', 'buyerState');
+
+calculateInvoice();
+</script>
+</body>
+</html>

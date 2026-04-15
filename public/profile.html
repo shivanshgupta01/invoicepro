@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InvoicePro — My Profile</title>
+<!-- INSTANT THEME LOAD: Prevents white/dark flash when navigating back -->
+<script>
+  const savedTheme = localStorage.getItem('ip_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --accent:#4f6ef7;--accent-soft:#3a56e0;--accent-glow:rgba(79,110,247,0.18);--accent-glow2:rgba(79,110,247,0.08);
+  --green:#22c55e;--green-soft:rgba(34,197,94,0.12);--amber:#f59e0b;--amber-soft:rgba(245,158,11,0.12);
+  --red:#ef4444;--red-soft:rgba(239,68,68,0.12);--purple:#8b5cf6;--purple-soft:rgba(139,92,246,0.12);
+  --font:'Plus Jakarta Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:10px;--r-sm:7px;--r-lg:14px;--transition:all .2s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{
+  --bg:#0b0d14;--bg2:#11141f;--bg3:#181c2a;--bg4:#1e2235;--bg5:#242840;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);--border3:rgba(255,255,255,0.18);
+  --text:#e8eaf6;--text2:#9398b5;--text3:#5c6180;--shadow:rgba(0,0,0,0.4);
+}
+[data-theme="light"]{
+  --bg:#f0f2fa;--bg2:#ffffff;--bg3:#f5f6fd;--bg4:#eaecf8;--bg5:#e2e5f5;
+  --border:rgba(79,110,247,0.1);--border2:rgba(79,110,247,0.18);--border3:rgba(79,110,247,0.28);
+  --text:#0f1130;--text2:#4a4f7a;--text3:#8b90b8;--shadow:rgba(79,110,247,0.08);
+}
+html{font-family:var(--font);font-size:14px;background:var(--bg);color:var(--text);line-height:1.5;transition:background .3s,color .3s}
+body{min-height:100vh;display:flex;flex-direction:column;}
+
+/* ── TOPBAR ── */
+.topbar{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;transition:background .3s;}
+.logo{font-size:19px;font-weight:700;letter-spacing:-.5px;color:var(--text);text-decoration:none;}
+.logo em{font-style:normal;color:var(--accent)}
+.back-btn{display:flex;align-items:center;gap:7px;padding:7px 13px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);font-size:12.5px;color:var(--text2);cursor:pointer;transition:var(--transition);text-decoration:none;}
+.back-btn:hover{background:var(--bg4);color:var(--text);}
+.back-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;}
+.theme-btn{width:54px;height:28px;border-radius:14px;background:var(--bg4);border:1px solid var(--border2);position:relative;cursor:pointer;flex-shrink:0;transition:var(--transition);}
+.theme-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;transition:transform .25s cubic-bezier(.4,0,.2,1);box-shadow:0 2px 8px rgba(79,110,247,.4);}
+[data-theme="light"] .theme-thumb{transform:translateX(26px)}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;justify-content:center;padding:32px 20px;}
+.profile-wrap{width:100%;max-width:720px;display:flex;flex-direction:column;gap:20px;}
+
+/* ── SECTION CARD ── */
+.section-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;transition:background .3s,border-color .3s;}
+.sc-head{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.sc-title{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.sc-title svg{width:16px;height:16px;stroke:var(--accent);fill:none;stroke-width:1.8;}
+.sc-action{font-size:12px;color:var(--accent);cursor:pointer;font-weight:500;padding:5px 10px;border-radius:var(--r-sm);border:1px solid rgba(79,110,247,.25);transition:var(--transition);}
+.sc-action:hover{background:var(--accent-glow2);}
+.sc-body{padding:22px;}
+
+/* ── USER PROFILE HEADER ── */
+.profile-header{display:flex;align-items:center;gap:20px;padding:24px 22px;border-bottom:1px solid var(--border);}
+.big-avatar{width:72px;height:72px;border-radius:16px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;flex-shrink:0;border:3px solid rgba(79,110,247,.3);}
+.profile-info{flex:1;}
+.profile-name{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.3px;margin-bottom:4px;}
+.profile-email{font-size:13px;color:var(--text3);display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.profile-email svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.6;}
+.profile-badges{display:flex;gap:8px;flex-wrap:wrap;}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-active{background:var(--green-soft);color:var(--green);}
+.badge-plan{background:var(--accent-glow);color:var(--accent);}
+.badge-joined{background:var(--bg4);color:var(--text3);}
+
+/* ── INFO GRID ── */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.info-item{display:flex;flex-direction:column;gap:4px;}
+.info-label{font-size:10.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;}
+.info-value{font-size:13.5px;color:var(--text);font-weight:500;}
+.info-value.mono{font-family:var(--mono);font-size:12.5px;}
+
+/* ── EDIT FIELD ── */
+.edit-row{display:flex;align-items:center;gap:10px;}
+.edit-input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font);outline:none;transition:var(--transition);}
+.edit-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+.save-btn{padding:8px 16px;background:var(--accent);border:none;border-radius:var(--r-sm);color:#fff;font-size:12.5px;font-weight:600;font-family:var(--font);cursor:pointer;transition:var(--transition);white-space:nowrap;}
+.save-btn:hover{background:var(--accent-soft);}
+
+/* ── FIRMS SECTION ── */
+.firms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+.firm-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px;position:relative;transition:var(--transition);}
+.firm-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+.firm-card.active-firm{border-color:rgba(79,110,247,.4);background:var(--accent-glow2);}
+.fc-top{display:flex;align-items:center;gap:10px;}
+.fc-logo{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;}
+.fc-name{font-size:13px;font-weight:700;color:var(--text);flex:1;}
+.fc-type{font-size:11px;color:var(--text3);margin-top:1px;}
+.fc-active-badge{position:absolute;top:10px;right:10px;padding:2px 8px;border-radius:20px;background:var(--green-soft);color:var(--green);font-size:10px;font-weight:600;}
+.fc-actions{display:flex;gap:6px;margin-top:4px;}
+.fc-btn{flex:1;padding:6px 0;border-radius:var(--r-sm);font-size:11.5px;font-weight:500;cursor:pointer;transition:var(--transition);text-align:center;font-family:var(--font);}
+.fc-switch{background:var(--bg4);border:1px solid var(--border2);color:var(--text2);}
+.fc-switch:hover{background:var(--accent);border-color:var(--accent);color:#fff;}
+.fc-delete{background:transparent;border:1px solid var(--border);color:var(--text3);}
+.fc-delete:hover{background:var(--red-soft);border-color:var(--red);color:var(--red);}
+
+.add-firm-card{background:var(--bg3);border:2px dashed var(--border2);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:var(--transition);min-height:110px;}
+.add-firm-card:hover{border-color:var(--accent);background:var(--accent-glow2);}
+.add-firm-card svg{width:22px;height:22px;stroke:var(--text3);fill:none;stroke-width:1.5;transition:var(--transition);}
+.add-firm-card:hover svg{stroke:var(--accent);}
+.add-firm-card span{font-size:12.5px;font-weight:600;color:var(--text3);transition:var(--transition);}
+.add-firm-card:hover span{color:var(--accent);}
+.firms-count{font-size:11px;color:var(--text3);text-align:right;margin-bottom:8px;}
+
+/* ── SECURITY SECTION ── */
+.security-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
+.security-row:last-child{border-bottom:none;padding-bottom:0;}
+.sr-left{display:flex;align-items:center;gap:12px;}
+.sr-icon{width:34px;height:34px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;}
+.sr-icon svg{width:15px;height:15px;stroke:var(--text2);fill:none;stroke-width:1.6;}
+.sr-title{font-size:13px;font-weight:600;color:var(--text);}
+.sr-sub{font-size:11.5px;color:var(--text3);margin-top:1px;}
+.sr-action{padding:6px 14px;border-radius:var(--r-sm);font-size:12px;font-weight:500;cursor:pointer;transition:var(--transition);font-family:var(--font);}
+.sr-action.outline{background:var(--bg3);border:1px solid var(--border2);color:var(--text2);}
+.sr-action.outline:hover{background:var(--bg4);color:var(--text);}
+.sr-action.danger{background:var(--red-soft);border:1px solid rgba(239,68,68,.3);color:var(--red);}
+.sr-action.danger:hover{background:rgba(239,68,68,.2);}
+
+/* ── NOT LOGGED IN STATE ── */
+.not-logged-in{text-align:center;padding:60px 20px;}
+.not-logged-in svg{width:48px;height:48px;stroke:var(--text3);fill:none;stroke-width:1.2;margin:0 auto 16px;display:block;}
+.not-logged-in h2{font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;}
+.not-logged-in p{font-size:13px;color:var(--text3);margin-bottom:20px;}
+.signin-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 24px;background:var(--accent);border:none;border-radius:var(--r-sm);color:#fff;font-size:13.5px;font-weight:600;font-family:var(--font);cursor:pointer;transition:var(--transition);}
+.signin-btn:hover{background:var(--accent-soft);}
+
+/* ── ADD FIRM MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:800;display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;animation:fadeIn .15s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-lg);padding:24px;width:100%;max-width:380px;animation:slideUp .2s ease both;}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.modal-title{font-size:15px;font-weight:700;color:var(--text);}
+.modal-close{width:28px;height:28px;border-radius:6px;background:var(--bg3);border:none;color:var(--text3);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:var(--transition);}
+.modal-close:hover{background:var(--bg4);color:var(--text);}
+.modal-field{margin-bottom:14px;}
+.modal-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.modal-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font);outline:none;transition:var(--transition);}
+.modal-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+.modal-input::placeholder{color:var(--text3);}
+
+/* New modal buttons */
+.modal-btn{flex:1;height:40px;background:var(--accent);border:none;border-radius:var(--r-sm);color:#fff;font-size:13.5px;font-weight:600;font-family:var(--font);cursor:pointer;transition:var(--transition);}
+.modal-btn:hover{background:var(--accent-soft);}
+.modal-btn-cancel{background:var(--bg3);border:1px solid var(--border2);color:var(--text);}
+.modal-btn-cancel:hover{background:var(--bg4);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:12px 20px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text);box-shadow:0 8px 32px rgba(0,0,0,.4);transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:999;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast-dot{width:7px;height:7px;border-radius:50%;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.profile-wrap > *{animation:fadeUp .3s ease both;}
+.profile-wrap > *:nth-child(1){animation-delay:.05s}
+.profile-wrap > *:nth-child(2){animation-delay:.1s}
+.profile-wrap > *:nth-child(3){animation-delay:.15s}
+.profile-wrap > *:nth-child(4){animation-delay:.2s}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <a class="logo" href="landing.html">Invoice<em>Pro</em></a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <a class="back-btn" href="landing.html">
+      <svg viewBox="0 0 16 16"><path d="M10 4l-4 4 4 4"/></svg>
+      Back to Dashboard
+    </a>
+    <div class="theme-btn" id="themeBtn" title="Toggle theme">
+      <div class="theme-thumb" id="thumb"><span id="themeIcon">🌙</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="profile-wrap" id="profileWrap">
+
+    <!-- NOT LOGGED IN STATE -->
+    <div class="section-card" id="notLoggedIn" style="display:none;">
+      <div class="not-logged-in">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        <h2>You're not signed in</h2>
+        <p>Sign in to view and manage your profile and firms.</p>
+        <button class="signin-btn" onclick="window.location.href='auth.html'">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 5l3 3-3 3M9 8H2"/><path d="M10 2h3a1 1 0 011 1v10a1 1 0 01-1 1h-3"/></svg>
+          Sign In
+        </button>
+      </div>
+    </div>
+
+    <!-- PROFILE HEADER CARD -->
+    <div class="section-card" id="profileCard" style="display:none;">
+      <div class="profile-header">
+        <div class="big-avatar" id="bigAvatar">?</div>
+        <div class="profile-info">
+          <div class="profile-name" id="profileName">Loading...</div>
+          <div class="profile-email">
+            <svg viewBox="0 0 16 16"><path d="M2 4l6 5 6-5"/><rect x="2" y="4" width="12" height="9" rx="1.5"/></svg>
+            <span id="profileEmail">—</span>
+          </div>
+          <div class="profile-badges">
+            <span class="badge badge-active">● Active</span>
+            <span class="badge badge-plan">Free Plan</span>
+            <span class="badge badge-joined" id="joinedBadge">Member</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account Info -->
+      <div class="sc-body">
+        <div class="info-grid" style="margin-bottom:20px;">
+          <div class="info-item">
+            <div class="info-label">First Name</div>
+            <div class="info-value" id="infoFirstName">—</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Last Name</div>
+            <div class="info-value" id="infoLastName">—</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Email Address</div>
+            <div class="info-value" id="infoEmail">—</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Business Name</div>
+            <div class="info-value" id="infoBusiness">—</div>
+          </div>
+        </div>
+
+        <!-- Edit Name -->
+        <div style="border-top:1px solid var(--border);padding-top:16px;">
+          <div class="info-label" style="margin-bottom:8px;">Update Display Name</div>
+          <div class="edit-row">
+            <input class="edit-input" id="editFirstName" placeholder="First name">
+            <input class="edit-input" id="editLastName" placeholder="Last name">
+            <button class="save-btn" onclick="saveName()">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FIRMS CARD -->
+    <div class="section-card" id="firmsCard" style="display:none;">
+      <div class="sc-head">
+        <div class="sc-title">
+          <svg viewBox="0 0 16 16"><rect x="2" y="6" width="12" height="8" rx="1"/><path d="M5 6V4a3 3 0 016 0v2"/></svg>
+          My Firms
+        </div>
+        <span class="sc-action" onclick="openModal()">+ Add Firm</span>
+      </div>
+      <div class="sc-body">
+        <div class="firms-count" id="firmsCount">0 / 10 firms</div>
+        <div class="firms-grid" id="firmsGrid"></div>
+      </div>
+    </div>
+
+    <!-- SECURITY CARD -->
+    <div class="section-card" id="securityCard" style="display:none;">
+      <div class="sc-head">
+        <div class="sc-title">
+          <svg viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>
+          Security
+        </div>
+      </div>
+      <div class="sc-body">
+        <div class="security-row">
+          <div class="sr-left">
+            <div class="sr-icon"><svg viewBox="0 0 16 16"><rect x="4" y="7" width="8" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/></svg></div>
+            <div>
+              <div class="sr-title">Password</div>
+              <div class="sr-sub">Change your account password</div>
+            </div>
+          </div>
+          <button class="sr-action outline" onclick="window.location.href='auth.html'">Change Password</button>
+        </div>
+        <div class="security-row">
+          <div class="sr-left">
+            <div class="sr-icon"><svg viewBox="0 0 16 16"><path d="M8 2l5 2v5c0 3-2.5 5-5 5S3 12 3 9V4l5-2z"/></svg></div>
+            <div>
+              <div class="sr-title">Active Sessions</div>
+              <div class="sr-sub">You are signed in on this device</div>
+            </div>
+          </div>
+          <button class="sr-action outline" onclick="logout()">Sign Out</button>
+        </div>
+        <div class="security-row">
+          <div class="sr-left">
+            <div class="sr-icon" style="background:var(--red-soft);"><svg viewBox="0 0 16 16" style="stroke:var(--red)"><path d="M3 3l10 10M13 3L3 13"/></svg></div>
+            <div>
+              <div class="sr-title" style="color:var(--red)">Delete Account</div>
+              <div class="sr-sub">Permanently remove all your data</div>
+            </div>
+          </div>
+          <button class="sr-action danger">Delete</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ADD FIRM MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal" style="max-width:440px;max-height:90vh;overflow-y:auto;">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">Business Profile</div>
+        <div style="font-size:11.5px;color:var(--text3);margin-top:2px;">Set up your profile to auto-fill invoices.</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div style="display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);padding:3px;margin-bottom:20px;">
+      <div id="ptabIndiv" onclick="switchPType('individual')" style="flex:1;height:36px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;border-radius:5px;cursor:pointer;transition:all .2s;background:var(--accent);color:#fff;">Individual</div>
+      <div id="ptabReg" onclick="switchPType('registered')" style="flex:1;height:36px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;border-radius:5px;cursor:pointer;transition:all .2s;color:var(--text2);">Registered Firm</div>
+    </div>
+
+    <!-- INDIVIDUAL FORM -->
+    <div id="ppIndiv">
+      <div class="modal-field"><div class="modal-label">Your Full Name <span style="color:var(--red)">*</span></div><input class="modal-input" id="pIndivName" placeholder="e.g. Shivansh Gupta" maxlength="60"></div>
+      
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="modal-btn" onclick="saveFirmProfile()">Save Profile</button>
+      </div>
+    </div>
+
+    <!-- REGISTERED FIRM FORM -->
+    <div id="ppReg" style="display:none;">
+      <div id="pgstOk" style="font-size:11.5px;color:var(--green);background:var(--green-soft);border-radius:var(--r-sm);padding:8px 12px;margin-bottom:12px;display:none;">✓ GST details fetched!</div>
+      <div id="pgstErr" style="font-size:11.5px;color:var(--red);background:var(--red-soft);border-radius:var(--r-sm);padding:8px 12px;margin-bottom:12px;display:none;"></div>
+      <div class="modal-field"><div class="modal-label">GSTIN <span style="color:var(--text3);font-weight:400">(optional)</span></div>
+        <div style="display:flex;gap:8px;"><input class="modal-input" id="pGstin" placeholder="15-digit GSTIN" maxlength="15" oninput="this.value=this.value.toUpperCase()" style="flex:1;font-family:var(--mono);">
+        <button id="pAutofillBtn" onclick="fetchGSTProfile()" style="padding:0 14px;height:38px;background:var(--accent);border:none;border-radius:var(--r-sm);color:#fff;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;">Auto-fill</button></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px;">Enter GSTIN to auto-fill firm details</div>
+      </div>
+      <div class="modal-field"><div class="modal-label">Firm's Name <span style="color:var(--red)">*</span></div><input class="modal-input" id="pFirmName" placeholder="Legal Name of Business" maxlength="80"></div>
+      <div class="modal-field"><div class="modal-label">Taxpayer Type <span style="color:var(--text3);font-weight:400">(optional)</span></div><input class="modal-input" id="pTaxType" placeholder="e.g. Regular / Composition"></div>
+      <div class="modal-field"><div class="modal-label">Firm's Address <span style="color:var(--text3);font-weight:400">(optional)</span></div><textarea class="modal-input" id="pAddress" placeholder="Registered Address" rows="2" style="resize:none;padding-top:9px;"></textarea></div>
+      <div class="modal-field"><div class="modal-label">Contact Numbers <span style="color:var(--text3);font-weight:400">(optional)</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><input class="modal-input" id="pMobile1" placeholder="+91 Main Mobile" maxlength="15"><input class="modal-input" id="pMobile2" placeholder="+91 Alt Mobile" maxlength="15"></div>
+      </div>
+      <div class="modal-field"><div class="modal-label">Email <span style="color:var(--text3);font-weight:400">(optional)</span></div><input class="modal-input" id="pEmail" placeholder="company@email.com" type="email"></div>
+      
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="modal-btn" onclick="saveFirmProfile()">Save Profile</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-dot" id="toastDot" style="background:var(--green)"></span>
+  <span id="toastMsg">Saved!</span>
+</div>
+
+<script>
+let currentUser = null;
+let firms = JSON.parse(localStorage.getItem('ip_firms') || '[]');
+let activeFirmId = localStorage.getItem('ip_active_firm') || null;
+
+/* ── THEME SYNC ACROSS PAGES ── */
+document.addEventListener('DOMContentLoaded', () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.getElementById('themeIcon').textContent = isDark ? '🌙' : '☀️';
+});
+
+document.getElementById('themeBtn').addEventListener('click', () => {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const newTheme = isDark ? 'light' : 'dark';
+  
+  html.setAttribute('data-theme', newTheme);
+  localStorage.setItem('ip_theme', newTheme);
+  document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '🌙' : '☀️';
+});
+
+/* ── TOAST ── */
+function showToast(msg, color = 'var(--green)') {
+  document.getElementById('toastMsg').textContent = msg;
+  document.getElementById('toastDot').style.background = color;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ── DATABASE FIRM SYNC ── */
+async function fetchFirmsFromDB(token) {
+  try {
+    const res = await fetch('/api/firms', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const dbFirms = await res.json();
+      firms = dbFirms.map(f => ({ ...f, id: f._id || f.id }));
+      localStorage.setItem('ip_firms', JSON.stringify(firms));
+      
+      if (firms.length > 0 && !firms.find(f => String(f.id) === String(activeFirmId))) {
+        activeFirmId = String(firms[0].id);
+        localStorage.setItem('ip_active_firm', activeFirmId);
+      } else if (firms.length === 0) {
+        activeFirmId = null;
+        localStorage.removeItem('ip_active_firm');
+      }
+      renderFirms();
+    }
+  } catch (err) {
+    console.error("Failed to load firms from DB:", err);
+  }
+}
+
+/* ── AUTH CHECK ── */
+async function loadProfile() {
+  const token = localStorage.getItem('invoicepro_token');
+
+  if (!token) {
+    document.getElementById('notLoggedIn').style.display = 'block';
+    return;
+  }
+
+  try {
+    const payloadBase64 = token.split('.')[1];
+    const decodedJson = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
+    const decoded = JSON.parse(decodedJson);
+    const user = decoded.user || decoded;
+
+    if (user && (user.firstName || user.email || user.name)) {
+      currentUser = user;
+      renderProfile(user);
+      
+      // Fetch DB synced firms exactly like landing.html
+      await fetchFirmsFromDB(token);
+    } else {
+      throw new Error('Invalid user payload');
+    }
+  } catch (err) {
+    console.error('Failed to decode token:', err);
+    localStorage.removeItem('invoicepro_token');
+    document.getElementById('notLoggedIn').style.display = 'block';
+  }
+}
+
+function renderProfile(user) {
+  const initial = (user.firstName || user.name || 'U')[0].toUpperCase();
+  const fullName = (user.firstName || user.name || '') + ' ' + (user.lastName || '');
+
+  document.getElementById('profileCard').style.display = 'block';
+  document.getElementById('firmsCard').style.display = 'block';
+  document.getElementById('securityCard').style.display = 'block';
+
+  document.getElementById('bigAvatar').textContent = initial;
+  document.getElementById('profileName').textContent = fullName.trim() || 'User';
+  document.getElementById('profileEmail').textContent = user.email || 'No email provided';
+
+  document.getElementById('infoFirstName').textContent = user.firstName || user.name || '—';
+  document.getElementById('infoLastName').textContent  = user.lastName  || '—';
+  document.getElementById('infoEmail').textContent     = user.email || '—';
+  document.getElementById('infoBusiness').textContent  = user.businessName || 'Not set';
+  document.getElementById('joinedBadge').textContent   = 'Member since ' + new Date().getFullYear();
+
+  document.getElementById('editFirstName').value = user.firstName || user.name || '';
+  document.getElementById('editLastName').value  = user.lastName  || '';
+
+  renderFirms();
+}
+
+function saveName() {
+  const fn = document.getElementById('editFirstName').value.trim();
+  const ln = document.getElementById('editLastName').value.trim();
+  if (!fn) { showToast('First name is required', 'var(--red)'); return; }
+  document.getElementById('profileName').textContent = (fn + ' ' + ln).trim();
+  document.getElementById('infoFirstName').textContent = fn;
+  document.getElementById('infoLastName').textContent  = ln || '—';
+  document.getElementById('bigAvatar').textContent = fn[0].toUpperCase();
+  showToast('Name updated!');
+}
+
+/* ── FIRMS ── */
+function renderFirms() {
+  const grid  = document.getElementById('firmsGrid');
+  const count = document.getElementById('firmsCount');
+  count.textContent = `${firms.length} / 10 firms`;
+
+  let html = firms.map(f => `
+    <div class="firm-card ${String(f.id) === String(activeFirmId) ? 'active-firm' : ''}">
+      ${String(f.id) === String(activeFirmId) ? '<span class="fc-active-badge">Active</span>' : ''}
+      <div class="fc-top">
+        <div class="fc-logo" style="background:${f.color}">${f.initial}</div>
+        <div>
+          <div class="fc-name">${f.name}</div>
+          <div class="fc-type">${f.type}</div>
+        </div>
+      </div>
+      <div class="fc-actions">
+        ${String(f.id) !== String(activeFirmId) ? `<button class="fc-btn fc-switch" onclick="switchFirm('${f.id}')">Set Active</button>` : '<button class="fc-btn fc-switch" style="opacity:.4;cursor:default;">Active</button>'}
+        <button class="fc-btn fc-delete" onclick="deleteFirm('${f.id}')">Delete</button>
+      </div>
+    </div>
+  `).join('');
+
+  if (firms.length < 10) {
+    html += `<div class="add-firm-card" onclick="openModal()">
+      <svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg>
+      <span>Add New Firm</span>
+    </div>`;
+  }
+
+  grid.innerHTML = html;
+}
+
+function switchFirm(id) {
+  activeFirmId = String(id);
+  localStorage.setItem('ip_active_firm', activeFirmId);
+  renderFirms();
+  showToast('Firm switched!');
+}
+
+async function deleteFirm(id) {
+  if (!confirm('Delete this firm?')) return;
+  const token = localStorage.getItem('invoicepro_token');
+  
+  try {
+    // Attempt DB Delete First (gracefully falls back if no backend route configured yet)
+    if(token) {
+      await fetch(`/api/firms/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+    }
+  } catch(e) {} // Ignore server errors, delete locally below anyway
+  
+  firms = firms.filter(f => String(f.id) !== String(id));
+  if (String(activeFirmId) === String(id)) {
+    activeFirmId = firms.length ? String(firms[0].id) : null;
+    localStorage.setItem('ip_active_firm', activeFirmId || '');
+  }
+  localStorage.setItem('ip_firms', JSON.stringify(firms));
+  renderFirms();
+  showToast('Firm deleted', 'var(--red)');
+}
+
+function logout() {
+  localStorage.removeItem('invoicepro_token');
+  window.location.href = 'auth.html';
+}
+
+loadProfile();
+
+/* ── PROFILE PAGE MODAL ── */
+let pFirmType = 'individual';
+
+function openModal() {
+  if (firms.length >= 10) { showToast('Maximum 10 firms reached', 'var(--amber)'); return; }
+  pFirmType = 'individual';
+  document.getElementById('pIndivName').value = '';
+  document.getElementById('pGstin').value = '';
+  document.getElementById('pFirmName').value = '';
+  document.getElementById('pTaxType').value = '';
+  document.getElementById('pAddress').value = '';
+  document.getElementById('pMobile1').value = '';
+  document.getElementById('pMobile2').value = '';
+  document.getElementById('pEmail').value = '';
+  document.getElementById('pgstOk').style.display = 'none';
+  document.getElementById('pgstErr').style.display = 'none';
+  switchPType('individual');
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('pIndivName').focus(), 150);
+}
+
+function closeModal() { 
+  document.getElementById('modalOverlay').classList.remove('open'); 
+}
+
+function handleOverlayClick(e) { 
+  if (e.target === document.getElementById('modalOverlay')) closeModal(); 
+}
+
+function switchPType(type) {
+  pFirmType = type;
+  const isIndiv = type === 'individual';
+  document.getElementById('ptabIndiv').style.background = isIndiv ? 'var(--accent)' : 'transparent';
+  document.getElementById('ptabIndiv').style.color      = isIndiv ? '#fff' : 'var(--text2)';
+  document.getElementById('ptabReg').style.background   = !isIndiv ? 'var(--accent)' : 'transparent';
+  document.getElementById('ptabReg').style.color        = !isIndiv ? '#fff' : 'var(--text2)';
+  document.getElementById('ppIndiv').style.display = isIndiv ? 'block' : 'none';
+  document.getElementById('ppReg').style.display   = !isIndiv ? 'block' : 'none';
+}
+
+async function fetchGSTProfile() {
+  const gstin = document.getElementById('pGstin').value.trim();
+  const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+  const errEl = document.getElementById('pgstErr');
+  const okEl  = document.getElementById('pgstOk');
+  errEl.style.display = 'none'; okEl.style.display = 'none';
+
+  if (!gstin) { errEl.textContent = 'Enter a 15-digit GSTIN first.'; errEl.style.display='block'; return; }
+  if (!gstRegex.test(gstin)) { errEl.textContent = 'Invalid GSTIN format.'; errEl.style.display='block'; return; }
+
+  const btn = document.getElementById('pAutofillBtn');
+  btn.textContent = 'Fetching...'; btn.disabled = true;
+
+  try {
+    const res = await fetch(`/api/gst/verify/${gstin}`);
+    const result = await res.json();
+
+    if (result.success && result.data) {
+      const d = result.data;
+      if (d.business_name)  document.getElementById('pFirmName').value = d.business_name;
+      if (d.taxpayer_type)  document.getElementById('pTaxType').value  = d.taxpayer_type;
+      if (d.address)        document.getElementById('pAddress').value   = d.address;
+      okEl.textContent = '✓ GST details fetched successfully!';
+      okEl.style.display = 'block';
+      setTimeout(() => okEl.style.display = 'none', 4000);
+    } else {
+      errEl.textContent = result.message || 'No data found for this GSTIN.';
+      errEl.style.display = 'block';
+    }
+  } catch {
+    errEl.textContent = 'Could not reach GST server.';
+    errEl.style.display = 'block';
+  }
+  btn.textContent = 'Auto-fill'; btn.disabled = false;
+}
+
+// Submits the firm to Database just like landing.html
+async function saveFirmProfile() {
+  let name, type, extra = {};
+  
+  const colors = ['#4f6ef7', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#ec4899'];
+  const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+  if (pFirmType === 'individual') {
+    name = document.getElementById('pIndivName').value.trim();
+    if (!name) { document.getElementById('pIndivName').style.borderColor='var(--red)'; return; }
+    type = 'Individual / Freelancer';
+  } else {
+    name = document.getElementById('pFirmName').value.trim();
+    if (!name) { document.getElementById('pFirmName').style.borderColor='var(--red)'; return; }
+    type = document.getElementById('pTaxType').value.trim() || 'Registered Firm';
+    extra = { 
+      gstin: document.getElementById('pGstin').value.trim(), 
+      address: document.getElementById('pAddress').value.trim(), 
+      mainMobile: document.getElementById('pMobile1').value.trim(), 
+      altMobile: document.getElementById('pMobile2').value.trim(), 
+      email: document.getElementById('pEmail').value.trim() 
+    };
+  }
+  
+  const token = localStorage.getItem('invoicepro_token');
+  if (!token) { showToast('Please sign in first', 'var(--red)'); return; }
+
+  const firmData = { name, type, color: randomColor, initial: name[0].toUpperCase(), firmType: pFirmType, ...extra };
+  const saveBtns = document.querySelectorAll('.modal-btn:not(.modal-btn-cancel)');
+  saveBtns.forEach(b => { b.textContent = "Saving..."; b.disabled = true; });
+
+  try {
+    const res = await fetch('/api/firms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(firmData)
+    });
+
+    if (res.ok) {
+      const savedDbFirm = await res.json();
+      savedDbFirm.id = savedDbFirm._id || savedDbFirm.id;
+
+      firms.push(savedDbFirm);
+      if (!activeFirmId) { 
+        activeFirmId = String(savedDbFirm.id); 
+        localStorage.setItem('ip_active_firm', activeFirmId); 
+      }
+      localStorage.setItem('ip_firms', JSON.stringify(firms));
+      
+      closeModal();
+      renderFirms();
+      showToast('Firm added!');
+    } else {
+      showToast('Failed to save firm', 'var(--red)');
+    }
+  } catch(err) {
+    showToast('Connection error', 'var(--red)');
+  } finally {
+    saveBtns.forEach(b => { b.textContent = "Save Profile"; b.disabled = false; });
+  }
+}
+</script>
+</body>
+</html>

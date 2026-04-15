@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>InvoicePro | Purchase Voucher</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- INSTANT THEME LOAD -->
+<script>
+  const savedTheme = localStorage.getItem('ip_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+</script>
+<style>
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blue: #4f6ef7; --green: #10b981; --red: #ef4444;
+  --r: 6px; --r-panel: 8px;
+}
+/* DARK MODE */
+[data-theme="dark"] {
+  --bg: #11141e; --panel: #1b202e; --input-bg: #11141e;
+  --border: #2a3143; --border-focus: #4f6ef7;
+  --text: #e2e8f0; --text-dim: #8c96a8;
+}
+/* LIGHT MODE */
+[data-theme="light"] {
+  --bg: #f1f5f9; --panel: #ffffff; --input-bg: #f8fafc;
+  --border: #cbd5e1; --border-focus: #4f6ef7;
+  --text: #0f172a; --text-dim: #64748b;
+}
+
+body {
+  font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+  height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* ─── TOP BAR ─── */
+.topbar {
+  height: 50px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.brand { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 6px; }
+.brand em { color: var(--blue); font-style: normal; }
+.brand-sub { color: var(--text-dim); font-size: 13px; font-weight: 400; }
+.top-actions { display: flex; align-items: center; gap: 14px; }
+.user-email { font-size: 12px; color: var(--text-dim); }
+.btn {
+  padding: 6px 12px; border-radius: var(--r); border: 1px solid var(--border);
+  background: transparent; color: var(--text); cursor: pointer;
+  font-size: 12px; font-weight: 500; transition: 0.2s;
+}
+.btn:hover { background: var(--border); }
+.btn.green { background: #0e9f6e; border-color: #0e9f6e; color: #fff; }
+.btn.green:hover { background: #057a55; }
+.btn.outline-red { color: var(--red); border-color: transparent; }
+.btn.outline-red:hover { background: rgba(239,68,68,0.1); }
+
+/* ─── MAIN LAYOUT ─── */
+.main-content { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 10px; min-height: 0; }
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); padding: 12px; }
+.panel-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; color: var(--text-dim); }
+.panel-title.blue { color: #3b82f6; }
+.panel-title.green { color: #10b981; }
+.grid { display: grid; gap: 10px; }
+
+/* ─── INPUTS ─── */
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; }
+.input {
+  background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--r);
+  color: var(--text); padding: 0 10px; height: 32px; font-size: 13px; width: 100%; outline: none; transition: 0.2s;
+}
+.input:focus { border-color: var(--border-focus); }
+.input::placeholder { color: #475569; }
+
+/* ─── TOP PANELS ─── */
+.top-section { display: grid; grid-template-columns: 0.9fr 1.3fr 1.3fr; gap: 10px; flex-shrink: 0; }
+.price-type {
+  margin-top: 12px; font-size: 11px; font-weight: 500; color: var(--text-dim);
+  display: flex; align-items: center; gap: 14px; background: var(--input-bg);
+  padding: 6px 10px; border-radius: var(--r); border: 1px solid var(--border);
+}
+.price-type input[type="radio"] { accent-color: var(--blue); margin-right: 4px; cursor: pointer; }
+.price-type label { display: flex; align-items: center; cursor: pointer; color: var(--text); }
+
+/* ─── TABLE SECTION ─── */
+.table-section { flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); display: flex; flex-direction: column; min-height: 0; }
+.table-wrap { flex: 1; overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { position: sticky; top: 0; background: var(--bg); z-index: 10; font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+th:last-child, td:last-child { text-align: right; }
+.td-input { background: transparent; border: 1px solid transparent; color: var(--text); height: 28px; width: 100%; font-size: 13px; padding: 0 6px; outline: none; border-radius: 4px; }
+.td-input:focus, .td-input:hover { border-color: var(--border); background: var(--input-bg); }
+.td-input.right { text-align: right; }
+.table-footer { padding: 10px; border-top: 1px solid var(--border); background: var(--panel); flex-shrink: 0; }
+.add-btn { background: transparent; border: 1px solid var(--blue); color: var(--blue); padding: 6px 12px; border-radius: var(--r); font-size: 12px; font-weight: 500; cursor: pointer; transition: 0.2s; }
+.add-btn:hover { background: rgba(79,110,247,0.1); }
+.del-btn { color: var(--red); cursor: pointer; background: transparent; border: none; font-size: 16px; opacity: 0.5; transition: 0.2s; }
+.del-btn:hover { opacity: 1; }
+
+/* ─── BOTTOM PANELS ─── */
+.bottom-section { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 10px; flex-shrink: 0; }
+.summary-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.summary-row label { font-size: 12px; font-weight: 600; color: var(--text); }
+.summary-row .input { width: 110px; text-align: right; font-weight: 600; }
+.grand-total-box { display: flex; flex-direction: column; justify-content: space-between; }
+.gt-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 22px; margin-bottom: 12px; }
+.gt-title { font-size: 10px; font-weight: 700; color: var(--text-dim); letter-spacing: 0.05em; }
+.gt-amount { font-size: 32px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; color: var(--green); }
+.gt-actions { display: flex; gap: 10px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">Invoice<em>Pro</em> <span class="brand-sub">| Purchase Voucher</span></div>
+  <div class="top-actions">
+    <button class="btn" onclick="window.location.href='landing.html'">← Back to Hub</button>
+    <span class="user-email" id="topEmail">loading...</span>
+    <button class="btn outline-red" onclick="logout()">Log out</button>
+  </div>
+</header>
+
+<div class="main-content">
+  
+  <!-- TOP SECTION -->
+  <div class="top-section">
+    <!-- Panel 1 -->
+    <div class="panel">
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="field"><label>VENDOR INV NO.</label><input class="input" placeholder="From Bill"></div>
+        <div class="field"><label>BILL DATE</label><input class="input" type="date" id="invDate"></div>
+        <div class="field"><label>PLACE OF SUPPLY</label><input class="input" placeholder="09-UP"></div>
+        <div class="field"><label>REV. CHARGE</label><select class="input"><option>No</option><option>Yes</option></select></div>
+      </div>
+      <div class="price-type">
+        <span>PRICE TYPE:</span>
+        <label><input type="radio" name="ptype" id="ptExclusive" checked> Without Tax</label>
+        <label><input type="radio" name="ptype" id="ptInclusive"> With Tax</label>
+      </div>
+    </div>
+
+    <!-- Panel 2: Vendor Details -->
+    <div class="panel">
+      <div class="panel-title green">VENDOR DETAILS (PURCHASED FROM)</div>
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <input class="input" id="vendorName" placeholder="Vendor Name">
+        <input class="input" id="vendorGstin" placeholder="VENDOR GSTIN" maxlength="15">
+        <input class="input" id="vendorAddress" placeholder="Vendor Address">
+        <select class="input" id="vendorState">
+          <option value="AN">Andaman & Nicobar Islands</option>
+          <option value="AP">Andhra Pradesh</option>
+          <option value="AR">Arunachal Pradesh</option>
+          <option value="AS">Assam</option>
+          <option value="BR">Bihar</option>
+          <option value="CH">Chandigarh</option>
+          <option value="CG">Chhattisgarh</option>
+          <option value="DN">Dadra & Nagar Haveli and Daman & Diu</option>
+          <option value="DL">Delhi</option>
+          <option value="GA">Goa</option>
+          <option value="GJ">Gujarat</option>
+          <option value="HR">Haryana</option>
+          <option value="HP">Himachal Pradesh</option>
+          <option value="JK">Jammu & Kashmir</option>
+          <option value="JH">Jharkhand</option>
+          <option value="KA">Karnataka</option>
+          <option value="KL">Kerala</option>
+          <option value="LA">Ladakh</option>
+          <option value="LD">Lakshadweep</option>
+          <option value="MP">Madhya Pradesh</option>
+          <option value="MH">Maharashtra</option>
+          <option value="MN">Manipur</option>
+          <option value="ML">Meghalaya</option>
+          <option value="MZ">Mizoram</option>
+          <option value="NL">Nagaland</option>
+          <option value="OR">Odisha</option>
+          <option value="PY">Puducherry</option>
+          <option value="PB">Punjab</option>
+          <option value="RJ">Rajasthan</option>
+          <option value="SK">Sikkim</option>
+          <option value="TN">Tamil Nadu</option>
+          <option value="TS">Telangana</option>
+          <option value="TR">Tripura</option>
+          <option value="UP" selected>Uttar Pradesh</option>
+          <option value="UK">Uttarakhand</option>
+          <option value="WB">West Bengal</option>
+        </select>
+        <input class="input" id="vendorPhone" placeholder="Vendor Phone No.">
+        <input class="input" id="vendorEmail" placeholder="Vendor Email ID">
+      </div>
+    </div>
+
+    <!-- Panel 3: Your Details (Auto-filled) -->
+    <div class="panel">
+      <div class="panel-title blue">YOUR DETAILS (BILLED TO)</div>
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <input class="input" id="yourName" placeholder="Your Company Name" style="font-weight:600;">
+        <input class="input" id="yourGstin" placeholder="Your GSTIN">
+        <input class="input" id="yourAddress" placeholder="Your Address">
+        <select class="input" id="yourState">
+          <option value="AN">Andaman & Nicobar Islands</option>
+          <option value="AP">Andhra Pradesh</option>
+          <option value="AR">Arunachal Pradesh</option>
+          <option value="AS">Assam</option>
+          <option value="BR">Bihar</option>
+          <option value="CH">Chandigarh</option>
+          <option value="CG">Chhattisgarh</option>
+          <option value="DN">Dadra & Nagar Haveli and Daman & Diu</option>
+          <option value="DL">Delhi</option>
+          <option value="GA">Goa</option>
+          <option value="GJ">Gujarat</option>
+          <option value="HR">Haryana</option>
+          <option value="HP">Himachal Pradesh</option>
+          <option value="JK">Jammu & Kashmir</option>
+          <option value="JH">Jharkhand</option>
+          <option value="KA">Karnataka</option>
+          <option value="KL">Kerala</option>
+          <option value="LA">Ladakh</option>
+          <option value="LD">Lakshadweep</option>
+          <option value="MP">Madhya Pradesh</option>
+          <option value="MH">Maharashtra</option>
+          <option value="MN">Manipur</option>
+          <option value="ML">Meghalaya</option>
+          <option value="MZ">Mizoram</option>
+          <option value="NL">Nagaland</option>
+          <option value="OR">Odisha</option>
+          <option value="PY">Puducherry</option>
+          <option value="PB">Punjab</option>
+          <option value="RJ">Rajasthan</option>
+          <option value="SK">Sikkim</option>
+          <option value="TN">Tamil Nadu</option>
+          <option value="TS">Telangana</option>
+          <option value="TR">Tripura</option>
+          <option value="UP" selected>Uttar Pradesh</option>
+          <option value="UK">Uttarakhand</option>
+          <option value="WB">West Bengal</option>
+        </select>
+        <input class="input" id="yourPhone" placeholder="Your Phone No.">
+        <input class="input" id="yourEmail" placeholder="Your Email ID">
+      </div>
+    </div>
+  </div>
+
+  <!-- MIDDLE SECTION (TABLE) -->
+  <div class="table-section">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 40px; text-align: center;">S.N.</th>
+            <th>Item Description</th>
+            <th style="width: 90px;">HSN/SAC</th>
+            <th style="width: 80px;">Tax Rate</th>
+            <th style="width: 70px;">Qty</th>
+            <th style="width: 100px;">Unit</th>
+            <th style="width: 100px;">Price (₹)</th>
+            <th style="width: 110px;">Amount (₹)</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- Row 1 -->
+          <tr>
+            <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
+            <td><input class="td-input" placeholder="Item Description"></td>
+            <td><input class="td-input" placeholder="HSN"></td>
+            <td>
+              <select class="td-input calc-tax">
+                <option value="0" selected>0%</option>
+                <option value="5">5%</option>
+                <option value="12">12%</option>
+                <option value="18">18%</option>
+                <option value="28">28%</option>
+              </select>
+            </td>
+            <td><input class="td-input right calc-qty" type="number" value="1" min="1"></td>
+            <td>
+              <select class="td-input">
+                <option value="Bags">Bags</option>
+                <option value="Bale">Bale</option>
+                <option value="Bundles">Bundles</option>
+                <option value="Cans">Cans</option>
+                <option value="Cartons">Cartons</option>
+                <option value="Dozen">Dozen</option>
+                <option value="Grams">Grams</option>
+                <option value="Gross">Gross</option>
+                <option value="Kgs">Kgs</option>
+                <option value="Ltrs">Ltrs</option>
+                <option value="Mtrs">Mtrs</option>
+                <option value="Nos" selected>Nos</option>
+                <option value="Pairs">Pairs</option>
+                <option value="Pcs">Pcs</option>
+                <option value="Pkt">Pkt</option>
+                <option value="Quintal">Quintal</option>
+                <option value="Rolls">Rolls</option>
+                <option value="Sets">Sets</option>
+                <option value="Sqm">Sqm</option>
+                <option value="Sqy">Sqy</option>
+                <option value="Tablets">Tablets</option>
+                <option value="Tonnes">Tonnes</option>
+                <option value="Tubes">Tubes</option>
+                <option value="Yards">Yards</option>
+              </select>
+            </td>
+            <td><input class="td-input right calc-price" type="number" placeholder="0.00"></td>
+            <td><input class="td-input right calc-amount" readonly value="0.00" style="color:var(--text); font-weight:600;"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <button class="add-btn" onclick="addRow()">+ Add Row (F2)</button>
+    </div>
+  </div>
+
+  <!-- BOTTOM SECTION -->
+  <div class="bottom-section">
+    <!-- Tax Summary -->
+    <div class="panel">
+      <div class="panel-title">TAX SUMMARY</div>
+      <div class="summary-row"><label>Taxable (₹)</label><input class="input" id="sumTaxable" value="0.00" readonly></div>
+      <div class="summary-row"><label id="lblCgst">CGST (₹)</label><input class="input" id="sumCgst" value="0.00" readonly></div>
+      <div class="summary-row" id="rowSgst" style="margin-bottom:0;"><label id="lblSgst">SGST (₹)</label><input class="input" id="sumSgst" value="0.00" readonly></div>
+    </div>
+
+    <!-- Additional -->
+    <div class="panel">
+      <div class="panel-title">ADDITIONAL DETAILS</div>
+      <div class="summary-row"><label style="color:var(--text-dim);font-size:11px;">Freight/Charges</label><input class="input" type="number" id="inFreight" placeholder="0.00"></div>
+      <div class="summary-row"><label style="color:var(--text-dim);font-size:11px;">Discount (-)</label><input class="input" type="number" id="inDiscount" placeholder="0.00"></div>
+      <div class="summary-row" style="margin-bottom:0;"><label style="color:var(--text-dim);font-size:11px;">Narration</label><input class="input" placeholder="Notes for records..."></div>
+    </div>
+
+    <!-- Grand Total -->
+    <div class="panel grand-total-box">
+      <div class="gt-header">
+        <div class="gt-title">TOTAL PAYABLE</div>
+        <div class="gt-amount" id="grandTotal">₹0.00</div>
+      </div>
+      <div class="gt-actions">
+        <button class="btn" style="flex:1;">Cancel</button>
+        <button class="btn" style="flex:1; background: var(--bg); border-color: var(--border);">Save PDF</button>
+        <button class="btn green" style="flex:1.5;">Save Purchase</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// --- INITIALIZATION ---
+document.getElementById('invDate').valueAsDate = new Date();
+
+document.addEventListener('DOMContentLoaded', () => {
+  // 1. Local JWT Decoding for Topbar Email (saves an API call, syncs locally just like profile/landing)
+  const token = localStorage.getItem('invoicepro_token');
+  const emailEl = document.getElementById('topEmail');
+  if (token) {
+    try {
+      const payloadBase64 = token.split('.')[1];
+      const decodedJson = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
+      const decoded = JSON.parse(decodedJson);
+      const user = decoded.user || decoded;
+      if (emailEl) emailEl.textContent = user.email || 'No email';
+    } catch(e) {
+      if (emailEl) emailEl.textContent = 'Not signed in';
+    }
+  } else {
+    if (emailEl) emailEl.textContent = 'Not signed in';
+  }
+
+  // 2. Auto-fill "Your Details" from LocalStorage Firm
+  const firms = JSON.parse(localStorage.getItem('ip_firms') || '[]');
+  const activeFirmId = localStorage.getItem('ip_active_firm');
+  if (firms.length > 0 && activeFirmId) {
+    const activeFirm = firms.find(f => String(f.id) === String(activeFirmId));
+    if (activeFirm) {
+      document.getElementById('yourName').value    = activeFirm.name || '';
+      document.getElementById('yourAddress').value = activeFirm.address || '';
+      document.getElementById('yourGstin').value   = activeFirm.gstin || '';
+      document.getElementById('yourPhone').value   = activeFirm.mainMobile || '';
+      document.getElementById('yourEmail').value   = activeFirm.email || '';
+    }
+  }
+});
+
+function logout() {
+  localStorage.removeItem('invoicepro_token');
+  window.location.href = 'auth.html';
+}
+
+// --- CALCULATIONS ENGINE ---
+function calculateInvoice() {
+  const isExclusive = document.getElementById('ptExclusive').checked;
+  const vendorState = document.getElementById('vendorState').value;
+  const yourState = document.getElementById('yourState').value;
+  const isInterState = vendorState !== yourState;
+
+  const discount = parseFloat(document.getElementById('inDiscount').value) || 0;
+  const freight = parseFloat(document.getElementById('inFreight').value) || 0;
+
+  let totalGross = 0;
+  const rowsData = [];
+  const rows = document.querySelectorAll('#tableBody tr');
+
+  rows.forEach(row => {
+    const qty = parseFloat(row.querySelector('.calc-qty').value) || 0;
+    const price = parseFloat(row.querySelector('.calc-price').value) || 0;
+    const taxRate = parseFloat(row.querySelector('.calc-tax').value) || 0;
+    const amountInput = row.querySelector('.calc-amount');
+
+    const gross = qty * price;
+    amountInput.value = gross.toFixed(2);
+    totalGross += gross;
+
+    rowsData.push({ gross, taxRate });
+  });
+
+  let totalTaxable = 0;
+  let totalTaxAmount = 0;
+
+  rowsData.forEach(row => {
+    if (row.gross > 0) {
+      const rowDiscount = totalGross > 0 ? (row.gross / totalGross) * discount : 0;
+      const rowNet = Math.max(0, row.gross - rowDiscount);
+
+      let taxable = 0, tax = 0;
+
+      if (isExclusive) {
+        taxable = rowNet;
+        tax = taxable * (row.taxRate / 100);
+      } else {
+        taxable = rowNet / (1 + (row.taxRate / 100));
+        tax = rowNet - taxable;
+      }
+
+      totalTaxable += taxable;
+      totalTaxAmount += tax;
+    }
+  });
+
+  document.getElementById('sumTaxable').value = totalTaxable.toFixed(2);
+
+  if (isInterState) {
+    document.getElementById('lblCgst').textContent = 'IGST (₹)';
+    document.getElementById('sumCgst').value = totalTaxAmount.toFixed(2);
+    document.getElementById('rowSgst').style.display = 'none';
+  } else {
+    document.getElementById('lblCgst').textContent = 'CGST (₹)';
+    document.getElementById('rowSgst').style.display = 'flex';
+    document.getElementById('sumCgst').value = (totalTaxAmount / 2).toFixed(2);
+    document.getElementById('sumSgst').value = (totalTaxAmount / 2).toFixed(2);
+  }
+
+  const grandTotal = totalTaxable + totalTaxAmount + freight;
+  document.getElementById('grandTotal').textContent = '₹' + Math.max(0, grandTotal).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+document.addEventListener('input', function(e) {
+  if (
+    e.target.classList.contains('calc-qty') || e.target.classList.contains('calc-price') ||
+    e.target.classList.contains('calc-tax') || e.target.id === 'inFreight' ||
+    e.target.id === 'inDiscount' || e.target.id === 'vendorState' ||
+    e.target.id === 'yourState' || e.target.name === 'ptype'
+  ) {
+    calculateInvoice();
+  }
+});
+
+// --- ROW MANAGEMENT ---
+function addRow() {
+  const tbody = document.getElementById('tableBody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
+    <td><input class="td-input" placeholder="Item Description"></td>
+    <td><input class="td-input" placeholder="HSN"></td>
+    <td>
+      <select class="td-input calc-tax">
+        <option value="0" selected>0%</option>
+        <option value="5">5%</option>
+        <option value="12">12%</option>
+        <option value="18">18%</option>
+        <option value="28">28%</option>
+      </select>
+    </td>
+    <td><input class="td-input right calc-qty" type="number" value="1" min="1"></td>
+    <td>
+      <select class="td-input">
+        <option value="Bags">Bags</option>
+        <option value="Bale">Bale</option>
+        <option value="Bundles">Bundles</option>
+        <option value="Cans">Cans</option>
+        <option value="Cartons">Cartons</option>
+        <option value="Dozen">Dozen</option>
+        <option value="Grams">Grams</option>
+        <option value="Gross">Gross</option>
+        <option value="Kgs">Kgs</option>
+        <option value="Ltrs">Ltrs</option>
+        <option value="Mtrs">Mtrs</option>
+        <option value="Nos" selected>Nos</option>
+        <option value="Pairs">Pairs</option>
+        <option value="Pcs">Pcs</option>
+        <option value="Pkt">Pkt</option>
+        <option value="Quintal">Quintal</option>
+        <option value="Rolls">Rolls</option>
+        <option value="Sets">Sets</option>
+        <option value="Sqm">Sqm</option>
+        <option value="Sqy">Sqy</option>
+        <option value="Tablets">Tablets</option>
+        <option value="Tonnes">Tonnes</option>
+        <option value="Tubes">Tubes</option>
+        <option value="Yards">Yards</option>
+      </select>
+    </td>
+    <td><input class="td-input right calc-price" type="number" placeholder="0.00"></td>
+    <td><input class="td-input right calc-amount" readonly value="0.00" style="color:var(--text); font-weight:600;"></td>
+  `;
+  tbody.appendChild(tr);
+  const wrap = document.querySelector('.table-wrap');
+  wrap.scrollTop = wrap.scrollHeight;
+  calculateInvoice();
+}
+
+function removeRow(btn) {
+  btn.closest('tr').remove();
+  calculateInvoice();
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'F2') {
+    e.preventDefault();
+    addRow();
+  }
+});
+
+// AUTO-FETCH GST DETAILS FUNCTION
+function setupGSTAutoFetch(gstinId, nameId, addressId, stateId) {
+  const gstinInput = document.getElementById(gstinId);
+  if (!gstinInput) return;
+
+  gstinInput.addEventListener('input', async (e) => {
+    let gstin = e.target.value.toUpperCase();
+    e.target.value = gstin;
+    
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+    
+    if (gstin.length === 15 && gstRegex.test(gstin)) {
+      const nameInput = document.getElementById(nameId);
+      const oldName = nameInput.value;
+      nameInput.value = "Fetching from GST Portal...";
+      
+      try {
+        const res = await fetch(`/api/gst/verify/${gstin}`);
+        const result = await res.json();
+        
+        if (result.success && result.data) {
+          nameInput.value = result.data.business_name || '';
+          document.getElementById(addressId).value = result.data.address || '';
+          
+          // Auto-select state based on 2-digit GST prefix and trigger tax recalculation
+          const stateCode = gstin.substring(0, 2);
+          const stateMap = { 
+            '01': 'JK', '02': 'HP', '03': 'PB', '04': 'CH', '05': 'UK', 
+            '06': 'HR', '07': 'DL', '08': 'RJ', '09': 'UP', '10': 'BR', 
+            '11': 'SK', '12': 'AR', '13': 'NL', '14': 'MN', '15': 'MZ', 
+            '16': 'TR', '17': 'ML', '18': 'AS', '19': 'WB', '20': 'JH', 
+            '21': 'OR', '22': 'CG', '23': 'MP', '24': 'GJ', '25': 'DN', 
+            '26': 'DN', '27': 'MH', '28': 'AP', '29': 'KA', '30': 'GA', 
+            '31': 'LD', '32': 'KL', '33': 'TN', '34': 'PY', '35': 'AN', 
+            '36': 'TS', '37': 'AP', '38': 'LA' 
+          };
+          
+          if (stateMap[stateCode]) {
+            document.getElementById(stateId).value = stateMap[stateCode];
+            calculateInvoice(); 
+          }
+        } else {
+          nameInput.value = oldName; 
+        }
+      } catch (err) {
+        nameInput.value = oldName;
+      }
+    }
+  });
+}
+
+// Hook up the Vendor GSTIN input on the Purchase Invoice
+setupGSTAutoFetch('vendorGstin', 'vendorName', 'vendorAddress', 'vendorState');
+
+calculateInvoice();
+</script>
+</body>
+</html>

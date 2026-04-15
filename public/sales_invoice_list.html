@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>InvoicePro | Sales List</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  const savedTheme = localStorage.getItem('ip_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+</script>
+<style>
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blue: #4f6ef7; --green: #10b981; --red: #ef4444;
+  --r: 6px; --r-panel: 8px;
+}
+[data-theme="dark"] {
+  --bg: #11141e; --panel: #1b202e; --input-bg: #11141e;
+  --border: #2a3143; --border-focus: #4f6ef7;
+  --text: #e2e8f0; --text-dim: #8c96a8;
+}
+[data-theme="light"] {
+  --bg: #f1f5f9; --panel: #ffffff; --input-bg: #f8fafc;
+  --border: #cbd5e1; --border-focus: #4f6ef7;
+  --text: #0f172a; --text-dim: #64748b;
+}
+
+body {
+  font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column;
+}
+
+.topbar {
+  height: 50px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.brand { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 6px; }
+.brand em { color: var(--blue); font-style: normal; }
+.brand-sub { color: var(--text-dim); font-size: 13px; font-weight: 400; }
+.top-actions { display: flex; align-items: center; gap: 10px; }
+.btn {
+  padding: 6px 12px; border-radius: var(--r); border: 1px solid var(--border);
+  background: transparent; color: var(--text); cursor: pointer;
+  font-size: 12px; font-weight: 500; transition: 0.2s;
+}
+.btn:hover { background: var(--border); }
+.btn.green { background: #0e9f6e; border-color: #0e9f6e; color: #fff; }
+.btn.green:hover { background: #057a55; }
+.btn.outline-red { color: var(--red); border-color: transparent; }
+.btn.outline-red:hover { background: rgba(239,68,68,0.1); }
+
+.main-content { flex: 1; padding: 20px; }
+
+.filter-section {
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel);
+  padding: 16px; margin-bottom: 20px; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;
+}
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-label { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; }
+.filter-input {
+  background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--r);
+  color: var(--text); padding: 0 10px; height: 32px; font-size: 13px; outline: none; min-width: 150px;
+}
+.filter-input:focus { border-color: var(--blue); }
+.filter-btn {
+  padding: 6px 14px; border-radius: var(--r); border: none; background: var(--blue);
+  color: #fff; cursor: pointer; font-weight: 600; font-size: 12px; height: 32px;
+}
+.filter-btn:hover { background: #3a56e0; }
+
+.list-container {
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel);
+  padding: 20px; overflow: auto;
+}
+
+.list-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 20px; }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th {
+  background: var(--bg); font-size: 10px; font-weight: 600; color: var(--text-dim);
+  text-transform: uppercase; padding: 12px 10px; text-align: left; border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 14px 10px; border-bottom: 1px solid var(--border); font-size: 13px;
+}
+tbody tr:hover { background: var(--input-bg); }
+tbody tr:last-child td { border-bottom: none; }
+
+.status-badge {
+  display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px;
+  font-weight: 600; text-transform: capitalize;
+}
+.status-saved { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+
+.action-btn {
+  padding: 4px 8px; margin: 0 2px; border: 1px solid var(--border); background: transparent;
+  color: var(--text-dim); border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600;
+  transition: 0.2s;
+}
+.action-btn:hover { background: var(--border); color: var(--text); }
+.action-btn.delete:hover { background: rgba(239,68,68,0.15); color: var(--red); }
+
+.empty-state {
+  text-align: center; padding: 60px 20px; color: var(--text-dim);
+}
+.empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+.empty-desc { font-size: 13px; margin-bottom: 20px; }
+.empty-btn { padding: 8px 16px; background: var(--blue); color: #fff; border: none; border-radius: var(--r); cursor: pointer; font-weight: 600; }
+
+@media(max-width: 900px) {
+  .filter-section { flex-direction: column; align-items: stretch; }
+  .filter-input { min-width: 100%; }
+  .filter-btn { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">Invoice<em>Pro</em> <span class="brand-sub">| Sales List</span></div>
+  <div class="top-actions">
+    <button class="btn" onclick="window.location.href='landing.html'">← Back to Hub</button>
+    <button class="btn green" onclick="window.location.href='invoice.html'">+ New Invoice</button>
+    <button class="btn outline-red" onclick="logout()">Log out</button>
+  </div>
+</header>
+
+<div class="main-content">
+  <!-- Filters -->
+  <div class="filter-section">
+    <div class="filter-group">
+      <label class="filter-label">Search Invoice #</label>
+      <input type="text" class="filter-input" id="searchVchNo" placeholder="Invoice No." onkeyup="filterInvoices()">
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">Search Party Name</label>
+      <input type="text" class="filter-input" id="searchParty" placeholder="Party Name" onkeyup="filterInvoices()">
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">From Date</label>
+      <input type="date" class="filter-input" id="filterFromDate" onchange="filterInvoices()">
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">To Date</label>
+      <input type="date" class="filter-input" id="filterToDate" onchange="filterInvoices()">
+    </div>
+    <button class="filter-btn" onclick="resetFilters()">Reset</button>
+  </div>
+
+  <!-- List -->
+  <div class="list-container">
+    <div class="list-title">All Saved Sales Vouchers</div>
+    
+    <div id="emptyState" class="empty-state" style="display:none;">
+      <div class="empty-icon">📭</div>
+      <div class="empty-title">No invoices found</div>
+      <div class="empty-desc">Create one in Sales Voucher to get started.</div>
+      <button class="empty-btn" onclick="window.location.href='invoice.html'">Create Invoice</button>
+    </div>
+
+    <div class="table-wrap" id="tableWrap" style="display:none;">
+      <table>
+        <thead>
+          <tr>
+            <th>DATE</th>
+            <th>INVOICE NO.</th>
+            <th>CLIENT NAME</th>
+            <th>TOTAL ITEMS</th>
+            <th>AMOUNT (₹)</th>
+            <th>STATUS</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody id="invoiceTableBody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+let db = null;
+let allInvoices = [];
+let filteredInvoices = [];
+
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('InvoiceProDB', 1);
+    
+    request.onerror = () => {
+      console.error('Database initialization failed');
+      reject(request.error);
+    };
+    
+    request.onsuccess = (e) => {
+      db = e.target.result;
+      console.log('Database initialized successfully');
+      resolve(db);
+    };
+    
+    request.onupgradeneeded = (e) => {
+      const database = e.target.result;
+      if (!database.objectStoreNames.contains('invoices')) {
+        const objectStore = database.createObjectStore('invoices', { keyPath: 'id' });
+        objectStore.createIndex('date', 'date', { unique: false });
+        objectStore.createIndex('partyName', 'party.name', { unique: false });
+        objectStore.createIndex('vchNo', 'vchNo', { unique: false });
+      }
+    };
+  });
+}
+
+function loadInvoices() {
+  if (!db) {
+    console.error('Database not initialized');
+    return;
+  }
+
+  const transaction = db.transaction(['invoices'], 'readonly');
+  const store = transaction.objectStore('invoices');
+  const request = store.getAll();
+
+  request.onerror = () => {
+    console.error('Error loading invoices:', request.error);
+    showEmptyState();
+  };
+
+  request.onsuccess = (e) => {
+    allInvoices = e.target.result;
+    console.log('Invoices loaded:', allInvoices);
+    
+    if (allInvoices.length === 0) {
+      showEmptyState();
+    } else {
+      filteredInvoices = [...allInvoices];
+      renderInvoices();
+    }
+  };
+}
+
+function renderInvoices() {
+  const tbody = document.getElementById('invoiceTableBody');
+  const tableWrap = document.getElementById('tableWrap');
+  const emptyState = document.getElementById('emptyState');
+
+  if (filteredInvoices.length === 0) {
+    tableWrap.style.display = 'none';
+    emptyState.style.display = 'block';
+    return;
+  }
+
+  tableWrap.style.display = 'block';
+  emptyState.style.display = 'none';
+
+  // Sort by date descending
+  const sorted = [...filteredInvoices].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  tbody.innerHTML = sorted.map(inv => {
+    const dateObj = new Date(inv.date);
+    const formattedDate = dateObj.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+    const amount = (inv.totals?.grandTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const itemCount = (inv.items || []).length;
+    const partyName = inv.party?.name || inv.partyName || 'N/A';
+
+    return `
+      <tr>
+        <td>${formattedDate}</td>
+        <td><strong>${inv.vchNo}</strong></td>
+        <td>${partyName}</td>
+        <td>${itemCount}</td>
+        <td>₹${amount}</td>
+        <td><span class="status-badge status-${inv.status.toLowerCase()}">${inv.status}</span></td>
+        <td>
+          <button class="action-btn" onclick="viewInvoice('${inv.id}')">View</button>
+          <button class="action-btn" onclick="editInvoice('${inv.id}')">Edit</button>
+          <button class="action-btn delete" onclick="deleteInvoice('${inv.id}')">Delete</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterInvoices() {
+  const vchNo = document.getElementById('searchVchNo').value.toLowerCase();
+  const party = document.getElementById('searchParty').value.toLowerCase();
+  const fromDate = document.getElementById('filterFromDate').value;
+  const toDate = document.getElementById('filterToDate').value;
+
+  filteredInvoices = allInvoices.filter(inv => {
+    const matchVchNo = inv.vchNo.toLowerCase().includes(vchNo);
+    const matchParty = (inv.party?.name || inv.partyName || '').toLowerCase().includes(party);
+    const matchDate = (!fromDate || inv.date >= fromDate) && (!toDate || inv.date <= toDate);
+    
+    return matchVchNo && matchParty && matchDate;
+  });
+
+  renderInvoices();
+}
+
+function resetFilters() {
+  document.getElementById('searchVchNo').value = '';
+  document.getElementById('searchParty').value = '';
+  document.getElementById('filterFromDate').value = '';
+  document.getElementById('filterToDate').value = '';
+  
+  filteredInvoices = [...allInvoices];
+  renderInvoices();
+}
+
+function viewInvoice(id) {
+  const invoice = allInvoices.find(inv => inv.id === id);
+  if (!invoice) return;
+  
+  // Store in session storage for detail view
+  sessionStorage.setItem('selectedInvoice', JSON.stringify(invoice));
+  
+  // For now, show an alert with details
+  const partyName = invoice.party?.name || invoice.partyName;
+  const amount = (invoice.totals?.grandTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+  const itemCount = (invoice.items || []).length;
+  
+  alert(`Invoice #${invoice.vchNo}\nParty: ${partyName}\nItems: ${itemCount}\nAmount: ₹${amount}`);
+}
+
+function editInvoice(id) {
+  const invoice = allInvoices.find(inv => inv.id === id);
+  if (!invoice) return;
+  
+  sessionStorage.setItem('editInvoice', JSON.stringify(invoice));
+  window.location.href = 'sales_invoice_modify.html?id=' + id;
+}
+
+function deleteInvoice(id) {
+  if (!confirm('Are you sure you want to delete this invoice?')) return;
+
+  const transaction = db.transaction(['invoices'], 'readwrite');
+  const store = transaction.objectStore('invoices');
+  const request = store.delete(id);
+
+  request.onsuccess = () => {
+    allInvoices = allInvoices.filter(inv => inv.id !== id);
+    filteredInvoices = filteredInvoices.filter(inv => inv.id !== id);
+    renderInvoices();
+    
+    if (allInvoices.length === 0) {
+      showEmptyState();
+    }
+  };
+
+  request.onerror = () => {
+    alert('Error deleting invoice');
+  };
+}
+
+function showEmptyState() {
+  document.getElementById('tableWrap').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'block';
+}
+
+function logout() {
+  localStorage.removeItem('invoicepro_token');
+  window.location.href = 'auth.html';
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await initDB();
+    loadInvoices();
+  } catch (error) {
+    console.error('Failed to initialize:', error);
+    showEmptyState();
+  }
+});
+</script>
+</body>
+</html>
