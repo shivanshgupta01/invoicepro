@@ -20,12 +20,16 @@
   --bg: #11141e; --panel: #1b202e; --input-bg: #11141e;
   --border: #2a3143; --border-focus: #4f6ef7;
   --text: #e2e8f0; --text-dim: #8c96a8;
+  --modal-overlay: rgba(0, 0, 0, 0.6);
+  --modal-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 /* LIGHT MODE COLORS */
 [data-theme="light"] {
   --bg: #f1f5f9; --panel: #ffffff; --input-bg: #f8fafc;
   --border: #cbd5e1; --border-focus: #4f6ef7;
   --text: #0f172a; --text-dim: #64748b;
+  --modal-overlay: rgba(15, 23, 42, 0.4);
+  --modal-shadow: 0 20px 60px rgba(100, 116, 139, 0.15);
 }
 
 body {
@@ -921,8 +925,8 @@ function logout() {
 
 document.addEventListener('DOMContentLoaded', initDB);
 
-// Beautiful Success Modal
-function showSuccessModal(title, grandTotal) {
+// --- BEAUTIFUL SUCCESS MODAL ---
+function showSuccessModal(titleOrDocNo, grandTotal) {
   const existingModal = document.getElementById('successModal');
   if (existingModal) existingModal.remove();
   
@@ -930,7 +934,7 @@ function showSuccessModal(title, grandTotal) {
   modalOverlay.id = 'successModal';
   modalOverlay.style.cssText = `
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+    background: var(--modal-overlay); backdrop-filter: blur(4px);
     display: flex; align-items: center; justify-content: center;
     z-index: 40000; animation: fadeInOverlay 0.3s ease;
   `;
@@ -939,43 +943,46 @@ function showSuccessModal(title, grandTotal) {
   modal.style.cssText = `
     background: linear-gradient(135deg, var(--panel) 0%, rgba(16, 185, 129, 0.05) 100%);
     border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 20px;
-    padding: 48px 40px; max-width: 420px; width: 90%;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(16, 185, 129, 0.1);
+    padding: 40px; max-width: 400px; width: 90%;
+    box-shadow: var(--modal-shadow);
     text-align: center; animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   `;
   
   const checkmarkSvg = `
-    <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 32px;">
-      <circle cx="50" cy="50" r="48" fill="rgba(16, 185, 129, 0.2)" stroke="#10b981" stroke-width="2"/>
+    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 24px;">
+      <circle cx="50" cy="50" r="48" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="2"/>
       <path d="M32 52L45 65L70 35" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     </svg>
   `;
   
-  const isDeleteMessage = title === 'Bill Deleted';
-  const messageText = isDeleteMessage ? 'Purchase bill has been successfully deleted.' : 'Your purchase bill has been successfully updated and saved.';
-  const formattedAmount = grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  // Fixes the "02!" title bug and handles deletions smoothly
+  const isDeleted = String(titleOrDocNo).includes('Deleted');
+  const titleText = isDeleted ? 'Deleted Successfully!' : 'Saved Successfully!';
+  const messageText = isDeleted ? 'The document has been securely removed.' : 'Your document has been successfully updated and saved.';
+  const docNo = isDeleted ? '-' : titleOrDocNo;
+  const formattedAmount = grandTotal ? grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00';
   
   modal.innerHTML = `
     ${checkmarkSvg}
-    <h2 style="color: var(--text); font-size: 26px; font-weight: 700; margin: 0 0 12px 0; letter-spacing: -0.5px;">${title}!</h2>
-    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 28px 0; line-height: 1.6;">${messageText}</p>
+    <h2 style="color: var(--text); font-size: 24px; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.5px;">${titleText}</h2>
+    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">${messageText}</p>
     
-    ${!isDeleteMessage ? `
-    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 28px;">
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    ${!isDeleted ? `
+    <div style="background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
         <div style="text-align: left;">
-          <p style="color: var(--text-dim); font-size: 11px; margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Bill #</p>
-          <p style="color: var(--text); font-size: 18px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">${title}</p>
+          <p style="color: var(--text-dim); font-size: 11px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Bill / Vch #</p>
+          <p style="color: var(--text); font-size: 16px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">${docNo}</p>
         </div>
         <div style="text-align: right;">
-          <p style="color: var(--text-dim); font-size: 11px; margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Amount</p>
-          <p style="color: #10b981; font-size: 18px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">₹${formattedAmount}</p>
+          <p style="color: var(--text-dim); font-size: 11px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Amount</p>
+          <p style="color: #10b981; font-size: 16px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">₹${formattedAmount}</p>
         </div>
       </div>
     </div>
     ` : ''}
     
-    <button id="closeSuccessBtn" style="width: 100%; padding: 14px 20px; background: linear-gradient(135deg, #10b981 0%, #0e9f6e 100%); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);">
+    <button id="closeSuccessBtn" style="width: 100%; padding: 14px 20px; background: #10b981; border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
       Continue
     </button>
   `;
@@ -985,12 +992,13 @@ function showSuccessModal(title, grandTotal) {
   
   document.getElementById('closeSuccessBtn').addEventListener('click', () => {
     modalOverlay.remove();
-    loadInvoices();
-    backToList();
+    // Use fallback checking just in case this is pasted into a file without these functions
+    if (typeof loadInvoices === 'function') loadInvoices();
+    if (typeof backToList === 'function') backToList();
   });
 }
 
-// Error Modal
+// --- ERROR MODAL ---
 function showErrorModal(message) {
   const existingModal = document.getElementById('errorModal');
   if (existingModal) existingModal.remove();
@@ -999,7 +1007,7 @@ function showErrorModal(message) {
   modalOverlay.id = 'errorModal';
   modalOverlay.style.cssText = `
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+    background: var(--modal-overlay); backdrop-filter: blur(4px);
     display: flex; align-items: center; justify-content: center;
     z-index: 40000; animation: fadeInOverlay 0.3s ease;
   `;
@@ -1008,19 +1016,19 @@ function showErrorModal(message) {
   modal.style.cssText = `
     background: linear-gradient(135deg, var(--panel) 0%, rgba(239, 68, 68, 0.05) 100%);
     border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 20px;
-    padding: 48px 40px; max-width: 420px; width: 90%;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(239, 68, 68, 0.1);
+    padding: 40px; max-width: 400px; width: 90%;
+    box-shadow: var(--modal-shadow);
     text-align: center; animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   `;
   
   modal.innerHTML = `
-    <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 32px;">
-      <circle cx="50" cy="50" r="48" fill="rgba(239, 68, 68, 0.2)" stroke="#ef4444" stroke-width="2"/>
+    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 24px;">
+      <circle cx="50" cy="50" r="48" fill="rgba(239, 68, 68, 0.15)" stroke="#ef4444" stroke-width="2"/>
       <path d="M35 35L65 65M65 35L35 65" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
     </svg>
-    <h2 style="color: var(--text); font-size: 26px; font-weight: 700; margin: 0 0 12px 0; letter-spacing: -0.5px;">Error!</h2>
-    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 28px 0; line-height: 1.6;">${message}</p>
-    <button id="closeErrorBtn" style="width: 100%; padding: 14px 20px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);">
+    <h2 style="color: var(--text); font-size: 24px; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.5px;">Error!</h2>
+    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">${message}</p>
+    <button id="closeErrorBtn" style="width: 100%; padding: 14px 20px; background: #ef4444; border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
       Try Again
     </button>
   `;
