@@ -407,9 +407,11 @@ function setAdjustmentMethod(method) {
 }
 
 // --- FETCH ORIGINAL INVOICE ---
+// --- FETCH ORIGINAL INVOICE ---
 function fetchOriginalInvoice() {
-  const vchNo = document.getElementById('originalInvoiceNo').value.trim();
-  if (!vchNo) {
+  const searchNo = document.getElementById('originalInvoiceNo').value.trim().toLowerCase();
+  
+  if (!searchNo) {
     showErrorModal("Please enter an Original Invoice Number to search.");
     return;
   }
@@ -420,18 +422,23 @@ function fetchOriginalInvoice() {
 
   const transaction = db.transaction(['invoices'], 'readonly');
   const store = transaction.objectStore('invoices');
-  const index = store.index('vchNo');
-  const request = index.get(vchNo);
+  const request = store.getAll(); // Fetch all to allow flexible/case-insensitive searching
 
   request.onsuccess = () => {
-    const inv = request.result;
-    // Check if we found a valid standard Sales Invoice
-    if (!inv || (inv.docType !== 'Invoice' && inv.docType !== 'Sales Invoice')) {
-      showErrorModal(`Invoice '${vchNo}' not found in your sales records.`);
+    const invoices = request.result;
+    
+    // Find standard Sales Invoice by flexible, case-insensitive voucher number
+    const inv = invoices.find(i => 
+      (i.docType === 'Invoice' || i.docType === 'Sales Invoice') && 
+      (i.vchNo || '').toLowerCase() === searchNo
+    );
+
+    if (!inv) {
+      showErrorModal(`Invoice '${document.getElementById('originalInvoiceNo').value.trim()}' not found in your sales records.`);
       return;
     }
 
-    // Auto-fill Client Details
+    // 1. Auto-fill Client Details
     document.getElementById('clientName').value = inv.party?.name || inv.partyName || '';
     document.getElementById('clientGstin').value = inv.party?.gstin || '';
     document.getElementById('clientAddress').value = inv.party?.address || '';
@@ -439,7 +446,7 @@ function fetchOriginalInvoice() {
     document.getElementById('clientPhone').value = inv.party?.phone || '';
     document.getElementById('clientEmail').value = inv.party?.email || '';
 
-    // Populate Table
+    // 2. Populate Table with items exactly as they were sold
     const tbody = document.getElementById('tableBody');
     if(inv.items && inv.items.length > 0) {
       tbody.innerHTML = inv.items.map((item, idx) => `
@@ -463,7 +470,20 @@ function fetchOriginalInvoice() {
           <td><input class="td-input right calc-amount" readonly value="${((item.qty || 0) * (item.price || item.rate || 0)).toFixed(2)}" style="color:var(--text); font-weight:600;"></td>
         </tr>
       `).join('');
+      
       calculateReturnTotals();
+      
+      // Visual feedback that the fetch was successful
+      const fetchBtn = document.querySelector('.btn.teal[onclick="fetchOriginalInvoice()"]');
+      const originalText = fetchBtn.innerHTML;
+      fetchBtn.innerHTML = '✓ Loaded';
+      fetchBtn.style.background = 'var(--green)';
+      fetchBtn.style.borderColor = 'var(--green)';
+      setTimeout(() => {
+        fetchBtn.innerHTML = originalText;
+        fetchBtn.style.background = '';
+        fetchBtn.style.borderColor = '';
+      }, 2000);
     }
   };
 }
