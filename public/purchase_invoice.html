@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>InvoicePro | Purchase Voucher</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<!-- INSTANT THEME LOAD -->
 <script>
   const savedTheme = localStorage.getItem('ip_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
@@ -109,6 +108,10 @@ th:last-child, td:last-child { text-align: right; }
 .gt-title { font-size: 10px; font-weight: 700; color: var(--text-dim); letter-spacing: 0.05em; }
 .gt-amount { font-size: 32px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; color: var(--green); }
 .gt-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* ─── MODAL ANIMATIONS ─── */
+@keyframes fadeInOverlay { from { opacity: 0; backdrop-filter: blur(0px); } to { opacity: 1; backdrop-filter: blur(4px); } }
+@keyframes slideUpModal { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
@@ -124,15 +127,13 @@ th:last-child, td:last-child { text-align: right; }
 
 <div class="main-content">
   
-  <!-- TOP SECTION -->
   <div class="top-section">
-    <!-- Panel 1 -->
     <div class="panel">
       <div class="grid" style="grid-template-columns: 1fr 1fr;">
-        <div class="field"><label>VENDOR INV NO.</label><input class="input" placeholder="From Bill"></div>
+        <div class="field"><label>VENDOR INV NO.</label><input class="input" id="vchNo" placeholder="From Bill"></div>
         <div class="field"><label>BILL DATE</label><input class="input" type="date" id="invDate"></div>
-        <div class="field"><label>PLACE OF SUPPLY</label><input class="input" placeholder="09-UP"></div>
-        <div class="field"><label>REV. CHARGE</label><select class="input"><option>No</option><option>Yes</option></select></div>
+        <div class="field"><label>PLACE OF SUPPLY</label><input class="input" id="placeOfSupply" placeholder="09-UP"></div>
+        <div class="field"><label>REV. CHARGE</label><select class="input" id="revCharge"><option>No</option><option>Yes</option></select></div>
       </div>
       <div class="price-type">
         <span>PRICE TYPE:</span>
@@ -141,7 +142,6 @@ th:last-child, td:last-child { text-align: right; }
       </div>
     </div>
 
-    <!-- Panel 2: Vendor Details -->
     <div class="panel">
       <div class="panel-title green">VENDOR DETAILS (PURCHASED FROM)</div>
       <div class="grid" style="grid-template-columns: 1fr 1fr;">
@@ -191,7 +191,6 @@ th:last-child, td:last-child { text-align: right; }
       </div>
     </div>
 
-    <!-- Panel 3: Your Details (Auto-filled) -->
     <div class="panel">
       <div class="panel-title blue">YOUR DETAILS (BILLED TO)</div>
       <div class="grid" style="grid-template-columns: 1fr 1fr;">
@@ -242,7 +241,6 @@ th:last-child, td:last-child { text-align: right; }
     </div>
   </div>
 
-  <!-- MIDDLE SECTION (TABLE) -->
   <div class="table-section">
     <div class="table-wrap">
       <table>
@@ -259,7 +257,6 @@ th:last-child, td:last-child { text-align: right; }
           </tr>
         </thead>
         <tbody id="tableBody">
-          <!-- Row 1 -->
           <tr>
             <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
             <td><input class="td-input" placeholder="Item Description"></td>
@@ -313,9 +310,7 @@ th:last-child, td:last-child { text-align: right; }
     </div>
   </div>
 
-  <!-- BOTTOM SECTION -->
   <div class="bottom-section">
-    <!-- Tax Summary -->
     <div class="panel">
       <div class="panel-title">TAX SUMMARY</div>
       <div class="summary-row"><label>Taxable (₹)</label><input class="input" id="sumTaxable" value="0.00" readonly></div>
@@ -323,24 +318,22 @@ th:last-child, td:last-child { text-align: right; }
       <div class="summary-row" id="rowSgst" style="margin-bottom:0;"><label id="lblSgst">SGST (₹)</label><input class="input" id="sumSgst" value="0.00" readonly></div>
     </div>
 
-    <!-- Additional -->
     <div class="panel">
       <div class="panel-title">ADDITIONAL DETAILS</div>
       <div class="summary-row"><label style="color:var(--text-dim);font-size:11px;">Freight/Charges</label><input class="input" type="number" id="inFreight" placeholder="0.00"></div>
       <div class="summary-row"><label style="color:var(--text-dim);font-size:11px;">Discount (-)</label><input class="input" type="number" id="inDiscount" placeholder="0.00"></div>
-      <div class="summary-row" style="margin-bottom:0;"><label style="color:var(--text-dim);font-size:11px;">Narration</label><input class="input" placeholder="Notes for records..."></div>
+      <div class="summary-row" style="margin-bottom:0;"><label style="color:var(--text-dim);font-size:11px;">Narration</label><input class="input" id="narration" placeholder="Notes for records..."></div>
     </div>
 
-    <!-- Grand Total -->
     <div class="panel grand-total-box">
       <div class="gt-header">
         <div class="gt-title">TOTAL PAYABLE</div>
         <div class="gt-amount" id="grandTotal">₹0.00</div>
       </div>
       <div class="gt-actions">
-        <button class="btn" style="flex:1;">Cancel</button>
-        <button class="btn" style="flex:1; background: var(--bg); border-color: var(--border);">Save PDF</button>
-        <button class="btn green" style="flex:1.5;">Save Purchase</button>
+        <button class="btn" style="flex:1;" onclick="window.location.href='landing.html'">Cancel</button>
+        <button class="btn" style="flex:1; background: var(--bg); border-color: var(--border);" onclick="alert('PDF feature coming soon!')">Save PDF</button>
+        <button class="btn green" style="flex:1.5;" onclick="savePurchase()">Save Purchase</button>
       </div>
     </div>
   </div>
@@ -348,11 +341,31 @@ th:last-child, td:last-child { text-align: right; }
 </div>
 
 <script>
-// --- INITIALIZATION ---
+// --- INITIALIZATION & DB ---
+let db = null;
+
+function initDB() {
+  const request = indexedDB.open('InvoiceProDB', 1);
+  
+  request.onerror = () => console.error('Database initialization failed');
+  request.onsuccess = (e) => { db = e.target.result; };
+  
+  request.onupgradeneeded = (e) => {
+    const database = e.target.result;
+    if (!database.objectStoreNames.contains('invoices')) {
+      const store = database.createObjectStore('invoices', { keyPath: 'id' });
+      store.createIndex('date', 'date', { unique: false });
+      store.createIndex('vchNo', 'vchNo', { unique: false });
+    }
+  };
+}
+
 document.getElementById('invDate').valueAsDate = new Date();
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Local JWT Decoding for Topbar Email (saves an API call, syncs locally just like profile/landing)
+  initDB();
+  
+  // 1. Local JWT Decoding for Topbar Email 
   const token = localStorage.getItem('invoicepro_token');
   const emailEl = document.getElementById('topEmail');
   if (token) {
@@ -378,6 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('yourName').value    = activeFirm.name || '';
       document.getElementById('yourAddress').value = activeFirm.address || '';
       document.getElementById('yourGstin').value   = activeFirm.gstin || '';
+      if(activeFirm.state) document.getElementById('yourState').value = activeFirm.state;
       document.getElementById('yourPhone').value   = activeFirm.mainMobile || '';
       document.getElementById('yourEmail').value   = activeFirm.email || '';
     }
@@ -387,6 +401,160 @@ document.addEventListener('DOMContentLoaded', () => {
 function logout() {
   localStorage.removeItem('invoicepro_token');
   window.location.href = 'auth.html';
+}
+
+// --- SAVE PURCHASE TO DB ---
+function savePurchase() {
+  const vchNo = document.getElementById('vchNo').value.trim() || 'PB-' + Date.now();
+  
+  const items = [];
+  document.querySelectorAll('#tableBody tr').forEach(row => {
+    const inputs = row.querySelectorAll('.td-input');
+    const desc = inputs[0]?.value.trim() || '';
+    const hsn = inputs[1]?.value.trim() || '';
+    const taxRate = parseFloat(row.querySelector('.calc-tax').value) || 0;
+    const qty = parseFloat(row.querySelector('.calc-qty').value) || 0;
+    const unit = row.querySelectorAll('select.td-input')[1]?.value || 'Nos';
+    const price = parseFloat(row.querySelector('.calc-price').value) || 0;
+    const amount = parseFloat(row.querySelector('.calc-amount').value) || 0;
+
+    if (desc || qty > 0) {
+      items.push({ description: desc, hsn, taxRate, qty, unit, price, amount });
+    }
+  });
+
+  if (items.length === 0) {
+    alert('⚠️ Please add at least one line item to the bill.');
+    return;
+  }
+
+  const grandTotalStr = document.getElementById('grandTotal').textContent.replace('₹', '').replace(/,/g, '');
+  const grandTotal = parseFloat(grandTotalStr) || 0;
+
+  const purchaseData = {
+    id: 'pur_' + Date.now(),
+    docType: 'Purchase Invoice',
+    vchNo: vchNo,
+    date: document.getElementById('invDate').value,
+    placeOfSupply: document.getElementById('placeOfSupply').value,
+    revCharge: document.getElementById('revCharge').value,
+    priceType: document.getElementById('ptExclusive').checked ? 'exclusive' : 'inclusive',
+    
+    // Vendor becomes 'supplier'
+    supplier: {
+      name: document.getElementById('vendorName').value,
+      gstin: document.getElementById('vendorGstin').value,
+      address: document.getElementById('vendorAddress').value,
+      state: document.getElementById('vendorState').value,
+      phone: document.getElementById('vendorPhone').value,
+      email: document.getElementById('vendorEmail').value
+    },
+    
+    // Buyer becomes 'party'
+    party: {
+      name: document.getElementById('yourName').value,
+      gstin: document.getElementById('yourGstin').value,
+      address: document.getElementById('yourAddress').value,
+      state: document.getElementById('yourState').value,
+      phone: document.getElementById('yourPhone').value,
+      email: document.getElementById('yourEmail').value
+    },
+    
+    items: items,
+    
+    totals: {
+      taxable: parseFloat(document.getElementById('sumTaxable').value) || 0,
+      freight: parseFloat(document.getElementById('inFreight').value) || 0,
+      discount: parseFloat(document.getElementById('inDiscount').value) || 0,
+      grandTotal: grandTotal
+    },
+    
+    narration: document.getElementById('narration').value,
+    status: 'Saved',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  if (!db) {
+    alert('❌ Database not initialized. Please refresh.');
+    return;
+  }
+  
+  const transaction = db.transaction(['invoices'], 'readwrite');
+  const store = transaction.objectStore('invoices');
+  store.add(purchaseData);
+  
+  transaction.oncomplete = () => {
+    showSuccessModal(vchNo, grandTotal);
+  };
+  
+  transaction.onerror = () => {
+    alert('❌ Error saving purchase bill. Please try again.');
+  };
+}
+
+// --- BEAUTIFUL SUCCESS MODAL ---
+function showSuccessModal(title, grandTotal) {
+  const existingModal = document.getElementById('successModal');
+  if (existingModal) existingModal.remove();
+  
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = 'successModal';
+  modalOverlay.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 40000; animation: fadeInOverlay 0.3s ease;
+  `;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(16, 185, 129, 0.05) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 20px;
+    padding: 48px 40px; max-width: 420px; width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(16, 185, 129, 0.1);
+    text-align: center; animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  `;
+  
+  const checkmarkSvg = `
+    <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 32px;">
+      <circle cx="50" cy="50" r="48" fill="rgba(16, 185, 129, 0.2)" stroke="#10b981" stroke-width="2"/>
+      <path d="M32 52L45 65L70 35" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+  `;
+  
+  const formattedAmount = grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  
+  modal.innerHTML = `
+    ${checkmarkSvg}
+    <h2 style="color: var(--text); font-size: 26px; font-weight: 700; margin: 0 0 12px 0; letter-spacing: -0.5px;">Saved Successfully!</h2>
+    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 28px 0; line-height: 1.6;">Your purchase bill has been securely saved to the database.</p>
+    
+    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 28px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div style="text-align: left;">
+          <p style="color: var(--text-dim); font-size: 11px; margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Bill / PO #</p>
+          <p style="color: var(--text); font-size: 18px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">${title}</p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-dim); font-size: 11px; margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Total Amount</p>
+          <p style="color: #10b981; font-size: 18px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">₹${formattedAmount}</p>
+        </div>
+      </div>
+    </div>
+    
+    <button id="closeSuccessBtn" style="width: 100%; padding: 14px 20px; background: linear-gradient(135deg, #10b981 0%, #0e9f6e 100%); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);">
+      Create New Bill
+    </button>
+  `;
+  
+  modalOverlay.appendChild(modal);
+  document.body.appendChild(modalOverlay);
+  
+  document.getElementById('closeSuccessBtn').addEventListener('click', () => {
+    modalOverlay.remove();
+    location.reload(); // Refresh to start a blank new bill
+  });
 }
 
 // --- CALCULATIONS ENGINE ---
@@ -558,7 +726,6 @@ function setupGSTAutoFetch(gstinId, nameId, addressId, stateId) {
           nameInput.value = result.data.business_name || '';
           document.getElementById(addressId).value = result.data.address || '';
           
-          // Auto-select state based on 2-digit GST prefix and trigger tax recalculation
           const stateCode = gstin.substring(0, 2);
           const stateMap = { 
             '01': 'JK', '02': 'HP', '03': 'PB', '04': 'CH', '05': 'UK', 
@@ -585,9 +752,7 @@ function setupGSTAutoFetch(gstinId, nameId, addressId, stateId) {
   });
 }
 
-// Hook up the Vendor GSTIN input on the Purchase Invoice
 setupGSTAutoFetch('vendorGstin', 'vendorName', 'vendorAddress', 'vendorState');
-
 calculateInvoice();
 </script>
 </body>
