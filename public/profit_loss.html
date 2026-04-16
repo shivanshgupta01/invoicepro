@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>InvoicePro | Profit & Loss</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  const savedTheme = localStorage.getItem('ip_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+</script>
+<style>
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blue: #4f6ef7; --green: #10b981; --red: #ef4444; --amber: #f59e0b; --purple: #8b5cf6;
+  --r: 6px; --r-panel: 8px;
+}
+[data-theme="dark"] {
+  --bg: #11141e; --panel: #1b202e; --input-bg: #11141e;
+  --border: #2a3143; --text: #e2e8f0; --text-dim: #8c96a8;
+}
+[data-theme="light"] {
+  --bg: #f1f5f9; --panel: #ffffff; --input-bg: #f8fafc;
+  --border: #cbd5e1; --text: #0f172a; --text-dim: #64748b;
+}
+
+body {
+  font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+  height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* ─── TOP BAR ─── */
+.topbar {
+  height: 50px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.brand { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 6px; }
+.brand em { color: var(--blue); font-style: normal; }
+.top-actions { display: flex; gap: 10px; }
+.btn {
+  padding: 6px 12px; border-radius: var(--r); border: 1px solid var(--border);
+  background: transparent; color: var(--text); cursor: pointer; font-size: 12px; font-weight: 500;
+}
+.btn:hover { background: var(--border); }
+
+/* ─── MAIN CONTENT ─── */
+.main-content { flex: 1; padding: 20px; overflow-y: auto; max-width: 900px; margin: 0 auto; width: 100%; }
+.header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.page-title { font-size: 20px; font-weight: 700; }
+.date-filter { background: var(--panel); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: var(--r); outline: none; font-family: inherit; }
+
+/* ─── KPI CARDS ─── */
+.kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+.kpi-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+.kpi-label { font-size: 12px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+.kpi-value { font-size: 32px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.kpi-value.green { color: var(--green); }
+.kpi-value.red { color: var(--red); }
+.kpi-value.blue { color: var(--blue); }
+
+/* ─── STATEMENT TABLE ─── */
+.statement-panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); overflow: hidden; }
+.st-row { display: flex; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.st-row:last-child { border-bottom: none; }
+.st-row.header { background: rgba(0,0,0,0.2); font-weight: 700; font-size: 12px; color: var(--text-dim); text-transform: uppercase; }
+.st-row.sub-total { background: rgba(79,110,247,0.05); font-weight: 600; }
+.st-row.grand-total { background: rgba(16,185,129,0.1); font-weight: 700; font-size: 18px; }
+.st-label { display: flex; align-items: center; gap: 8px; }
+.st-amount { font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+.indent { margin-left: 24px; color: var(--text-dim); font-size: 13px; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">Invoice<em>Pro</em></div>
+  <div class="top-actions">
+    <button class="btn" onclick="window.location.href='landing.html'">← Back to Dashboard</button>
+  </div>
+</header>
+
+<div class="main-content">
+  <div class="header-row">
+    <div class="page-title">Profit & Loss Statement</div>
+    <select class="date-filter" id="timeFilter" onchange="calculatePL()">
+      <option value="all">All Time</option>
+      <option value="this_month">This Month</option>
+      <option value="this_year">This Year</option>
+    </select>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Income</div>
+      <div class="kpi-value blue" id="kpiIncome">₹0.00</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Expenses</div>
+      <div class="kpi-value red" id="kpiExpense">₹0.00</div>
+    </div>
+    <div class="kpi-card" style="border-color: var(--green); background: rgba(16,185,129,0.05);">
+      <div class="kpi-label" style="color: var(--green);">Net Profit</div>
+      <div class="kpi-value green" id="kpiProfit">₹0.00</div>
+    </div>
+  </div>
+
+  <div class="statement-panel">
+    <div class="st-row header">
+      <div>Account</div>
+      <div>Total (₹)</div>
+    </div>
+
+    <div class="st-row">
+      <div class="st-label" style="font-weight: 600; color: var(--blue);">Operating Income</div>
+    </div>
+    <div class="st-row">
+      <div class="st-label indent">Sales Invoices (Revenue)</div>
+      <div class="st-amount" id="valSales">0.00</div>
+    </div>
+    <div class="st-row">
+      <div class="st-label indent">Less: Sales Returns</div>
+      <div class="st-amount" style="color: var(--red);" id="valSalesReturn">0.00</div>
+    </div>
+    <div class="st-row sub-total">
+      <div class="st-label">Net Income</div>
+      <div class="st-amount" id="valNetIncome">0.00</div>
+    </div>
+
+    <div class="st-row" style="border-top: 4px solid var(--border);">
+      <div class="st-label" style="font-weight: 600; color: var(--red);">Cost of Goods & Expenses</div>
+    </div>
+    <div class="st-row">
+      <div class="st-label indent">Purchases / Bills</div>
+      <div class="st-amount" id="valPurchases">0.00</div>
+    </div>
+    <div class="st-row">
+      <div class="st-label indent">Less: Purchase Returns</div>
+      <div class="st-amount" style="color: var(--green);" id="valPurchaseReturn">0.00</div>
+    </div>
+    <div class="st-row sub-total">
+      <div class="st-label">Net Expenses</div>
+      <div class="st-amount" id="valNetExpense">0.00</div>
+    </div>
+
+    <div class="st-row grand-total" style="border-top: 4px solid var(--border);">
+      <div class="st-label">NET PROFIT / (LOSS)</div>
+      <div class="st-amount" id="valGrandProfit">₹0.00</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let db = null;
+
+function initDB() {
+  const request = indexedDB.open('InvoiceProDB', 1);
+  request.onsuccess = (e) => { 
+    db = e.target.result; 
+    calculatePL(); 
+  };
+}
+
+function calculatePL() {
+  if (!db) return;
+  
+  const filter = document.getElementById('timeFilter').value;
+  const now = new Date();
+  
+  let sales = 0;
+  let salesReturns = 0;
+  let purchases = 0;
+  let purchaseReturns = 0;
+
+  const transaction = db.transaction(['invoices'], 'readonly');
+  const store = transaction.objectStore('invoices');
+  const request = store.getAll();
+
+  request.onsuccess = () => {
+    const records = request.result;
+
+    records.forEach(record => {
+      // Date Filtering Logic
+      const recordDate = new Date(record.date || record.createdAt);
+      if (filter === 'this_month') {
+        if (recordDate.getMonth() !== now.getMonth() || recordDate.getFullYear() !== now.getFullYear()) return;
+      } else if (filter === 'this_year') {
+        if (recordDate.getFullYear() !== now.getFullYear()) return;
+      }
+
+      // We use "taxable" or "subtotal" to calculate P&L without tax distortion
+      const amount = record.totals?.taxable || record.totals?.subtotal || record.totals?.grandTotal || 0;
+      const type = record.docType || 'Invoice'; // Fallback for older saves
+
+      if (type === 'Invoice' || type === 'Sales Invoice') {
+        sales += amount;
+      } else if (type === 'Sales Return') {
+        salesReturns += amount;
+      } else if (type === 'Purchase Invoice' || type === 'Purchase') {
+        purchases += amount;
+      } else if (type === 'Purchase Return') {
+        purchaseReturns += amount;
+      }
+      // Note: Quotations, Receipts, and Payments are ignored as they don't affect P&L
+    });
+
+    // Crunch the final numbers
+    const netIncome = sales - salesReturns;
+    const netExpense = purchases - purchaseReturns;
+    const netProfit = netIncome - netExpense;
+
+    // Update UI
+    document.getElementById('valSales').textContent = sales.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    document.getElementById('valSalesReturn').textContent = '-' + salesReturns.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    document.getElementById('valNetIncome').textContent = netIncome.toLocaleString('en-IN', {minimumFractionDigits: 2});
+
+    document.getElementById('valPurchases').textContent = purchases.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    document.getElementById('valPurchaseReturn').textContent = '-' + purchaseReturns.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    document.getElementById('valNetExpense').textContent = netExpense.toLocaleString('en-IN', {minimumFractionDigits: 2});
+
+    document.getElementById('kpiIncome').textContent = '₹' + netIncome.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    document.getElementById('kpiExpense').textContent = '₹' + netExpense.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    
+    const profitEls = [document.getElementById('kpiProfit'), document.getElementById('valGrandProfit')];
+    const profitText = (netProfit < 0 ? '-₹' : '₹') + Math.abs(netProfit).toLocaleString('en-IN', {minimumFractionDigits: 2});
+    
+    profitEls.forEach(el => {
+      el.textContent = profitText;
+      if (netProfit < 0) {
+        el.style.color = 'var(--red)';
+        el.parentElement.style.borderColor = 'var(--red)';
+        el.parentElement.style.backgroundColor = 'rgba(239,68,68,0.05)';
+      } else {
+        el.style.color = 'var(--green)';
+        el.parentElement.style.borderColor = 'var(--green)';
+        el.parentElement.style.backgroundColor = 'rgba(16,185,129,0.05)';
+      }
+    });
+  };
+}
+
+document.addEventListener('DOMContentLoaded', initDB);
+</script>
+</body>
+</html>
