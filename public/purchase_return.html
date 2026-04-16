@@ -288,13 +288,13 @@ th:last-child, td:last-child { text-align: right; }
     </div>
   </div>
 
-  <div class="bottom-section">
+  <div class="bottom-section" style="grid-template-columns: 1fr 1fr 1.2fr 1.2fr;">
     <div class="panel">
       <div class="panel-title amber">RECOVERY SUMMARY</div>
       <div class="summary-row"><label>Items Subtotal (₹)</label><input class="input" id="returnSubtotal" value="0.00" readonly style="color: var(--text-dim);"></div>
       <div class="summary-row"><label>Tax Refunded (₹)</label><input class="input" type="number" id="returnTax" placeholder="0.00" onchange="calculateReturnTotals()"></div>
       <div class="summary-row" style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 8px;">
-        <label style="color:var(--text-dim);">Deductions / Fees (-)</label><input class="input" type="number" id="deductions" placeholder="0.00" onchange="calculateReturnTotals()">
+        <label style="color:var(--text-dim);">Deductions (-)</label><input class="input" type="number" id="deductions" placeholder="0.00" onchange="calculateReturnTotals()">
       </div>
     </div>
 
@@ -302,18 +302,18 @@ th:last-child, td:last-child { text-align: right; }
       <div class="panel-title purple">ADJUSTMENT TYPE</div>
       <div class="gt-actions" style="display:flex; flex-direction: column; gap: 8px; flex: 1; justify-content: center;">
         <button class="adj-btn active" id="btnRefund" onclick="setAdjustmentMethod('Refund')">Refund (Bank/Cash)</button>
-        <button class="adj-btn" id="btnCredit" onclick="setAdjustmentMethod('Vendor Credit')">Vendor Credit (Deduct next bill)</button>
+        <button class="adj-btn" id="btnCredit" onclick="setAdjustmentMethod('Vendor Credit')">Vendor Credit</button>
       </div>
     </div>
 
-    <div class="panel" style="display: flex; flex-direction: column;">
+    <div class="panel" style="display: flex; flex-direction: column; min-width: 140px;">
       <div class="panel-title">RETURN NOTES</div>
-      <textarea class="input" id="returnNotes" style="flex: 1; resize: none; padding-top: 8px;" placeholder="Notes for the vendor regarding the return..."></textarea>
+      <textarea class="input" id="returnNotes" style="flex: 1; resize: none; padding-top: 8px; width: 100%;" placeholder="Notes for the vendor..."></textarea>
     </div>
 
     <div class="panel grand-total-box">
       <div class="gt-header">
-        <div class="gt-title">TOTAL REFUNDABLE AMOUNT</div>
+        <div class="gt-title">TOTAL REFUNDABLE</div>
         <div class="gt-amount" id="finalReturnTotal">₹0.00</div>
       </div>
       <div class="gt-actions">
@@ -322,7 +322,6 @@ th:last-child, td:last-child { text-align: right; }
       </div>
     </div>
   </div>
-</div>
 
 <script>
 // Auto-fill dates
