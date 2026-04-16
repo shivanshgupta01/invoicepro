@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>InvoicePro | Purchase Return</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  const savedTheme = localStorage.getItem('ip_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+</script>
+<style>
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blue: #4f6ef7; --green: #10b981; --red: #ef4444; --amber: #f59e0b; --teal: #14b8a6; --purple: #8b5cf6;
+  --r: 6px; --r-panel: 8px;
+}
+[data-theme="dark"] {
+  --bg: #11141e; --panel: #1b202e; --input-bg: #11141e;
+  --border: #2a3143; --border-focus: #4f6ef7;
+  --text: #e2e8f0; --text-dim: #8c96a8;
+}
+[data-theme="light"] {
+  --bg: #f1f5f9; --panel: #ffffff; --input-bg: #f8fafc;
+  --border: #cbd5e1; --border-focus: #4f6ef7;
+  --text: #0f172a; --text-dim: #64748b;
+}
+
+body {
+  font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+  height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* ─── TOP BAR ─── */
+.topbar {
+  height: 50px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.brand { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 6px; }
+.brand em { color: var(--blue); font-style: normal; }
+.brand-sub { color: var(--text-dim); font-size: 13px; font-weight: 400; }
+.top-actions { display: flex; align-items: center; gap: 10px; }
+.user-email { font-size: 12px; color: var(--text-dim); margin: 0 8px; }
+.btn {
+  padding: 6px 12px; border-radius: var(--r); border: 1px solid var(--border);
+  background: transparent; color: var(--text); cursor: pointer;
+  font-size: 12px; font-weight: 500; transition: 0.2s;
+}
+.btn:hover { background: var(--border); }
+.btn.green { background: #0e9f6e; border-color: #0e9f6e; color: #fff; }
+.btn.green:hover { background: #057a55; }
+.btn.red { background: var(--red); border-color: var(--red); color: #fff; }
+.btn.red:hover { background: #dc2626; }
+.btn.purple { background: var(--purple); border-color: var(--purple); color: #fff; }
+.btn.purple:hover { background: #7c3aed; }
+.btn.outline-red { color: var(--red); border-color: transparent; }
+.btn.outline-red:hover { background: rgba(239,68,68,0.1); }
+
+/* ─── MAIN LAYOUT ─── */
+.main-content { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 10px; min-height: 0; overflow-y: auto; }
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); padding: 12px; }
+.panel-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; color: var(--text-dim); }
+.panel-title.blue { color: #3b82f6; }
+.panel-title.green { color: #10b981; }
+.panel-title.amber { color: #f59e0b; }
+.panel-title.purple { color: var(--purple); }
+.grid { display: grid; gap: 10px; }
+
+/* ─── INPUTS ─── */
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; }
+.input {
+  background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--r);
+  color: var(--text); padding: 0 10px; height: 32px; font-size: 13px; width: 100%; outline: none; transition: 0.2s;
+}
+.input:focus { border-color: var(--border-focus); }
+.input:disabled { opacity: 0.7; cursor: not-allowed; }
+.input::placeholder { color: #94a3b8; }
+
+/* ─── TOP PANELS ─── */
+.top-section { display: grid; grid-template-columns: 1fr 1.3fr 1.3fr; gap: 10px; flex-shrink: 0; }
+
+/* ─── TABLE SECTION ─── */
+.table-section { flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); display: flex; flex-direction: column; min-height: 200px; }
+.table-wrap { flex: 1; overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { position: sticky; top: 0; background: var(--bg); z-index: 10; font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+th:last-child, td:last-child { text-align: right; }
+.td-input { background: transparent; border: 1px solid transparent; color: var(--text); height: 28px; width: 100%; font-size: 13px; padding: 0 6px; outline: none; border-radius: 4px; font-family: 'Inter', sans-serif;}
+.td-input:focus, .td-input:hover { border-color: var(--border); background: var(--input-bg); }
+.td-input:disabled { opacity: 0.6; cursor: not-allowed; }
+.td-input.right { text-align: right; }
+.table-footer { padding: 10px; border-top: 1px solid var(--border); background: var(--panel); flex-shrink: 0; text-align: center; color: var(--text-dim); font-size: 12px;}
+.add-btn { background: transparent; border: 1px solid var(--blue); color: var(--blue); padding: 6px 12px; border-radius: var(--r); font-size: 12px; font-weight: 500; cursor: pointer; transition: 0.2s; }
+.add-btn:hover { background: rgba(79,110,247,0.1); }
+.del-btn { color: var(--red); cursor: pointer; background: transparent; border: none; font-size: 16px; opacity: 0.5; transition: 0.2s; }
+.del-btn:hover { opacity: 1; }
+
+/* ─── BOTTOM PANELS ─── */
+.bottom-section { display: grid; grid-template-columns: 1fr 1fr 1.3fr 1.2fr; gap: 10px; flex-shrink: 0; }
+.summary-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.summary-row label { font-size: 12px; font-weight: 600; color: var(--text); }
+.summary-row .input { width: 110px; text-align: right; font-weight: 600; }
+.grand-total-box { display: flex; flex-direction: column; justify-content: space-between; }
+.gt-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
+.gt-title { font-size: 10px; font-weight: 700; color: var(--text-dim); letter-spacing: 0.05em; }
+.gt-amount { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; color: var(--green); }
+.gt-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* Adjustment Method Buttons */
+.adj-btn {
+  flex: 1; padding: 10px; border-radius: var(--r); border: 1px solid var(--border);
+  background: var(--input-bg); color: var(--text); cursor: pointer;
+  font-size: 12px; font-weight: 600; transition: 0.2s; text-align: center;
+}
+.adj-btn.active {
+  background: var(--purple); border-color: var(--purple); color: #fff;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-focus); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">Invoice<em>Pro</em> <span class="brand-sub">| Purchase Return (Debit Note)</span></div>
+  <div class="top-actions">
+    <button class="btn" onclick="window.location.href='landing.html'">← Back to Hub</button>
+    <span class="user-email" id="topEmail">loading...</span>
+    <button class="btn outline-red" onclick="logout()">Log out</button>
+  </div>
+</header>
+
+<div class="main-content">
+  
+  <div class="top-section">
+    <div class="panel">
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="field" style="grid-column: span 2;">
+          <label>ORIGINAL BILL / PO NO. <span style="color: var(--purple); text-transform: none; font-weight: normal;">(Type to load items)</span></label>
+          <div style="display: flex; gap: 6px;">
+            <input class="input" id="searchBillNo" placeholder="e.g., BILL-001...">
+            <button class="btn purple" style="height: 32px;" onclick="fetchOriginalBill()">Fetch Bill</button>
+          </div>
+        </div>
+        <div class="field"><label>DEBIT NOTE / RETURN ID</label><input class="input" id="returnId" placeholder="PR-001"></div>
+        <div class="field"><label>RETURN DATE</label><input class="input" type="date" id="returnDate"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title blue">VENDOR DETAILS (SUPPLIER)</div>
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <input class="input" id="vendorName" placeholder="Vendor Name">
+        <input class="input" id="vendorGstin" placeholder="Vendor GSTIN" maxlength="15">
+        <input class="input" id="vendorAddress" placeholder="Vendor Address">
+        <select class="input" id="vendorState">
+          <option value="AN">Andaman & Nicobar Islands</option>
+          <option value="AP">Andhra Pradesh</option>
+          <option value="AR">Arunachal Pradesh</option>
+          <option value="AS">Assam</option>
+          <option value="BR">Bihar</option>
+          <option value="CH">Chandigarh</option>
+          <option value="CG">Chhattisgarh</option>
+          <option value="DN">Dadra & Nagar Haveli and Daman & Diu</option>
+          <option value="DL">Delhi</option>
+          <option value="GA">Goa</option>
+          <option value="GJ">Gujarat</option>
+          <option value="HR">Haryana</option>
+          <option value="HP">Himachal Pradesh</option>
+          <option value="JK">Jammu & Kashmir</option>
+          <option value="JH">Jharkhand</option>
+          <option value="KA">Karnataka</option>
+          <option value="KL">Kerala</option>
+          <option value="LA">Ladakh</option>
+          <option value="LD">Lakshadweep</option>
+          <option value="MP">Madhya Pradesh</option>
+          <option value="MH">Maharashtra</option>
+          <option value="MN">Manipur</option>
+          <option value="ML">Meghalaya</option>
+          <option value="MZ">Mizoram</option>
+          <option value="NL">Nagaland</option>
+          <option value="OR">Odisha</option>
+          <option value="PY">Puducherry</option>
+          <option value="PB">Punjab</option>
+          <option value="RJ">Rajasthan</option>
+          <option value="SK">Sikkim</option>
+          <option value="TN">Tamil Nadu</option>
+          <option value="TS">Telangana</option>
+          <option value="TR">Tripura</option>
+          <option value="UP" selected>Uttar Pradesh</option>
+          <option value="UK">Uttarakhand</option>
+          <option value="WB">West Bengal</option>
+        </select>
+        <input class="input" id="vendorPhone" placeholder="Vendor Phone">
+        <input class="input" id="vendorEmail" placeholder="Vendor Email">
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title green">YOUR DETAILS (BUYER)</div>
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <input class="input" id="buyerName" placeholder="Company Name" disabled>
+        <input class="input" id="buyerGstin" placeholder="GSTIN" disabled>
+        <input class="input" id="buyerAddress" placeholder="Registered Address" disabled>
+        <input class="input" id="buyerState" placeholder="State" disabled>
+        <input class="input" id="buyerPhone" placeholder="Phone No." disabled>
+        <input class="input" id="buyerEmail" placeholder="Email ID" disabled>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-section">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 40px; text-align: center;">X</th>
+            <th>Item Name / SKU</th>
+            <th style="width: 140px;">Unit Cost (₹)</th>
+            <th style="width: 120px;">Return Qty</th>
+            <th style="width: 180px;">Reason for Return</th>
+            <th style="width: 140px;">Return Total (₹)</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr>
+            <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
+            <td><input class="td-input" placeholder="e.g. Office Chairs" onchange="calculateReturnLineItem(this)"></td>
+            <td><input class="td-input right calc-price" type="number" placeholder="0.00" onchange="calculateReturnLineItem(this)"></td>
+            <td><input class="td-input right calc-qty" type="number" value="1" min="1" onchange="calculateReturnLineItem(this)"></td>
+            <td>
+              <select class="td-input calc-reason">
+                <option value="Defective">Defective / Damaged</option>
+                <option value="Wrong Item">Wrong Item Received</option>
+                <option value="Overstock">Overstock / Excess</option>
+                <option value="Not Required">No Longer Required</option>
+              </select>
+            </td>
+            <td><input class="td-input right calc-amount" readonly value="0.00" style="color:var(--text); font-weight:600;"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-footer" id="tableFooterText">
+      <button class="add-btn" onclick="addRow()">+ Add Row for Return (F2)</button>
+    </div>
+  </div>
+
+  <div class="bottom-section">
+    <div class="panel">
+      <div class="panel-title amber">RECOVERY SUMMARY</div>
+      <div class="summary-row"><label>Items Subtotal (₹)</label><input class="input" id="returnSubtotal" value="0.00" readonly style="color: var(--text-dim);"></div>
+      <div class="summary-row"><label>Tax Refunded (₹)</label><input class="input" type="number" id="returnTax" placeholder="0.00" onchange="calculateReturnTotals()"></div>
+      <div class="summary-row" style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 8px;">
+        <label style="color:var(--text-dim);">Deductions / Fees (-)</label><input class="input" type="number" id="deductions" placeholder="0.00" onchange="calculateReturnTotals()">
+      </div>
+    </div>
+
+    <div class="panel" style="display: flex; flex-direction: column;">
+      <div class="panel-title purple">ADJUSTMENT TYPE</div>
+      <div class="gt-actions" style="display:flex; flex-direction: column; gap: 8px; flex: 1; justify-content: center;">
+        <button class="adj-btn active" id="btnRefund" onclick="setAdjustmentMethod('Refund')">Refund (Bank/Cash)</button>
+        <button class="adj-btn" id="btnCredit" onclick="setAdjustmentMethod('Vendor Credit')">Vendor Credit (Deduct next bill)</button>
+      </div>
+    </div>
+
+    <div class="panel" style="display: flex; flex-direction: column;">
+      <div class="panel-title">RETURN NOTES</div>
+      <textarea class="input" id="returnNotes" style="flex: 1; resize: none; padding-top: 8px;" placeholder="Notes for the vendor regarding the return..."></textarea>
+    </div>
+
+    <div class="panel grand-total-box">
+      <div class="gt-header">
+        <div class="gt-title">TOTAL REFUNDABLE AMOUNT</div>
+        <div class="gt-amount" id="finalReturnTotal">₹0.00</div>
+      </div>
+      <div class="gt-actions">
+        <button class="btn" style="flex:1;" onclick="window.location.href='landing.html'">Cancel</button>
+        <button class="btn green" style="flex:1;" onclick="savePurchaseReturn()">Save Return</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Auto-fill dates
+document.getElementById('returnDate').valueAsDate = new Date();
+
+let db = null;
+let currentInvoiceItems = [];
+let adjustmentMethod = 'Refund';
+let originalBillData = null;
+
+// Initialize IndexedDB
+function initDB() {
+  const request = indexedDB.open('InvoiceProDB', 1);
+  request.onerror = () => console.error('Database initialization failed');
+  request.onsuccess = (e) => { db = e.target.result; };
+  request.onupgradeneeded = (e) => {
+    const database = e.target.result;
+    if (!database.objectStoreNames.contains('invoices')) {
+      const objectStore = database.createObjectStore('invoices', { keyPath: 'id' });
+      objectStore.createIndex('date', 'date', { unique: false });
+      objectStore.createIndex('partyName', 'partyName', { unique: false });
+      objectStore.createIndex('vchNo', 'vchNo', { unique: false });
+    }
+  };
+}
+
+// --- AUTH & INITIALIZATION ---
+document.addEventListener('DOMContentLoaded', () => {
+  initDB();
+  const token = localStorage.getItem('invoicepro_token');
+  const emailEl = document.getElementById('topEmail');
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (emailEl) emailEl.textContent = payload.user?.email || 'No email';
+    } catch(e) {}
+  }
+
+  // Auto-fill "Your Details (Buyer)" from LocalStorage Firm
+  const firms = JSON.parse(localStorage.getItem('ip_firms') || '[]');
+  const activeFirmId = localStorage.getItem('ip_active_firm');
+  if (firms.length > 0 && activeFirmId) {
+    const activeFirm = firms.find(f => String(f.id) === String(activeFirmId));
+    if (activeFirm) {
+      document.getElementById('buyerName').value    = activeFirm.name || '';
+      document.getElementById('buyerAddress').value = activeFirm.address || '';
+      document.getElementById('buyerGstin').value   = activeFirm.gstin || '';
+      document.getElementById('buyerPhone').value   = activeFirm.mainMobile || '';
+      document.getElementById('buyerEmail').value   = activeFirm.email || '';
+    }
+  }
+});
+
+function logout() {
+  localStorage.removeItem('invoicepro_token');
+  window.location.href = 'auth.html';
+}
+
+function setAdjustmentMethod(method) {
+  adjustmentMethod = method;
+  document.getElementById('btnRefund').classList.toggle('active', method === 'Refund');
+  document.getElementById('btnCredit').classList.toggle('active', method === 'Vendor Credit');
+}
+
+// --- CALCULATION ENGINE ---
+function calculateReturnLineItem(inputEl) {
+  const tr = inputEl.closest('tr');
+  const qty = parseFloat(tr.querySelector('.calc-qty').value) || 0;
+  const price = parseFloat(tr.querySelector('.calc-price').value) || 0;
+  
+  const refundAmount = qty * price;
+  tr.querySelector('.calc-amount').value = refundAmount.toFixed(2);
+  
+  calculateReturnTotals();
+}
+
+function calculateReturnTotals() {
+  let subtotal = 0;
+  document.querySelectorAll('#tableBody .calc-amount').forEach(el => {
+    subtotal += parseFloat(el.value) || 0;
+  });
+  
+  const taxRefunded = parseFloat(document.getElementById('returnTax').value) || 0;
+  const deductions = parseFloat(document.getElementById('deductions').value) || 0;
+  
+  const finalTotal = Math.max(0, (subtotal + taxRefunded) - deductions);
+  
+  document.getElementById('returnSubtotal').value = subtotal.toFixed(2);
+  document.getElementById('finalReturnTotal').textContent = '₹' + finalTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function addRow() {
+  const tbody = document.getElementById('tableBody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
+    <td><input class="td-input" placeholder="Item Name / SKU" onchange="calculateReturnLineItem(this)"></td>
+    <td><input class="td-input right calc-price" type="number" placeholder="0.00" onchange="calculateReturnLineItem(this)"></td>
+    <td><input class="td-input right calc-qty" type="number" value="1" min="1" onchange="calculateReturnLineItem(this)"></td>
+    <td>
+      <select class="td-input calc-reason">
+        <option value="Defective">Defective / Damaged</option>
+        <option value="Wrong Item">Wrong Item Received</option>
+        <option value="Overstock">Overstock / Excess</option>
+        <option value="Not Required">No Longer Required</option>
+      </select>
+    </td>
+    <td><input class="td-input right calc-amount" readonly value="0.00" style="color:var(--text); font-weight:600;"></td>
+  `;
+  tbody.appendChild(tr);
+  document.querySelector('.table-wrap').scrollTop = document.querySelector('.table-wrap').scrollHeight;
+  calculateReturnTotals();
+}
+
+function removeRow(btn) {
+  btn.closest('tr').remove();
+  calculateReturnTotals();
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'F2') {
+    e.preventDefault();
+    addRow();
+  }
+});
+
+// --- FETCH ORIGINAL BILL ---
+function fetchOriginalBill() {
+  const vchNo = document.getElementById('searchBillNo').value.trim();
+  if (!vchNo) {
+    alert("Please enter an Original Bill / PO Number to search.");
+    return;
+  }
+  if (!db) {
+    alert("Database not ready.");
+    return;
+  }
+
+  const transaction = db.transaction(['invoices'], 'readonly');
+  const store = transaction.objectStore('invoices');
+  const index = store.index('vchNo');
+  const request = index.get(vchNo);
+
+  request.onsuccess = () => {
+    const inv = request.result;
+    // Assuming 'Purchase Invoice' docType exists, or falling back to searching anyway
+    if (!inv || (inv.docType && inv.docType !== 'Purchase Invoice' && inv.docType !== 'Purchase')) {
+      alert(`Bill/PO ${vchNo} not found in your purchase records.`);
+      return;
+    }
+
+    originalBillData = inv;
+    
+    // Auto-fill Vendor Details (Supplier)
+    document.getElementById('vendorName').value = inv.supplier?.name || inv.partyName || '';
+    document.getElementById('vendorGstin').value = inv.supplier?.gstin || inv.partyGstin || '';
+    document.getElementById('vendorAddress').value = inv.supplier?.address || inv.partyAddress || '';
+    document.getElementById('vendorState').value = inv.supplier?.state || inv.buyerState || 'UP';
+    document.getElementById('vendorPhone').value = inv.supplier?.phone || inv.partyPhone || '';
+    document.getElementById('vendorEmail').value = inv.supplier?.email || inv.partyEmail || '';
+
+    // Populate Table
+    const tbody = document.getElementById('tableBody');
+    if(inv.items && inv.items.length > 0) {
+      tbody.innerHTML = inv.items.map((item, idx) => `
+        <tr>
+          <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
+          <td><input class="td-input" value="${item.description}" disabled></td>
+          <td><input class="td-input right calc-price" type="number" value="${item.price || item.rate || 0}" disabled></td>
+          <td>
+            <input class="td-input right calc-qty" type="number" value="${item.qty}" min="0" max="${item.qty}" step="0.01" 
+                   onchange="calculateReturnLineItem(this)" style="border: 1px solid var(--purple);">
+          </td>
+          <td>
+            <select class="td-input calc-reason">
+              <option value="Defective">Defective / Damaged</option>
+              <option value="Wrong Item">Wrong Item Received</option>
+              <option value="Overstock">Overstock / Excess</option>
+              <option value="Not Required">No Longer Required</option>
+            </select>
+          </td>
+          <td><input class="td-input right calc-amount" readonly value="${((item.qty || 0) * (item.price || item.rate || 0)).toFixed(2)}" style="color:var(--text); font-weight:600;"></td>
+        </tr>
+      `).join('');
+      calculateReturnTotals();
+    }
+  };
+}
+
+// AUTO-FETCH GST DETAILS
+function setupGSTAutoFetch(gstinId, nameId, addressId, stateId) {
+  const gstinInput = document.getElementById(gstinId);
+  if (!gstinInput) return;
+
+  gstinInput.addEventListener('input', async (e) => {
+    let gstin = e.target.value.toUpperCase();
+    e.target.value = gstin;
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+    
+    if (gstin.length === 15 && gstRegex.test(gstin)) {
+      const nameInput = document.getElementById(nameId);
+      const oldName = nameInput.value;
+      nameInput.value = "Fetching from GST Portal...";
+      
+      try {
+        const res = await fetch(`/api/gst/verify/${gstin}`);
+        const result = await res.json();
+        if (result.success && result.data) {
+          nameInput.value = result.data.business_name || '';
+          document.getElementById(addressId).value = result.data.address || '';
+          const stateCode = gstin.substring(0, 2);
+          const stateMap = { '09': 'UP', '07': 'DL', '19': 'WB', '27': 'MH' };
+          if (stateMap[stateCode]) document.getElementById(stateId).value = stateMap[stateCode];
+        } else { nameInput.value = oldName; }
+      } catch (err) { nameInput.value = oldName; }
+    }
+  });
+}
+setupGSTAutoFetch('vendorGstin', 'vendorName', 'vendorAddress', 'vendorState');
+
+// --- SAVE RETURN FUNCTION ---
+function savePurchaseReturn() {
+  const returnId = document.getElementById('returnId').value.trim() || 'PR-' + Date.now();
+  const vendorName = document.getElementById('vendorName').value.trim() || 'Unknown Vendor';
+  
+  const items = [];
+  document.querySelectorAll('#tableBody tr').forEach(row => {
+    const inputs = row.querySelectorAll('.td-input');
+    // Check if imported (disabled input) or manual (enabled input)
+    const description = inputs[0]?.value.trim() || '';
+    const price = parseFloat(inputs[1]?.value) || 0;
+    const qty = parseFloat(inputs[2]?.value) || 0;
+    const reason = row.querySelector('.calc-reason')?.value || 'Defective';
+    const amount = parseFloat(row.querySelector('.calc-amount')?.value) || 0;
+
+    if (description || qty > 0) {
+      items.push({ description, price, qty, reason, amount });
+    }
+  });
+
+  if (items.length === 0) {
+    alert('⚠️ Please add at least one line item to return');
+    return;
+  }
+
+  const finalTotalStr = document.getElementById('finalReturnTotal').textContent.replace('₹', '').replace(/,/g, '');
+  const finalTotal = parseFloat(finalTotalStr) || 0;
+
+  const returnData = {
+    id: 'prtn_' + Date.now(),
+    docType: 'Purchase Return',
+    vchNo: returnId,
+    originalBillNo: document.getElementById('searchBillNo').value.trim(),
+    date: document.getElementById('returnDate').value,
+    
+    supplier: {
+      name: vendorName,
+      gstin: document.getElementById('vendorGstin').value,
+      address: document.getElementById('vendorAddress').value,
+      state: document.getElementById('vendorState').value,
+      phone: document.getElementById('vendorPhone').value,
+      email: document.getElementById('vendorEmail').value
+    },
+    
+    party: {
+      name: document.getElementById('buyerName').value,
+      gstin: document.getElementById('buyerGstin').value
+    },
+    
+    items: items,
+    adjustmentMethod: adjustmentMethod,
+    
+    totals: {
+      subtotal: parseFloat(document.getElementById('returnSubtotal').value) || 0,
+      taxRefunded: parseFloat(document.getElementById('returnTax').value) || 0,
+      deductions: parseFloat(document.getElementById('deductions').value) || 0,
+      grandTotal: finalTotal
+    },
+    
+    notes: document.getElementById('returnNotes').value,
+    status: 'Processed',
+    createdAt: new Date().toISOString()
+  };
+
+  if (!db) {
+    alert('❌ Database not initialized. Please refresh.');
+    return;
+  }
+  
+  const transaction = db.transaction(['invoices'], 'readwrite');
+  const store = transaction.objectStore('invoices');
+  store.add(returnData);
+  
+  transaction.oncomplete = () => {
+    alert(`✅ Purchase Return Processed!\n\nDebit Note / Return ID: ${returnId}\nRefund Value: ₹${finalTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}\nMethod: ${adjustmentMethod}`);
+    if (confirm('Create a new Purchase Return?')) {
+      location.reload();
+    } else {
+      window.location.href = 'landing.html';
+    }
+  };
+  
+  transaction.onerror = () => {
+    alert('❌ Error saving purchase return. Please try again.');
+  };
+}
+</script>
+</body>
+</html>
