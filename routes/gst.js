@@ -1,7 +1,6 @@
 // routes/gst.js
 // ─────────────────────────────────────────────────────────────
-//  GST verification route — mirrors your Python Flask code
-//  but written for Node.js + Express.
+//  GST verification route
 //
 //  Endpoint: GET /api/gst/verify/:gstin
 //  Example:  GET /api/gst/verify/27AAAAA0000A1Z5
@@ -9,9 +8,6 @@
 
 const express = require('express');
 const router  = express.Router();
-
-const RAPIDAPI_HOST = 'gst-insights-api.p.rapidapi.com';
-const RAPIDAPI_KEY  = '9327d10006mshbeeda76caddbf61p1b957ejsnfb3ec9ed10f7';
 
 // GET /api/gst/verify/:gstin
 router.get('/verify/:gstin', async (req, res) => {
@@ -25,18 +21,36 @@ router.get('/verify/:gstin', async (req, res) => {
   }
 
   try {
-    const url = `https://${RAPIDAPI_HOST}/getGSTDetailsUsingGST/${gstin}`;
+    // 1. Properly grab the variables from your .env file
+    const apiHost = process.env.RAPIDAPI_HOST;
+    const apiKey = process.env.RAPIDAPI_KEY;
+
+    // Safety check just in case the .env is missing
+    if (!apiHost || !apiKey) {
+      console.error('SERVER ERROR: Missing RAPIDAPI_HOST or RAPIDAPI_KEY in .env file!');
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Server configuration error: Missing API keys.' 
+      });
+    }
+
+    const url = `https://${apiHost}/getGSTDetailsUsingGST/${gstin}`;
 
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'x-rapidapi-host': RAPIDAPI_HOST,
-        'x-rapidapi-key':  RAPIDAPI_KEY,
+        'x-rapidapi-host': apiHost,
+        'x-rapidapi-key':  apiKey,
         'Content-Type':    'application/json',
       },
     });
 
+    // 2. Better Error Catching
     if (!response.ok) {
+      // Pull the exact error from RapidAPI so you can see it in your terminal
+      const errorText = await response.text(); 
+      console.error(`❌ RapidAPI Error (Code ${response.status}):`, errorText);
+      
       return res.status(response.status).json({
         success: false,
         message: `API Error (Code ${response.status}).`
@@ -50,7 +64,7 @@ router.get('/verify/:gstin', async (req, res) => {
       return res.status(404).json({ success: false, message: 'No data found for this GSTIN.' });
     }
 
-    // Handle both array and object responses — same as your Python code
+    // Handle both array and object responses
     const dataDict = Array.isArray(dataContent)
       ? dataContent[0]
       : dataContent;
@@ -65,7 +79,7 @@ router.get('/verify/:gstin', async (req, res) => {
       businessName = dataDict.legalName || 'Name not found';
     }
 
-    // Build address string — same logic as Python
+    // Build address string
     const addrObj = dataDict?.principalAddress?.address || {};
     let addressString = 'Address not available';
 
@@ -96,7 +110,7 @@ router.get('/verify/:gstin', async (req, res) => {
     });
 
   } catch (err) {
-    console.error('GST fetch error:', err.message);
+    console.error('❌ GST fetch error:', err.message);
     return res.status(500).json({
       success: false,
       message: 'Failed to connect to GST API server.'
