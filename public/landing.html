@@ -626,18 +626,21 @@ tbody tr:hover td{background:var(--bg3)}
   </div>
 </div>
 
-<div class="modal-overlay" id="authModalOverlay" onclick="closeAuthModal()">
+<div class="modal-overlay" id="deleteFirmModalOverlay" onclick="closeDeleteFirmModal()">
   <div class="modal" style="max-width:340px; text-align:center; padding: 28px 24px;" onclick="event.stopPropagation()">
-    <div style="width:52px;height:52px;border-radius:50%;background:var(--accent-glow);color:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="width:24px;height:24px;"><path d="M10 2h3a1 1 0 011 1v10a1 1 0 01-1 1h-3"/><path d="M6 5l3 3-3 3M9 8H2"/></svg></div>
-    <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;">Sign In Required</div>
-    <div style="font-size:12.5px;color:var(--text3);margin-bottom:24px;line-height:1.5;">You need to sign in or create an account to add and manage business profiles. It's totally free!</div>
+    <div style="width:52px;height:52px;border-radius:50%;background:rgba(239,68,68,0.12);color:var(--red);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:26px;height:26px;">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+    </div>
+    <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;">Delete Firm?</div>
+    <div style="font-size:12.5px;color:var(--text3);margin-bottom:24px;line-height:1.5;">Are you sure you want to remove this business profile? This action cannot be undone.</div>
     <div style="display:flex;gap:10px;">
-      <button style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;padding:10px;transition:var(--transition);" onmouseover="this.style.background='var(--bg4)'" onmouseout="this.style.background='var(--bg3)'" onclick="closeAuthModal()">Cancel</button>
-      <button style="flex:1;background:var(--accent);border:none;border-radius:var(--r-sm);color:#fff;font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;padding:10px;transition:var(--transition);" onmouseover="this.style.background='var(--accent-soft)'" onmouseout="this.style.background='var(--accent)'" onclick="window.location.href='auth.html'">Sign In</button>
+      <button style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;padding:10px;transition:var(--transition);" onmouseover="this.style.background='var(--bg4)'" onmouseout="this.style.background='var(--bg3)'" onclick="closeDeleteFirmModal()">Cancel</button>
+      <button style="flex:1;background:var(--red);border:none;border-radius:var(--r-sm);color:#fff;font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;padding:10px;transition:var(--transition);" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='var(--red)'" onclick="confirmDeleteFirm()">Delete</button>
     </div>
   </div>
 </div>
-
 <!-- ════ BEAUTIFUL NAV TABS (PILL SHAPES & UNIQUE HOVER COLORS) ════ -->
 <nav class="nav-strip">
   
@@ -1057,16 +1060,26 @@ function renderFirmList() {
   `).join('');
 }
 
-async function deleteFirmFromHub(id, event) {
-  // Stop the click from also triggering the "switchFirm" click event
-  if (event) event.stopPropagation(); 
-  
-  if (!confirm('Are you sure you want to delete this firm?')) return;
+let firmToDeleteId = null;
 
+function deleteFirmFromHub(id, event) {
+  if (event) event.stopPropagation(); 
+  firmToDeleteId = id; // Remember the ID
+  document.getElementById('deleteFirmModalOverlay').classList.add('open'); // Open the beautiful modal
+}
+
+function closeDeleteFirmModal() {
+  document.getElementById('deleteFirmModalOverlay').classList.remove('open');
+  firmToDeleteId = null;
+}
+
+async function confirmDeleteFirm() {
+  if (!firmToDeleteId) return;
+
+  const id = firmToDeleteId;
   const token = localStorage.getItem('invoicepro_token');
   
   try {
-    // Delete from MongoDB/Backend
     if (token) {
       await fetch(`/api/firms/${id}`, { 
         method: 'DELETE', 
@@ -1080,7 +1093,7 @@ async function deleteFirmFromHub(id, event) {
   // Remove from local array
   firms = firms.filter(f => String(f.id) !== String(id));
   
-  // If we deleted the currently active firm, switch to the next available one
+  // If active firm was deleted, switch to another
   if (String(activeFirmId) === String(id)) {
     activeFirmId = firms.length > 0 ? String(firms[0].id) : null;
     if (activeFirmId) {
@@ -1090,10 +1103,13 @@ async function deleteFirmFromHub(id, event) {
     }
   }
   
-  // Save new list and update UI
+  // Save and update UI
   localStorage.setItem('ip_firms', JSON.stringify(firms));
   updateFirmPill();
   renderFirmList();
+  
+  // Close the modal
+  closeDeleteFirmModal();
 }
 
 /* ── THEME TOGGLE ── */
