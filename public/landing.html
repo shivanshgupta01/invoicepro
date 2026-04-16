@@ -504,6 +504,32 @@ tbody tr:hover td{background:var(--bg3)}
 
 @media(max-width:900px){.layout{grid-template-columns:1fr}.right{display:none}.stats{grid-template-columns:1fr 1fr}.form-row{grid-template-columns:1fr 1fr}.topbar-center{display:none}}
 @media(max-width:500px){.stats{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}}
+
+
+
+/* --- UI FIX: PREVENT TABS AND DROPDOWNS FROM WRAPPING --- */
+.tab-dropdown {
+  min-width: max-content !important; 
+}
+
+.tab-dd-item {
+  white-space: nowrap !important;
+}
+
+.ntab-wrapper, .ntab {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* Optional: If your whole navbar is squished, this allows it to scroll smoothly left-to-right on small screens */
+.nav-tabs-container, .beautiful-nav { 
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none; /* Hides scrollbar for clean look */
+}
+.nav-tabs-container::-webkit-scrollbar, .beautiful-nav::-webkit-scrollbar {
+  display: none; 
+}
 </style>
 </head>
 <body>
