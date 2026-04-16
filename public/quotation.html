@@ -104,6 +104,11 @@ th:last-child, td:last-child { text-align: right; }
 .gt-title { font-size: 10px; font-weight: 700; color: var(--text-dim); letter-spacing: 0.05em; }
 .gt-amount { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; color: var(--text); }
 .gt-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ─── MODAL ANIMATIONS ─── */
+@keyframes fadeInOverlay { from { opacity: 0; backdrop-filter: blur(0px); } to { opacity: 1; backdrop-filter: blur(4px); } }
+@keyframes slideUpModal { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -256,10 +261,10 @@ th:last-child, td:last-child { text-align: right; }
         <tbody id="tableBody">
           <tr>
             <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
-            <td><input class="td-input" placeholder="Item Description" onchange="calculateQuotation()"></td>
-            <td><input class="td-input" placeholder="HSN" onchange="calculateQuotation()"></td>
+            <td><input class="td-input" placeholder="Item Description"></td>
+            <td><input class="td-input" placeholder="HSN"></td>
             <td>
-              <select class="td-input calc-tax" onchange="calculateQuotation()">
+              <select class="td-input calc-tax">
                 <option value="0">0%</option>
                 <option value="5">5%</option>
                 <option value="12">12%</option>
@@ -267,9 +272,9 @@ th:last-child, td:last-child { text-align: right; }
                 <option value="28">28%</option>
               </select>
             </td>
-            <td><input class="td-input right calc-qty" type="number" value="1" min="1" onchange="calculateQuotation()"></td>
+            <td><input class="td-input right calc-qty" type="number" value="1" min="1"></td>
             <td>
-              <select class="td-input" onchange="calculateQuotation()">
+              <select class="td-input">
                 <option value="Bags">Bags</option>
                 <option value="Boxes">Boxes</option>
                 <option value="Kgs">Kgs</option>
@@ -280,7 +285,7 @@ th:last-child, td:last-child { text-align: right; }
                 <option value="Pkt">Pkt</option>
               </select>
             </td>
-            <td><input class="td-input right calc-price" type="number" placeholder="0.00" onchange="calculateQuotation()"></td>
+            <td><input class="td-input right calc-price" type="number" placeholder="0.00"></td>
             <td><input class="td-input right calc-amount" readonly value="0.00" style="color:var(--text); font-weight:600;"></td>
           </tr>
         </tbody>
@@ -301,8 +306,8 @@ th:last-child, td:last-child { text-align: right; }
 
     <div class="panel">
       <div class="panel-title">ADJUSTMENTS</div>
-      <div class="summary-row"><label style="color:var(--text-dim);font-size:11px;">Other Charges</label><input class="input" type="number" id="inFreight" placeholder="0.00" onchange="calculateQuotation()"></div>
-      <div class="summary-row"><label style="color:var(--text-dim);font-size:11px;">Discount (-)</label><input class="input" type="number" id="inDiscount" placeholder="0.00" onchange="calculateQuotation()"></div>
+      <div class="summary-row"><label style="color:var(--text-dim);font-size:11px;">Other Charges</label><input class="input" type="number" id="inFreight" placeholder="0.00"></div>
+      <div class="summary-row"><label style="color:var(--text-dim);font-size:11px;">Discount (-)</label><input class="input" type="number" id="inDiscount" placeholder="0.00"></div>
     </div>
 
     <div class="panel">
@@ -474,15 +479,27 @@ function calculateQuotation() {
   document.getElementById('grandTotal').textContent = '₹' + Math.max(0, grandTotal).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
 
+// Global Event Listener for Instant Calculations
+document.addEventListener('input', function(e) {
+  if (
+    e.target.classList.contains('calc-qty') || e.target.classList.contains('calc-price') ||
+    e.target.classList.contains('calc-tax') || e.target.id === 'inFreight' ||
+    e.target.id === 'inDiscount' || e.target.id === 'supplierState' ||
+    e.target.id === 'buyerState' || e.target.name === 'ptype'
+  ) {
+    calculateQuotation();
+  }
+});
+
 function addRow() {
   const tbody = document.getElementById('tableBody');
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
-    <td><input class="td-input" placeholder="Item Description" onchange="calculateQuotation()"></td>
-    <td><input class="td-input" placeholder="HSN" onchange="calculateQuotation()"></td>
+    <td><input class="td-input" placeholder="Item Description"></td>
+    <td><input class="td-input" placeholder="HSN"></td>
     <td>
-      <select class="td-input calc-tax" onchange="calculateQuotation()">
+      <select class="td-input calc-tax">
         <option value="0">0%</option>
         <option value="5">5%</option>
         <option value="12">12%</option>
@@ -490,9 +507,9 @@ function addRow() {
         <option value="28">28%</option>
       </select>
     </td>
-    <td><input class="td-input right calc-qty" type="number" value="1" min="1" onchange="calculateQuotation()"></td>
+    <td><input class="td-input right calc-qty" type="number" value="1" min="1"></td>
     <td>
-      <select class="td-input" onchange="calculateQuotation()">
+      <select class="td-input">
         <option value="Bags">Bags</option>
         <option value="Boxes">Boxes</option>
         <option value="Kgs">Kgs</option>
@@ -503,7 +520,7 @@ function addRow() {
         <option value="Pkt">Pkt</option>
       </select>
     </td>
-    <td><input class="td-input right calc-price" type="number" placeholder="0.00" onchange="calculateQuotation()"></td>
+    <td><input class="td-input right calc-price" type="number" placeholder="0.00"></td>
     <td><input class="td-input right calc-amount" readonly value="0.00" style="color:var(--text); font-weight:600;"></td>
   `;
   tbody.appendChild(tr);
@@ -606,7 +623,7 @@ function saveQuotation() {
 
   const quoteData = {
     id: 'quote_' + Date.now(),
-    docType: 'Quotation', // Differentiates it from standard invoices in DB
+    docType: 'Quotation', 
     vchNo: quoteNo,
     date: document.getElementById('quoteDate').value,
     validUntil: document.getElementById('validUntilDate').value,
@@ -653,7 +670,7 @@ function saveQuotation() {
   };
 
   if (!db) {
-    alert('❌ Database not initialized. Please refresh and try again.');
+    showErrorModal('Database not initialized. Please refresh and try again.');
     return;
   }
   
@@ -662,17 +679,117 @@ function saveQuotation() {
   const request = store.add(quoteData);
   
   request.onsuccess = () => {
-    alert('✅ Quotation saved successfully!\n\nQuote #: ' + quoteNo + '\nAmount: ₹' + quoteData.totals.grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-    if (confirm('Would you like to create a new quotation?')) {
-      location.reload();
-    } else {
-      window.location.href = 'landing.html';
-    }
+    showSuccessModal(quoteNo, quoteData.totals.grandTotal);
   };
   
   request.onerror = () => {
-    alert('❌ Error saving quotation. Please try again.');
+    showErrorModal('Error saving quotation. Please try again.');
   };
+}
+
+// --- BEAUTIFUL SUCCESS MODAL ---
+function showSuccessModal(title, grandTotal) {
+  const existingModal = document.getElementById('successModal');
+  if (existingModal) existingModal.remove();
+  
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = 'successModal';
+  modalOverlay.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 40000; animation: fadeInOverlay 0.3s ease;
+  `;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(16, 185, 129, 0.05) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 20px;
+    padding: 48px 40px; max-width: 420px; width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(16, 185, 129, 0.1);
+    text-align: center; animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  `;
+  
+  const checkmarkSvg = `
+    <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 32px;">
+      <circle cx="50" cy="50" r="48" fill="rgba(16, 185, 129, 0.2)" stroke="#10b981" stroke-width="2"/>
+      <path d="M32 52L45 65L70 35" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+  `;
+  
+  const formattedAmount = grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  
+  modal.innerHTML = `
+    ${checkmarkSvg}
+    <h2 style="color: var(--text); font-size: 26px; font-weight: 700; margin: 0 0 12px 0; letter-spacing: -0.5px;">Saved Successfully!</h2>
+    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 28px 0; line-height: 1.6;">Your quotation has been securely saved to the database.</p>
+    
+    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 28px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div style="text-align: left;">
+          <p style="color: var(--text-dim); font-size: 11px; margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Quote #</p>
+          <p style="color: var(--text); font-size: 18px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">${title}</p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-dim); font-size: 11px; margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Total Amount</p>
+          <p style="color: #10b981; font-size: 18px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">₹${formattedAmount}</p>
+        </div>
+      </div>
+    </div>
+    
+    <button id="closeSuccessBtn" style="width: 100%; padding: 14px 20px; background: linear-gradient(135deg, #10b981 0%, #0e9f6e 100%); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);">
+      Create New Quote
+    </button>
+  `;
+  
+  modalOverlay.appendChild(modal);
+  document.body.appendChild(modalOverlay);
+  
+  document.getElementById('closeSuccessBtn').addEventListener('click', () => {
+    modalOverlay.remove();
+    location.reload(); 
+  });
+}
+
+// --- ERROR MODAL ---
+function showErrorModal(message) {
+  const existingModal = document.getElementById('errorModal');
+  if (existingModal) existingModal.remove();
+  
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = 'errorModal';
+  modalOverlay.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 40000; animation: fadeInOverlay 0.3s ease;
+  `;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(239, 68, 68, 0.05) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 20px;
+    padding: 48px 40px; max-width: 420px; width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(239, 68, 68, 0.1);
+    text-align: center; animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  `;
+  
+  modal.innerHTML = `
+    <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 32px;">
+      <circle cx="50" cy="50" r="48" fill="rgba(239, 68, 68, 0.2)" stroke="#ef4444" stroke-width="2"/>
+      <path d="M35 35L65 65M65 35L35 65" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <h2 style="color: var(--text); font-size: 26px; font-weight: 700; margin: 0 0 12px 0; letter-spacing: -0.5px;">Error!</h2>
+    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 28px 0; line-height: 1.6;">${message}</p>
+    <button id="closeErrorBtn" style="width: 100%; padding: 14px 20px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);">
+      Try Again
+    </button>
+  `;
+  
+  modalOverlay.appendChild(modal);
+  document.body.appendChild(modalOverlay);
+  
+  document.getElementById('closeErrorBtn').addEventListener('click', () => modalOverlay.remove());
 }
 </script>
 </body>
