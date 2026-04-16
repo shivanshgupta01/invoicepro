@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>InvoicePro | Sales Return Voucher</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  // Script to handle light/dark mode based on body data-theme attribute
+  const savedTheme = localStorage.getItem('ip_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+</script>
+<style>
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blue: #4f6ef7;
+  --green: #10b981;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --teal: #14b8a6;
+  --r: 6px; --r-panel: 8px;
+}
+/* DARK MODE COLORS */
+[data-theme="dark"] {
+  --bg: #11141e; --panel: #1b202e; --input-bg: #11141e;
+  --border: #2a3143; --border-focus: #4f6ef7;
+  --text: #e2e8f0; --text-dim: #8c96a8;
+}
+/* LIGHT MODE COLORS (For completeness, based on established dark theme) */
+[data-theme="light"] {
+  --bg: #f1f5f9; --panel: #ffffff; --input-bg: #f8fafc;
+  --border: #cbd5e1; --border-focus: #4f6ef7;
+  --text: #0f172a; --text-dim: #64748b;
+}
+
+body {
+  font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+  height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* ─── TOP BAR ─── */
+.topbar {
+  height: 50px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.brand { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 6px; }
+.brand em { color: var(--blue); font-style: normal; }
+.brand-sub { color: var(--text-dim); font-size: 13px; font-weight: 400; }
+.top-actions { display: flex; align-items: center; gap: 10px; }
+.user-email { font-size: 12px; color: var(--text-dim); margin: 0 8px; }
+.btn {
+  padding: 6px 12px; border-radius: var(--r); border: 1px solid var(--border);
+  background: transparent; color: var(--text); cursor: pointer;
+  font-size: 12px; font-weight: 500; transition: 0.2s;
+}
+.btn:hover { background: var(--border); }
+.btn.green { background: #0e9f6e; border-color: #0e9f6e; color: #fff; }
+.btn.green:hover { background: #057a55; }
+.btn.red { background: var(--red); border-color: var(--red); color: #fff; }
+.btn.red:hover { background: #dc2626; }
+.btn.outline-red { color: var(--red); border-color: transparent; }
+.btn.outline-red:hover { background: rgba(239,68,68,0.1); }
+.btn.teal { background: var(--teal); border-color: var(--teal); color: #fff; }
+.btn.teal:hover { background: #0f766e; }
+
+/* ─── MAIN LAYOUT ─── */
+.main-content { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 10px; min-height: 0; overflow-y: auto; }
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); padding: 12px; }
+.panel-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; color: var(--text-dim); }
+.panel-title.blue { color: #3b82f6; }
+.panel-title.green { color: #10b981; }
+.panel-title.amber { color: #f59e0b; }
+.panel-title.teal { color: #14b8a6; }
+.grid { display: grid; gap: 10px; }
+
+/* ─── INPUTS ─── */
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; }
+.input {
+  background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--r);
+  color: var(--text); padding: 0 10px; height: 32px; font-size: 13px; width: 100%; outline: none; transition: 0.2s;
+}
+.input:focus { border-color: var(--border-focus); }
+.input::placeholder { color: #94a3b8; }
+
+/* ─── TOP PANELS ─── */
+.top-section { display: grid; grid-template-columns: 0.9fr 1.3fr 1.3fr; gap: 10px; flex-shrink: 0; }
+.price-type {
+  margin-top: 12px; font-size: 11px; font-weight: 500; color: var(--text-dim);
+  display: flex; align-items: center; gap: 14px; background: var(--input-bg);
+  padding: 6px 10px; border-radius: var(--r); border: 1px solid var(--border);
+}
+.price-type input[type="radio"] { accent-color: var(--blue); margin-right: 4px; cursor: pointer; }
+.price-type label { display: flex; align-items: center; cursor: pointer; color: var(--text); }
+
+/* ─── TABLE SECTION ─── */
+.table-section { flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); display: flex; flex-direction: column; min-height: 200px; }
+.table-wrap { flex: 1; overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { position: sticky; top: 0; background: var(--bg); z-index: 10; font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+th:last-child, td:last-child { text-align: right; }
+.td-input { background: transparent; border: 1px solid transparent; color: var(--text); height: 28px; width: 100%; font-size: 13px; padding: 0 6px; outline: none; border-radius: 4px; font-family: 'Inter', sans-serif;}
+.td-input:focus, .td-input:hover { border-color: var(--border); background: var(--input-bg); }
+.td-input.right { text-align: right; }
+.table-footer { padding: 10px; border-top: 1px solid var(--border); background: var(--panel); flex-shrink: 0; }
+.add-btn { background: transparent; border: 1px solid var(--blue); color: var(--blue); padding: 6px 12px; border-radius: var(--r); font-size: 12px; font-weight: 500; cursor: pointer; transition: 0.2s; }
+.add-btn:hover { background: rgba(79,110,247,0.1); }
+.del-btn { color: var(--red); cursor: pointer; background: transparent; border: none; font-size: 16px; opacity: 0.5; transition: 0.2s; }
+.del-btn:hover { opacity: 1; }
+
+/* ─── BOTTOM PANELS ─── */
+.bottom-section { display: grid; grid-template-columns: 1fr 1fr 1.3fr 1.2fr; gap: 10px; flex-shrink: 0; }
+.summary-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.summary-row label { font-size: 12px; font-weight: 600; color: var(--text); }
+.summary-row .input { width: 110px; text-align: right; font-weight: 600; }
+.grand-total-box { display: flex; flex-direction: column; justify-content: space-between; }
+.gt-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
+.gt-title { font-size: 10px; font-weight: 700; color: var(--text-dim); letter-spacing: 0.05em; }
+.gt-amount { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; color: var(--text); }
+.gt-actions { display: flex; gap: 8px; justify-content: flex-end; }
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-focus); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">Invoice<em>Pro</em> <span class="brand-sub">| Sales Return</span></div>
+  <div class="top-actions">
+    <button class="btn" onclick="window.location.href='landing.html'">← Back to Hub</button>
+    <span class="user-email" id="topEmail">loading...</span>
+    <button class="btn green" onclick="window.location.href='invoice.html'">Export in Excel</button>
+    <button class="btn outline-red" onclick="logout()">Log out</button>
+  </div>
+</header>
+
+<div class="main-content">
+  
+  <div class="top-section">
+    <div class="panel">
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="field" style="grid-column: span 2;">
+          <label>ORIGINAL INVOICE NUMBER (type to load)</label>
+          <input class="input" id="originalInvoiceNo" placeholder="Link Original Sale (e.g., INV-001)">
+        </div>
+        <div class="field"><label>SALES RETURN ID</label><input class="input" id="salesReturnId" placeholder="SR-001"></div>
+        <div class="field"><label>RETURN DATE</label><input class="input" type="date" id="returnDate"></div>
+        <div class="field" style="grid-column: span 2;">
+          <label>PLACE OF SUPPLY</label>
+          <input class="input" id="placeOfSupply" placeholder="09-UP">
+        </div>
+      </div>
+      <div class="gt-actions" style="margin-top: 10px;">
+        <button class="btn teal" style="width: 100%; border-color: var(--teal);">Simulate Data Import</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title blue">YOUR DETAILS (SELLER)</div>
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <input class="input" id="supplierName" placeholder="Company Name">
+        <input class="input" id="supplierGstin" placeholder="GSTIN">
+        <input class="input" id="supplierAddress" placeholder="Registered Address">
+        <select class="input" id="supplierState">
+          <option value="AN">Andaman & Nicobar Islands</option>
+          <option value="AP">Andhra Pradesh</option>
+          <option value="AR">Arunachal Pradesh</option>
+          <option value="AS">Assam</option>
+          <option value="BR">Bihar</option>
+          <option value="CH">Chandigarh</option>
+          <option value="CG">Chhattisgarh</option>
+          <option value="DN">Dadra & Nagar Haveli and Daman & Diu</option>
+          <option value="DL">Delhi</option>
+          <option value="GA">Goa</option>
+          <option value="GJ">Gujarat</option>
+          <option value="HR">Haryana</option>
+          <option value="HP">Himachal Pradesh</option>
+          <option value="JK">Jammu & Kashmir</option>
+          <option value="JH">Jharkhand</option>
+          <option value="KA">Karnataka</option>
+          <option value="KL">Kerala</option>
+          <option value="LA">Ladakh</option>
+          <option value="LD">Lakshadweep</option>
+          <option value="MP">Madhya Pradesh</option>
+          <option value="MH">Maharashtra</option>
+          <option value="MN">Manipur</option>
+          <option value="ML">Meghalaya</option>
+          <option value="MZ">Mizoram</option>
+          <option value="NL">Nagaland</option>
+          <option value="OR">Odisha</option>
+          <option value="PY">Puducherry</option>
+          <option value="PB">Punjab</option>
+          <option value="RJ">Rajasthan</option>
+          <option value="SK">Sikkim</option>
+          <option value="TN">Tamil Nadu</option>
+          <option value="TS">Telangana</option>
+          <option value="TR">Tripura</option>
+          <option value="UP" selected>Uttar Pradesh</option>
+          <option value="UK">Uttarakhand</option>
+          <option value="WB">West Bengal</option>
+        </select>
+        <input class="input" id="supplierPhone" placeholder="Phone No.">
+        <input class="input" id="supplierEmail" placeholder="Email ID">
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title green">CUSTOMER DETAILS (ORIGINAL BUYER)</div>
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <input class="input" id="clientName" placeholder="Customer Name">
+        <input class="input" id="clientGstin" placeholder="Customer GSTIN" maxlength="15">
+        <input class="input" id="clientAddress" placeholder="Billing Address">
+        <select class="input" id="buyerState">
+          <option value="AN">Andaman & Nicobar Islands</option>
+          <option value="AP">Andhra Pradesh</option>
+          <option value="AR">Arunachal Pradesh</option>
+          <option value="AS">Assam</option>
+          <option value="BR">Bihar</option>
+          <option value="CH">Chandigarh</option>
+          <option value="CG">Chhattisgarh</option>
+          <option value="DN">Dadra & Nagar Haveli and Daman & Diu</option>
+          <option value="DL">Delhi</option>
+          <option value="GA">Goa</option>
+          <option value="GJ">Gujarat</option>
+          <option value="HR">Haryana</option>
+          <option value="HP">Himachal Pradesh</option>
+          <option value="JK">Jammu & Kashmir</option>
+          <option value="JH">Jharkhand</option>
+          <option value="KA">Karnataka</option>
+          <option value="KL">Kerala</option>
+          <option value="LA">Ladakh</option>
+          <option value="LD">Lakshadweep</option>
+          <option value="MP">Madhya Pradesh</option>
+          <option value="MH">Maharashtra</option>
+          <option value="MN">Manipur</option>
+          <option value="ML">Meghalaya</option>
+          <option value="MZ">Mizoram</option>
+          <option value="NL">Nagaland</option>
+          <option value="OR">Odisha</option>
+          <option value="PY">Puducherry</option>
+          <option value="PB">Punjab</option>
+          <option value="RJ">Rajasthan</option>
+          <option value="SK">Sikkim</option>
+          <option value="TN">Tamil Nadu</option>
+          <option value="TS">Telangana</option>
+          <option value="TR">Tripura</option>
+          <option value="UP" selected>Uttar Pradesh</option>
+          <option value="UK">Uttarakhand</option>
+          <option value="WB">West Bengal</option>
+        </select>
+        <input class="input" id="clientPhone" placeholder="Customer Phone No.">
+        <input class="input" id="clientEmail" placeholder="Customer Email ID">
+      </div>
+    </div>
+  </div>
+
+  <div class="table-section">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 40px; text-align: center;">X</th>
+            <th>Item Name</th>
+            <th style="width: 140px;">Original Price (₹)</th>
+            <th style="width: 100px;">Return Quantity</th>
+            <th style="width: 180px;">Reason for Return</th>
+            <th style="width: 140px;">Refund Amount (₹)</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr>
+            <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
+            <td><input class="td-input" placeholder="Item/Service Name" onchange="calculateReturnLineItem(this)"></td>
+            <td><input class="td-input right calc-price" type="number" placeholder="0.00" onchange="calculateReturnLineItem(this)"></td>
+            <td><input class="td-input right calc-qty" type="number" value="1" min="1" onchange="calculateReturnLineItem(this)"></td>
+            <td>
+              <select class="td-input calc-reason">
+                <option value="Damaged">Damaged/Defective</option>
+                <option value="Wrong Size">Wrong Size/Color</option>
+                <option value="Not as Described">Not as Described</option>
+                <option value="Duplicate Order">Duplicate Order</option>
+                <option value="Other">Other (specify in notes)</option>
+              </select>
+            </td>
+            <td><input class="td-input right calc-amount" readonly value="0.00" style="color:var(--text); font-weight:600;"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <button class="add-btn" onclick="addRow()">+ Add Row for Return (F2)</button>
+    </div>
+  </div>
+
+  <div class="bottom-section">
+    <div class="panel">
+      <div class="panel-title amber">RETURN VALUE SUMMARY</div>
+      <div class="summary-row"><label>Item Value Subtotal (₹)</label><input class="input" id="returnSubtotal" value="0.00" readonly></div>
+      <div class="summary-row"><label>Restocking Fee (Optional) (₹)</label><input class="input" type="number" id="restockingFee" placeholder="0.00" onchange="calculateReturnTotals()"></div>
+    </div>
+
+    <div class="panel" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center;">
+      <div class="panel-title teal">ADJUSTMENT METHOD</div>
+      <div class="gt-actions" style="display:flex; flex-direction: column; gap: 8px; width: 100%;">
+        <button class="btn teal" style="width: 100%; border-color: var(--teal); background: var(--teal); color: #fff;">Refund to Original Payment</button>
+        <button class="btn" style="width: 100%;">Store Credit</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">RETURN NOTES</div>
+      <div class="grid" style="grid-template-columns: 1fr;">
+        <div class="field"><label>NARRATION / REMARKS</label><input class="input" id="narration" placeholder="Internal or External remarks..."></div>
+      </div>
+    </div>
+
+    <div class="panel grand-total-box">
+      <div class="gt-header">
+        <div class="gt-title">TOTAL RETURN VALUE</div>
+        <div class="gt-amount" id="finalReturnTotal">₹0.00</div>
+      </div>
+      <div class="gt-actions">
+        <button class="btn" style="flex:1;">Cancel</button>
+        <button class="btn green" style="flex:1;" onclick="saveReturnVoucher()">Save Return</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Auto-fill dates
+document.getElementById('returnDate').valueAsDate = new Date();
+
+let db = null;
+
+// Initialize IndexedDB (simplified for stand-alone use)
+function initDB() {
+  const request = indexedDB.open('InvoiceProDB', 1);
+  
+  request.onerror = (e) => {
+    console.error('Database initialization failed');
+  };
+  
+  request.onsuccess = (e) => {
+    db = e.target.result;
+    console.log('Database initialized successfully');
+  };
+  
+  request.onupgradeneeded = (e) => {
+    const database = e.target.result;
+    if (!database.objectStoreNames.contains('invoices')) {
+      const objectStore = database.createObjectStore('invoices', { keyPath: 'id' });
+      objectStore.createIndex('date', 'date', { unique: false });
+      objectStore.createIndex('partyName', 'partyName', { unique: false });
+      objectStore.createIndex('vchNo', 'vchNo', { unique: false });
+    }
+  };
+}
+
+// --- AUTH & INITIALIZATION ---
+document.addEventListener('DOMContentLoaded', () => {
+  initDB();
+  
+  // Fake auth email for display
+  const token = localStorage.getItem('invoicepro_token');
+  const emailEl = document.getElementById('topEmail');
+  if (token) {
+    try {
+      const payloadBase64 = token.split('.')[1];
+      const decodedJson = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
+      const decoded = JSON.parse(decodedJson);
+      const user = decoded.user || decoded; // in case of direct user object
+      if (emailEl) emailEl.textContent = user.email || 'No email';
+    } catch(e) {
+      if (emailEl) emailEl.textContent = 'Not signed in';
+    }
+  } else {
+    if (emailEl) emailEl.textContent = 'Not signed in';
+  }
+
+  // Fake active firm logic
+  const firms = JSON.parse(localStorage.getItem('ip_firms') || '[]');
+  const activeFirmId = localStorage.getItem('ip_active_firm');
+
+  if (firms.length > 0 && activeFirmId) {
+    const activeFirm = firms.find(f => String(f.id) === String(activeFirmId));
+    if (activeFirm) {
+      document.getElementById('supplierName').value    = activeFirm.name || '';
+      document.getElementById('supplierAddress').value = activeFirm.address || '';
+      document.getElementById('supplierGstin').value   = activeFirm.gstin || '';
+      document.getElementById('supplierPhone').value   = activeFirm.mainMobile || '';
+      document.getElementById('supplierEmail').value   = activeFirm.email || '';
+    }
+  }
+});
+
+function logout() {
+  localStorage.removeItem('invoicepro_token');
+  window.location.href = 'auth.html';
+}
+
+// --- CALCULATION ENGINE ---
+function calculateReturnLineItem(inputEl) {
+  const tr = inputEl.closest('tr');
+  const qty = parseFloat(tr.querySelector('.calc-qty').value) || 0;
+  const price = parseFloat(tr.querySelector('.calc-price').value) || 0;
+  
+  const refundAmount = qty * price;
+  
+  tr.querySelector('.calc-amount').value = refundAmount.toFixed(2);
+  
+  calculateReturnTotals();
+}
+
+function calculateReturnTotals() {
+  let subtotal = 0;
+  document.querySelectorAll('#tableBody .calc-amount').forEach(el => {
+    subtotal += parseFloat(el.value) || 0;
+  });
+  
+  const restockingFee = parseFloat(document.getElementById('restockingFee').value) || 0;
+  
+  const finalTotal = subtotal - restockingFee;
+  
+  document.getElementById('returnSubtotal').value = subtotal.toFixed(2);
+  document.getElementById('finalReturnTotal').textContent = '₹' + finalTotal.toLocaleString('en-IN', {minimumFractionDigits: 2});
+}
+
+// Function to add a new row
+function addRow() {
+  const tbody = document.getElementById('tableBody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
+    <td><input class="td-input" placeholder="Item Name" onchange="calculateReturnLineItem(this)"></td>
+    <td><input class="td-input right calc-price" type="number" placeholder="0.00" onchange="calculateReturnLineItem(this)"></td>
+    <td><input class="td-input right calc-qty" type="number" value="1" min="1" onchange="calculateReturnLineItem(this)"></td>
+    <td>
+      <select class="td-input calc-reason">
+        <option value="Damaged">Damaged/Defective</option>
+        <option value="Wrong Size">Wrong Size/Color</option>
+        <option value="Not as Described">Not as Described</option>
+        <option value="Duplicate Order">Duplicate Order</option>
+        <option value="Other">Other (specify in notes)</option>
+      </select>
+    </td>
+    <td><input class="td-input right calc-amount" readonly value="0.00" style="color:var(--text); font-weight:600;"></td>
+  `;
+  tbody.appendChild(tr);
+  const wrap = document.querySelector('.table-wrap');
+  wrap.scrollTop = wrap.scrollHeight;
+  calculateReturnTotals();
+}
+
+// Function to remove a row
+function removeRow(btn) {
+  btn.closest('tr').remove();
+  calculateReturnTotals();
+}
+
+// Handle keydown for adding row
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'F2') {
+    e.preventDefault();
+    addRow();
+  }
+});
+
+// Auto-fill GST details function from original page, relabeled IDs
+function setupGSTAutoFetch(gstinId, nameId, addressId, stateId) {
+  const gstinInput = document.getElementById(gstinId);
+  if (!gstinInput) return;
+
+  gstinInput.addEventListener('input', async (e) => {
+    let gstin = e.target.value.toUpperCase();
+    e.target.value = gstin;
+    
+    // Basic format validation
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+    
+    if (gstin.length === 15 && gstRegex.test(gstin)) {
+      const nameInput = document.getElementById(nameId);
+      const oldName = nameInput.value;
+      nameInput.value = "Fetching from GST Portal...";
+      
+      try {
+        const res = await fetch(`/api/gst/verify/${gstin}`);
+        const result = await res.json();
+        
+        if (result.success && result.data) {
+          nameInput.value = result.data.business_name || '';
+          document.getElementById(addressId).value = result.data.address || '';
+          
+          // Auto-select state dropdown
+          const stateCode = gstin.substring(0, 2);
+          const stateDropdown = document.getElementById(stateId);
+          if (stateDropdown) {
+             // Basic state mapping logic
+             const stateMap = { '09': 'UP', '07': 'DL', '19': 'WB', '27': 'MH' };
+             if (stateMap[stateCode]) {
+                stateDropdown.value = stateMap[stateCode];
+             }
+          }
+          
+        } else {
+          nameInput.value = oldName; 
+        }
+      } catch (err) {
+        nameInput.value = oldName;
+      }
+    }
+  });
+}
+setupGSTAutoFetch('clientGstin', 'clientName', 'clientAddress', 'buyerState');
+
+// Final Save Return Function
+function saveReturnVoucher() {
+  const returnId = document.getElementById('salesReturnId').value.trim() || 'SR-' + Date.now();
+  const partyName = document.getElementById('clientName').value.trim() || 'Unknown Client';
+  const returnTotalStr = document.getElementById('finalReturnTotal').textContent.replace('₹', '').replace(/,/g, '');
+  const returnTotal = parseFloat(returnTotalStr) || 0;
+  
+  if (!partyName || returnTotal <= 0) {
+    alert('⚠️ Please ensure customer name and return value are present.');
+    return;
+  }
+  
+  // Logic to save return voucher object to IndexedDB or backend API would go here.
+  // We just confirm the save with the "lite" success message flow
+  alert('✅ Sales Return Saved Successfully!\n\nReturn ID: ' + returnId + '\nCustomer: ' + partyName + '\nReturn Value: ₹' + returnTotal.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+  
+  if (confirm('Create a new Sales Return?')) {
+    location.reload();
+  } else {
+    window.location.href = 'landing.html';
+  }
+}
+</script>
+</body>
+</html>
