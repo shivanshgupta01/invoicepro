@@ -427,6 +427,9 @@ function setupGSTAutoFetch(gstinId, nameId, addressId, stateId) {
 // Hook it up to the Receipt Client inputs!
 setupGSTAutoFetch('clientGstin', 'clientName', 'clientAddress', 'buyerState');
 
+// ADD THIS NEW LINE FOR "YOUR DETAILS":
+setupGSTAutoFetch('supplierGstin', 'supplierName', 'supplierAddress', 'supplierState');
+
 // --- SAVE RECEIPT FUNCTION ---
 function saveReceipt() {
   const receiptNo = document.getElementById('receiptNo').value.trim() || 'REC-' + Date.now();

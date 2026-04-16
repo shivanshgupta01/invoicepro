@@ -593,6 +593,9 @@ function setupGSTAutoFetch(gstinId, nameId, addressId, stateId) {
 }
 setupGSTAutoFetch('clientGstin', 'clientName', 'clientAddress', 'buyerState');
 
+// ADD THIS NEW LINE FOR "YOUR DETAILS":
+setupGSTAutoFetch('supplierGstin', 'supplierName', 'supplierAddress', 'supplierState');
+
 // --- FINAL SAVE RETURN FUNCTION ---
 function saveReturnVoucher() {
   const returnId = document.getElementById('salesReturnId').value.trim() || 'SR-' + Date.now();

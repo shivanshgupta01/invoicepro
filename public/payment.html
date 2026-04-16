@@ -527,6 +527,9 @@ function setupGSTAutoFetch(gstinId, nameId, addressId, stateId) {
 }
 setupGSTAutoFetch('clientGstin', 'clientName', 'clientAddress', 'buyerState');
 
+// ADD THIS NEW LINE FOR "YOUR DETAILS":
+setupGSTAutoFetch('supplierGstin', 'supplierName', 'supplierAddress', 'supplierState');
+
 // --- SAVE PAYMENT FUNCTION ---
 function savePayment() {
   const paymentNo = document.getElementById('paymentNo').value.trim() || 'PAY-' + Date.now();

@@ -592,6 +592,9 @@ function setupGSTAutoFetch(gstinId, nameId, addressId, stateId) {
 }
 setupGSTAutoFetch('clientGstin', 'clientName', 'clientAddress', 'buyerState');
 
+// ADD THIS NEW LINE FOR "YOUR DETAILS":
+setupGSTAutoFetch('supplierGstin', 'supplierName', 'supplierAddress', 'supplierState');
+
 // --- SAVE QUOTE FUNCTION ---
 function saveQuotation() {
   const quoteNo = document.getElementById('quoteNo').value.trim() || 'QT-' + Date.now();

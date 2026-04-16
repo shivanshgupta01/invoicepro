@@ -980,6 +980,9 @@ function generatePDF() {
 // Hook up the Client GSTIN input on the Sales Invoice
 setupGSTAutoFetch('clientGstin', 'clientName', 'clientAddress', 'buyerState');
 
+// ADD THIS NEW LINE FOR "YOUR DETAILS":
+setupGSTAutoFetch('supplierGstin', 'supplierName', 'supplierAddress', 'supplierState');
+
 calculateInvoice();
 </script>
 </body>
