@@ -19,11 +19,15 @@
   --bg: #11141e; --panel: #1b202e; --input-bg: #11141e;
   --border: #2a3143; --border-focus: #4f6ef7;
   --text: #e2e8f0; --text-dim: #8c96a8;
+  --modal-overlay: rgba(0, 0, 0, 0.6);
+  --modal-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 [data-theme="light"] {
   --bg: #f1f5f9; --panel: #ffffff; --input-bg: #f8fafc;
   --border: #cbd5e1; --border-focus: #4f6ef7;
   --text: #0f172a; --text-dim: #64748b;
+  --modal-overlay: rgba(15, 23, 42, 0.4);
+  --modal-shadow: 0 20px 60px rgba(100, 116, 139, 0.15);
 }
 
 body {
@@ -113,6 +117,11 @@ th:last-child, td:last-child { text-align: right; }
 }
 .paid-stamp.show { opacity: 0.8; scale: 1; }
 
+/* MODAL ANIMATIONS */
+@keyframes fadeInOverlay { from { opacity: 0; backdrop-filter: blur(0px); } to { opacity: 1; backdrop-filter: blur(4px); } }
+@keyframes slideUpModal { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -156,44 +165,7 @@ th:last-child, td:last-child { text-align: right; }
         <input class="input" id="supplierName" placeholder="Company Name">
         <input class="input" id="supplierGstin" placeholder="GSTIN (Optional)">
         <input class="input" id="supplierAddress" placeholder="Registered Address">
-        <select class="input" id="supplierState" onchange="calculatePayment()">
-          <option value="AN">Andaman & Nicobar Islands</option>
-          <option value="AP">Andhra Pradesh</option>
-          <option value="AR">Arunachal Pradesh</option>
-          <option value="AS">Assam</option>
-          <option value="BR">Bihar</option>
-          <option value="CH">Chandigarh</option>
-          <option value="CG">Chhattisgarh</option>
-          <option value="DN">Dadra & Nagar Haveli and Daman & Diu</option>
-          <option value="DL">Delhi</option>
-          <option value="GA">Goa</option>
-          <option value="GJ">Gujarat</option>
-          <option value="HR">Haryana</option>
-          <option value="HP">Himachal Pradesh</option>
-          <option value="JK">Jammu & Kashmir</option>
-          <option value="JH">Jharkhand</option>
-          <option value="KA">Karnataka</option>
-          <option value="KL">Kerala</option>
-          <option value="LA">Ladakh</option>
-          <option value="LD">Lakshadweep</option>
-          <option value="MP">Madhya Pradesh</option>
-          <option value="MH">Maharashtra</option>
-          <option value="MN">Manipur</option>
-          <option value="ML">Meghalaya</option>
-          <option value="MZ">Mizoram</option>
-          <option value="NL">Nagaland</option>
-          <option value="OR">Odisha</option>
-          <option value="PY">Puducherry</option>
-          <option value="PB">Punjab</option>
-          <option value="RJ">Rajasthan</option>
-          <option value="SK">Sikkim</option>
-          <option value="TN">Tamil Nadu</option>
-          <option value="TS">Telangana</option>
-          <option value="TR">Tripura</option>
-          <option value="UP" selected>Uttar Pradesh</option>
-          <option value="UK">Uttarakhand</option>
-          <option value="WB">West Bengal</option>
-          </select>
+        <input class="input" id="supplierState" placeholder="State">
         <input class="input" id="supplierPhone" placeholder="Phone No.">
         <input class="input" id="supplierEmail" placeholder="Email ID">
       </div>
@@ -205,44 +177,7 @@ th:last-child, td:last-child { text-align: right; }
         <input class="input" id="clientName" placeholder="Client Name">
         <input class="input" id="clientGstin" placeholder="CLIENT GSTIN (Optional)" maxlength="15">
         <input class="input" id="clientAddress" placeholder="Billing Address">
-        <select class="input" id="buyerState" onchange="calculatePayment()">
-          <option value="AN">Andaman & Nicobar Islands</option>
-          <option value="AP">Andhra Pradesh</option>
-          <option value="AR">Arunachal Pradesh</option>
-          <option value="AS">Assam</option>
-          <option value="BR">Bihar</option>
-          <option value="CH">Chandigarh</option>
-          <option value="CG">Chhattisgarh</option>
-          <option value="DN">Dadra & Nagar Haveli and Daman & Diu</option>
-          <option value="DL">Delhi</option>
-          <option value="GA">Goa</option>
-          <option value="GJ">Gujarat</option>
-          <option value="HR">Haryana</option>
-          <option value="HP">Himachal Pradesh</option>
-          <option value="JK">Jammu & Kashmir</option>
-          <option value="JH">Jharkhand</option>
-          <option value="KA">Karnataka</option>
-          <option value="KL">Kerala</option>
-          <option value="LA">Ladakh</option>
-          <option value="LD">Lakshadweep</option>
-          <option value="MP">Madhya Pradesh</option>
-          <option value="MH">Maharashtra</option>
-          <option value="MN">Manipur</option>
-          <option value="ML">Meghalaya</option>
-          <option value="MZ">Mizoram</option>
-          <option value="NL">Nagaland</option>
-          <option value="OR">Odisha</option>
-          <option value="PY">Puducherry</option>
-          <option value="PB">Punjab</option>
-          <option value="RJ">Rajasthan</option>
-          <option value="SK">Sikkim</option>
-          <option value="TN">Tamil Nadu</option>
-          <option value="TS">Telangana</option>
-          <option value="TR">Tripura</option>
-          <option value="UP" selected>Uttar Pradesh</option>
-          <option value="UK">Uttarakhand</option>
-          <option value="WB">West Bengal</option>
-        </select>
+        <input class="input" id="buyerState" placeholder="State">
         <input class="input" id="clientPhone" placeholder="Client Phone No.">
         <input class="input" id="clientEmail" placeholder="Client Email ID">
       </div>
@@ -264,9 +199,9 @@ th:last-child, td:last-child { text-align: right; }
         <tbody id="tableBody">
           <tr>
             <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
-            <td><input class="td-input" placeholder="e.g. Web Design Advance" onchange="calculateReceipt()"></td>
-            <td><input class="td-input right calc-qty" type="number" value="1" min="1" onchange="calculateReceipt()"></td>
-            <td><input class="td-input right calc-price" type="number" placeholder="0.00" onchange="calculateReceipt()"></td>
+            <td><input class="td-input" placeholder="e.g. Web Design Advance"></td>
+            <td><input class="td-input right calc-qty" type="number" value="1" min="1"></td>
+            <td><input class="td-input right calc-price" type="number" placeholder="0.00"></td>
             <td><input class="td-input right calc-amount" readonly value="0.00" style="color:var(--text); font-weight:600;"></td>
           </tr>
         </tbody>
@@ -281,14 +216,14 @@ th:last-child, td:last-child { text-align: right; }
     <div class="panel">
       <div class="panel-title">SUMMARY</div>
       <div class="summary-row"><label>Subtotal (₹)</label><input class="input" id="sumSubtotal" value="0.00" readonly></div>
-      <div class="summary-row"><label>Tax / Fees (₹)</label><input class="input" type="number" id="inTax" placeholder="0.00" onchange="calculateReceipt()"></div>
-      <div class="summary-row"><label>Discount (-) (₹)</label><input class="input" type="number" id="inDiscount" placeholder="0.00" onchange="calculateReceipt()"></div>
+      <div class="summary-row"><label>Tax / Fees (₹)</label><input class="input" type="number" id="inTax" placeholder="0.00"></div>
+      <div class="summary-row"><label>Discount (-) (₹)</label><input class="input" type="number" id="inDiscount" placeholder="0.00"></div>
     </div>
 
     <div class="panel">
       <div class="panel-title">RECEIPT TOTALS</div>
       <div class="summary-row"><label>Total Amount</label><input class="input" id="sumTotalDue" value="0.00" readonly style="border:none; background:transparent;"></div>
-      <div class="summary-row"><label style="color:var(--green);">Amount Received (₹)</label><input class="input" type="number" id="inPaid" placeholder="0.00" onchange="calculateReceipt()" style="border-color:var(--green); color:var(--green);"></div>
+      <div class="summary-row"><label style="color:var(--green);">Amount Received (₹)</label><input class="input" type="number" id="inPaid" placeholder="0.00" style="border-color:var(--green); color:var(--green);"></div>
       <div class="summary-row" style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 8px;">
         <label>Balance Due</label><input class="input" id="sumBalance" value="0.00" readonly style="color:var(--amber);">
       </div>
@@ -395,14 +330,29 @@ function calculateReceipt() {
   }
 }
 
+// Global Event Listener for Instant Calculations
+document.addEventListener('input', function(e) {
+  if (
+    e.target.classList.contains('calc-qty') || 
+    e.target.classList.contains('calc-price') ||
+    e.target.id === 'inTax' || 
+    e.target.id === 'inDiscount' || 
+    e.target.id === 'inPaid' ||
+    e.target.id === 'supplierState' ||
+    e.target.id === 'buyerState'
+  ) {
+    calculateReceipt();
+  }
+});
+
 function addRow() {
   const tbody = document.getElementById('tableBody');
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
-    <td><input class="td-input" placeholder="e.g. Web Design" onchange="calculateReceipt()"></td>
-    <td><input class="td-input right calc-qty" type="number" value="1" min="1" onchange="calculateReceipt()"></td>
-    <td><input class="td-input right calc-price" type="number" placeholder="0.00" onchange="calculateReceipt()"></td>
+    <td><input class="td-input" placeholder="e.g. Web Design Advance"></td>
+    <td><input class="td-input right calc-qty" type="number" value="1" min="1"></td>
+    <td><input class="td-input right calc-price" type="number" placeholder="0.00"></td>
     <td><input class="td-input right calc-amount" readonly value="0.00" style="color:var(--text); font-weight:600;"></td>
   `;
   tbody.appendChild(tr);
@@ -421,7 +371,6 @@ document.addEventListener('keydown', function(e) {
     addRow();
   }
 });
-
 
 // AUTO-FETCH GST DETAILS FUNCTION
 function setupGSTAutoFetch(gstinId, nameId, addressId, stateId) {
@@ -478,8 +427,6 @@ function setupGSTAutoFetch(gstinId, nameId, addressId, stateId) {
 // Hook it up to the Receipt Client inputs!
 setupGSTAutoFetch('clientGstin', 'clientName', 'clientAddress', 'buyerState');
 
-
-
 // --- SAVE RECEIPT FUNCTION ---
 function saveReceipt() {
   const receiptNo = document.getElementById('receiptNo').value.trim() || 'REC-' + Date.now();
@@ -498,13 +445,13 @@ function saveReceipt() {
   });
 
   if (items.length === 0) {
-    alert('⚠️ Please add at least one line item');
+    showErrorModal('Please add at least one line item.');
     return;
   }
 
   const amountReceived = parseFloat(document.getElementById('inPaid').value) || 0;
   if (amountReceived <= 0) {
-    alert('⚠️ Please enter an Amount Received greater than 0.');
+    showErrorModal('Please enter an Amount Received greater than 0.');
     return;
   }
 
@@ -552,7 +499,7 @@ function saveReceipt() {
   };
 
   if (!db) {
-    alert('❌ Database not initialized. Please refresh.');
+    showErrorModal('Database not initialized. Please refresh.');
     return;
   }
   
@@ -561,13 +508,137 @@ function saveReceipt() {
   const request = store.add(receiptData);
   
   request.onsuccess = () => {
-    alert('✅ Receipt saved successfully!\n\nReceipt #: ' + receiptNo + '\nAmount Received: ₹' + amountReceived.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-    if (confirm('Would you like to create a new receipt?')) {
-      location.reload();
-    } else {
-      window.location.href = 'landing.html';
-    }
+    showSuccessModal(receiptNo, amountReceived);
   };
+
+  request.onerror = () => {
+    showErrorModal('Failed to save receipt. Please try again.');
+  };
+}
+
+// --- BEAUTIFUL THEME-AWARE MODALS ---
+function showSuccessModal(titleOrDocNo, amountReceived) {
+  const existingModal = document.getElementById('successModal');
+  if (existingModal) existingModal.remove();
+  
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = 'successModal';
+  modalOverlay.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--modal-overlay); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 40000; animation: fadeInOverlay 0.3s ease;
+  `;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(16, 185, 129, 0.05) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 20px;
+    padding: 40px; max-width: 400px; width: 90%;
+    box-shadow: var(--modal-shadow);
+    text-align: center; animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  `;
+  
+  const checkmarkSvg = `
+    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 24px;">
+      <circle cx="50" cy="50" r="48" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="2"/>
+      <path d="M32 52L45 65L70 35" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+  `;
+  
+  const isDeleted = String(titleOrDocNo).includes('Deleted');
+  const titleText = isDeleted ? 'Deleted Successfully!' : 'Saved Successfully!';
+  const messageText = isDeleted ? 'The receipt has been securely removed.' : 'Your receipt has been successfully updated and saved.';
+  const docNo = isDeleted ? '-' : titleOrDocNo;
+  const formattedAmount = amountReceived !== null ? amountReceived.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00';
+  
+  modal.innerHTML = `
+    ${checkmarkSvg}
+    <h2 style="color: var(--text); font-size: 24px; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.5px;">${titleText}</h2>
+    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">${messageText}</p>
+    
+    ${!isDeleted ? `
+    <div style="background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div style="text-align: left;">
+          <p style="color: var(--text-dim); font-size: 11px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Receipt #</p>
+          <p style="color: var(--text); font-size: 16px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">${docNo}</p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-dim); font-size: 11px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Amount Rec'd</p>
+          <p style="color: #10b981; font-size: 16px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">₹${formattedAmount}</p>
+        </div>
+      </div>
+    </div>
+    ` : ''}
+    
+    <div style="display: flex; gap: 10px;">
+      <button id="closeSuccessBtn" style="flex: 1; padding: 14px 10px; background: transparent; border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+        Close
+      </button>
+      <button id="newReceiptBtn" style="flex: 2; padding: 14px 10px; background: #10b981; border: none; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+        Create New Receipt
+      </button>
+    </div>
+  `;
+  
+  modalOverlay.appendChild(modal);
+  document.body.appendChild(modalOverlay);
+  
+  document.getElementById('closeSuccessBtn').addEventListener('click', () => {
+    modalOverlay.remove();
+  });
+
+  document.getElementById('newReceiptBtn').addEventListener('click', () => {
+    modalOverlay.remove();
+    location.reload(); 
+  });
+  
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) {
+      modalOverlay.remove();
+    }
+  });
+}
+
+function showErrorModal(message) {
+  const existingModal = document.getElementById('errorModal');
+  if (existingModal) existingModal.remove();
+  
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = 'errorModal';
+  modalOverlay.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--modal-overlay); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 40000; animation: fadeInOverlay 0.3s ease;
+  `;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(239, 68, 68, 0.05) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 20px;
+    padding: 40px; max-width: 400px; width: 90%;
+    box-shadow: var(--modal-shadow);
+    text-align: center; animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  `;
+  
+  modal.innerHTML = `
+    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 24px;">
+      <circle cx="50" cy="50" r="48" fill="rgba(239, 68, 68, 0.15)" stroke="#ef4444" stroke-width="2"/>
+      <path d="M35 35L65 65M65 35L35 65" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <h2 style="color: var(--text); font-size: 24px; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.5px;">Error!</h2>
+    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">${message}</p>
+    <button id="closeErrorBtn" style="width: 100%; padding: 14px 20px; background: #ef4444; border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+      Try Again
+    </button>
+  `;
+  
+  modalOverlay.appendChild(modal);
+  document.body.appendChild(modalOverlay);
+  
+  document.getElementById('closeErrorBtn').addEventListener('click', () => modalOverlay.remove());
 }
 </script>
 </body>
