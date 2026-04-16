@@ -6,7 +6,6 @@
 <title>InvoicePro | Sales Return Voucher</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script>
-  // Script to handle light/dark mode based on body data-theme attribute
   const savedTheme = localStorage.getItem('ip_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
 </script>
@@ -25,12 +24,16 @@
   --bg: #11141e; --panel: #1b202e; --input-bg: #11141e;
   --border: #2a3143; --border-focus: #4f6ef7;
   --text: #e2e8f0; --text-dim: #8c96a8;
+  --modal-overlay: rgba(0, 0, 0, 0.6);
+  --modal-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
-/* LIGHT MODE COLORS (For completeness, based on established dark theme) */
+/* LIGHT MODE COLORS */
 [data-theme="light"] {
   --bg: #f1f5f9; --panel: #ffffff; --input-bg: #f8fafc;
   --border: #cbd5e1; --border-focus: #4f6ef7;
   --text: #0f172a; --text-dim: #64748b;
+  --modal-overlay: rgba(15, 23, 42, 0.4);
+  --modal-shadow: 0 20px 60px rgba(100, 116, 139, 0.15);
 }
 
 body {
@@ -81,17 +84,11 @@ body {
   color: var(--text); padding: 0 10px; height: 32px; font-size: 13px; width: 100%; outline: none; transition: 0.2s;
 }
 .input:focus { border-color: var(--border-focus); }
+.input:disabled { opacity: 0.7; cursor: not-allowed; }
 .input::placeholder { color: #94a3b8; }
 
 /* ─── TOP PANELS ─── */
 .top-section { display: grid; grid-template-columns: 0.9fr 1.3fr 1.3fr; gap: 10px; flex-shrink: 0; }
-.price-type {
-  margin-top: 12px; font-size: 11px; font-weight: 500; color: var(--text-dim);
-  display: flex; align-items: center; gap: 14px; background: var(--input-bg);
-  padding: 6px 10px; border-radius: var(--r); border: 1px solid var(--border);
-}
-.price-type input[type="radio"] { accent-color: var(--blue); margin-right: 4px; cursor: pointer; }
-.price-type label { display: flex; align-items: center; cursor: pointer; color: var(--text); }
 
 /* ─── TABLE SECTION ─── */
 .table-section { flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); display: flex; flex-direction: column; min-height: 200px; }
@@ -103,6 +100,7 @@ th:last-child, td:last-child { text-align: right; }
 .td-input { background: transparent; border: 1px solid transparent; color: var(--text); height: 28px; width: 100%; font-size: 13px; padding: 0 6px; outline: none; border-radius: 4px; font-family: 'Inter', sans-serif;}
 .td-input:focus, .td-input:hover { border-color: var(--border); background: var(--input-bg); }
 .td-input.right { text-align: right; }
+.td-input:disabled { opacity: 0.6; cursor: not-allowed; }
 .table-footer { padding: 10px; border-top: 1px solid var(--border); background: var(--panel); flex-shrink: 0; }
 .add-btn { background: transparent; border: 1px solid var(--blue); color: var(--blue); padding: 6px 12px; border-radius: var(--r); font-size: 12px; font-weight: 500; cursor: pointer; transition: 0.2s; }
 .add-btn:hover { background: rgba(79,110,247,0.1); }
@@ -119,6 +117,21 @@ th:last-child, td:last-child { text-align: right; }
 .gt-title { font-size: 10px; font-weight: 700; color: var(--text-dim); letter-spacing: 0.05em; }
 .gt-amount { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; color: var(--text); }
 .gt-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* Adjustment Buttons */
+.adj-btn {
+  flex: 1; padding: 10px; border-radius: var(--r); border: 1px solid var(--border);
+  background: var(--input-bg); color: var(--text); cursor: pointer;
+  font-size: 12px; font-weight: 600; transition: 0.2s; text-align: center; width: 100%;
+}
+.adj-btn.active {
+  background: var(--teal); border-color: var(--teal); color: #fff;
+}
+
+/* Animations */
+@keyframes fadeInOverlay { from { opacity: 0; backdrop-filter: blur(0px); } to { opacity: 1; backdrop-filter: blur(4px); } }
+@keyframes slideUpModal { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -133,7 +146,6 @@ th:last-child, td:last-child { text-align: right; }
   <div class="top-actions">
     <button class="btn" onclick="window.location.href='landing.html'">← Back to Hub</button>
     <span class="user-email" id="topEmail">loading...</span>
-    <button class="btn green" onclick="window.location.href='invoice.html'">Export in Excel</button>
     <button class="btn outline-red" onclick="logout()">Log out</button>
   </div>
 </header>
@@ -144,8 +156,11 @@ th:last-child, td:last-child { text-align: right; }
     <div class="panel">
       <div class="grid" style="grid-template-columns: 1fr 1fr;">
         <div class="field" style="grid-column: span 2;">
-          <label>ORIGINAL INVOICE NUMBER (type to load)</label>
-          <input class="input" id="originalInvoiceNo" placeholder="Link Original Sale (e.g., INV-001)">
+          <label>ORIGINAL INVOICE NUMBER <span style="color: var(--teal); text-transform: none; font-weight: normal;">(Type to load items)</span></label>
+          <div style="display: flex; gap: 6px;">
+            <input class="input" id="originalInvoiceNo" placeholder="e.g., INV-001...">
+            <button class="btn teal" style="height: 32px;" onclick="fetchOriginalInvoice()">Fetch Bill</button>
+          </div>
         </div>
         <div class="field"><label>SALES RETURN ID</label><input class="input" id="salesReturnId" placeholder="SR-001"></div>
         <div class="field"><label>RETURN DATE</label><input class="input" type="date" id="returnDate"></div>
@@ -153,9 +168,6 @@ th:last-child, td:last-child { text-align: right; }
           <label>PLACE OF SUPPLY</label>
           <input class="input" id="placeOfSupply" placeholder="09-UP">
         </div>
-      </div>
-      <div class="gt-actions" style="margin-top: 10px;">
-        <button class="btn teal" style="width: 100%; border-color: var(--teal);">Simulate Data Import</button>
       </div>
     </div>
 
@@ -266,7 +278,7 @@ th:last-child, td:last-child { text-align: right; }
             <th style="width: 40px; text-align: center;">X</th>
             <th>Item Name</th>
             <th style="width: 140px;">Original Price (₹)</th>
-            <th style="width: 100px;">Return Quantity</th>
+            <th style="width: 120px;">Return Qty</th>
             <th style="width: 180px;">Reason for Return</th>
             <th style="width: 140px;">Refund Amount (₹)</th>
           </tr>
@@ -274,16 +286,16 @@ th:last-child, td:last-child { text-align: right; }
         <tbody id="tableBody">
           <tr>
             <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
-            <td><input class="td-input" placeholder="Item/Service Name" onchange="calculateReturnLineItem(this)"></td>
-            <td><input class="td-input right calc-price" type="number" placeholder="0.00" onchange="calculateReturnLineItem(this)"></td>
-            <td><input class="td-input right calc-qty" type="number" value="1" min="1" onchange="calculateReturnLineItem(this)"></td>
+            <td><input class="td-input" placeholder="Item/Service Name"></td>
+            <td><input class="td-input right calc-price" type="number" placeholder="0.00"></td>
+            <td><input class="td-input right calc-qty" type="number" value="1" min="1"></td>
             <td>
               <select class="td-input calc-reason">
                 <option value="Damaged">Damaged/Defective</option>
                 <option value="Wrong Size">Wrong Size/Color</option>
                 <option value="Not as Described">Not as Described</option>
                 <option value="Duplicate Order">Duplicate Order</option>
-                <option value="Other">Other (specify in notes)</option>
+                <option value="Other">Other</option>
               </select>
             </td>
             <td><input class="td-input right calc-amount" readonly value="0.00" style="color:var(--text); font-weight:600;"></td>
@@ -299,22 +311,22 @@ th:last-child, td:last-child { text-align: right; }
   <div class="bottom-section">
     <div class="panel">
       <div class="panel-title amber">RETURN VALUE SUMMARY</div>
-      <div class="summary-row"><label>Item Value Subtotal (₹)</label><input class="input" id="returnSubtotal" value="0.00" readonly></div>
-      <div class="summary-row"><label>Restocking Fee (Optional) (₹)</label><input class="input" type="number" id="restockingFee" placeholder="0.00" onchange="calculateReturnTotals()"></div>
+      <div class="summary-row"><label>Item Value Subtotal (₹)</label><input class="input" id="returnSubtotal" value="0.00" readonly style="color: var(--text-dim);"></div>
+      <div class="summary-row"><label>Restocking Fee (Optional) (₹)</label><input class="input" type="number" id="restockingFee" placeholder="0.00"></div>
     </div>
 
     <div class="panel" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center;">
       <div class="panel-title teal">ADJUSTMENT METHOD</div>
       <div class="gt-actions" style="display:flex; flex-direction: column; gap: 8px; width: 100%;">
-        <button class="btn teal" style="width: 100%; border-color: var(--teal); background: var(--teal); color: #fff;">Refund to Original Payment</button>
-        <button class="btn" style="width: 100%;">Store Credit</button>
+        <button class="adj-btn active" id="btnRefund" onclick="setAdjustmentMethod('Refund to Original Payment')">Refund to Original Payment</button>
+        <button class="adj-btn" id="btnCredit" onclick="setAdjustmentMethod('Store Credit')">Store Credit</button>
       </div>
     </div>
 
     <div class="panel">
       <div class="panel-title">RETURN NOTES</div>
       <div class="grid" style="grid-template-columns: 1fr;">
-        <div class="field"><label>NARRATION / REMARKS</label><input class="input" id="narration" placeholder="Internal or External remarks..."></div>
+        <div class="field"><label>NARRATION / REMARKS</label><textarea class="input" id="narration" style="height: 60px; resize:none; padding-top: 8px;" placeholder="Internal or External remarks..."></textarea></div>
       </div>
     </div>
 
@@ -324,7 +336,7 @@ th:last-child, td:last-child { text-align: right; }
         <div class="gt-amount" id="finalReturnTotal">₹0.00</div>
       </div>
       <div class="gt-actions">
-        <button class="btn" style="flex:1;">Cancel</button>
+        <button class="btn" style="flex:1;" onclick="window.location.href='landing.html'">Cancel</button>
         <button class="btn green" style="flex:1;" onclick="saveReturnVoucher()">Save Return</button>
       </div>
     </div>
@@ -336,20 +348,13 @@ th:last-child, td:last-child { text-align: right; }
 document.getElementById('returnDate').valueAsDate = new Date();
 
 let db = null;
+let adjustmentMethod = 'Refund to Original Payment';
 
-// Initialize IndexedDB (simplified for stand-alone use)
+// Initialize IndexedDB
 function initDB() {
   const request = indexedDB.open('InvoiceProDB', 1);
-  
-  request.onerror = (e) => {
-    console.error('Database initialization failed');
-  };
-  
-  request.onsuccess = (e) => {
-    db = e.target.result;
-    console.log('Database initialized successfully');
-  };
-  
+  request.onerror = (e) => console.error('Database initialization failed');
+  request.onsuccess = (e) => { db = e.target.result; };
   request.onupgradeneeded = (e) => {
     const database = e.target.result;
     if (!database.objectStoreNames.contains('invoices')) {
@@ -361,11 +366,8 @@ function initDB() {
   };
 }
 
-// --- AUTH & INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
   initDB();
-  
-  // Fake auth email for display
   const token = localStorage.getItem('invoicepro_token');
   const emailEl = document.getElementById('topEmail');
   if (token) {
@@ -373,19 +375,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const payloadBase64 = token.split('.')[1];
       const decodedJson = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
       const decoded = JSON.parse(decodedJson);
-      const user = decoded.user || decoded; // in case of direct user object
+      const user = decoded.user || decoded; 
       if (emailEl) emailEl.textContent = user.email || 'No email';
-    } catch(e) {
-      if (emailEl) emailEl.textContent = 'Not signed in';
-    }
-  } else {
-    if (emailEl) emailEl.textContent = 'Not signed in';
+    } catch(e) { }
   }
 
-  // Fake active firm logic
+  // Auto-fill active firm logic
   const firms = JSON.parse(localStorage.getItem('ip_firms') || '[]');
   const activeFirmId = localStorage.getItem('ip_active_firm');
-
   if (firms.length > 0 && activeFirmId) {
     const activeFirm = firms.find(f => String(f.id) === String(activeFirmId));
     if (activeFirm) {
@@ -403,66 +400,136 @@ function logout() {
   window.location.href = 'auth.html';
 }
 
-// --- CALCULATION ENGINE ---
-function calculateReturnLineItem(inputEl) {
-  const tr = inputEl.closest('tr');
-  const qty = parseFloat(tr.querySelector('.calc-qty').value) || 0;
-  const price = parseFloat(tr.querySelector('.calc-price').value) || 0;
-  
-  const refundAmount = qty * price;
-  
-  tr.querySelector('.calc-amount').value = refundAmount.toFixed(2);
-  
-  calculateReturnTotals();
+function setAdjustmentMethod(method) {
+  adjustmentMethod = method;
+  document.getElementById('btnRefund').classList.toggle('active', method === 'Refund to Original Payment');
+  document.getElementById('btnCredit').classList.toggle('active', method === 'Store Credit');
 }
 
+// --- FETCH ORIGINAL INVOICE ---
+function fetchOriginalInvoice() {
+  const vchNo = document.getElementById('originalInvoiceNo').value.trim();
+  if (!vchNo) {
+    showErrorModal("Please enter an Original Invoice Number to search.");
+    return;
+  }
+  if (!db) {
+    showErrorModal("Database not ready. Please wait a moment.");
+    return;
+  }
+
+  const transaction = db.transaction(['invoices'], 'readonly');
+  const store = transaction.objectStore('invoices');
+  const index = store.index('vchNo');
+  const request = index.get(vchNo);
+
+  request.onsuccess = () => {
+    const inv = request.result;
+    // Check if we found a valid standard Sales Invoice
+    if (!inv || (inv.docType !== 'Invoice' && inv.docType !== 'Sales Invoice')) {
+      showErrorModal(`Invoice '${vchNo}' not found in your sales records.`);
+      return;
+    }
+
+    // Auto-fill Client Details
+    document.getElementById('clientName').value = inv.party?.name || inv.partyName || '';
+    document.getElementById('clientGstin').value = inv.party?.gstin || '';
+    document.getElementById('clientAddress').value = inv.party?.address || '';
+    document.getElementById('buyerState').value = inv.party?.state || 'UP';
+    document.getElementById('clientPhone').value = inv.party?.phone || '';
+    document.getElementById('clientEmail').value = inv.party?.email || '';
+
+    // Populate Table
+    const tbody = document.getElementById('tableBody');
+    if(inv.items && inv.items.length > 0) {
+      tbody.innerHTML = inv.items.map((item, idx) => `
+        <tr>
+          <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
+          <td><input class="td-input" value="${item.description}" disabled></td>
+          <td><input class="td-input right calc-price" type="number" value="${item.price || item.rate || 0}" disabled></td>
+          <td>
+            <input class="td-input right calc-qty" type="number" value="${item.qty}" min="0" max="${item.qty}" step="0.01" 
+                   style="border: 1px solid var(--teal);">
+          </td>
+          <td>
+            <select class="td-input calc-reason">
+              <option value="Damaged">Damaged/Defective</option>
+              <option value="Wrong Size">Wrong Size/Color</option>
+              <option value="Not as Described">Not as Described</option>
+              <option value="Duplicate Order">Duplicate Order</option>
+              <option value="Other">Other (specify in notes)</option>
+            </select>
+          </td>
+          <td><input class="td-input right calc-amount" readonly value="${((item.qty || 0) * (item.price || item.rate || 0)).toFixed(2)}" style="color:var(--text); font-weight:600;"></td>
+        </tr>
+      `).join('');
+      calculateReturnTotals();
+    }
+  };
+}
+
+// --- CALCULATION ENGINE ---
 function calculateReturnTotals() {
   let subtotal = 0;
-  document.querySelectorAll('#tableBody .calc-amount').forEach(el => {
-    subtotal += parseFloat(el.value) || 0;
+  document.querySelectorAll('#tableBody tr').forEach(row => {
+      const qty = parseFloat(row.querySelector('.calc-qty').value) || 0;
+      const price = parseFloat(row.querySelector('.calc-price').value) || 0;
+      const refundAmount = qty * price;
+      
+      const amountInput = row.querySelector('.calc-amount');
+      if (amountInput) {
+        amountInput.value = refundAmount.toFixed(2);
+        subtotal += refundAmount;
+      }
   });
   
   const restockingFee = parseFloat(document.getElementById('restockingFee').value) || 0;
-  
-  const finalTotal = subtotal - restockingFee;
+  const finalTotal = Math.max(0, subtotal - restockingFee);
   
   document.getElementById('returnSubtotal').value = subtotal.toFixed(2);
   document.getElementById('finalReturnTotal').textContent = '₹' + finalTotal.toLocaleString('en-IN', {minimumFractionDigits: 2});
 }
 
-// Function to add a new row
+// Global Event Listener for Instant Calculations
+document.addEventListener('input', function(e) {
+  if (
+    e.target.classList.contains('calc-qty') || 
+    e.target.classList.contains('calc-price') ||
+    e.target.id === 'restockingFee'
+  ) {
+    calculateReturnTotals();
+  }
+});
+
 function addRow() {
   const tbody = document.getElementById('tableBody');
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
-    <td><input class="td-input" placeholder="Item Name" onchange="calculateReturnLineItem(this)"></td>
-    <td><input class="td-input right calc-price" type="number" placeholder="0.00" onchange="calculateReturnLineItem(this)"></td>
-    <td><input class="td-input right calc-qty" type="number" value="1" min="1" onchange="calculateReturnLineItem(this)"></td>
+    <td><input class="td-input" placeholder="Item Name"></td>
+    <td><input class="td-input right calc-price" type="number" placeholder="0.00"></td>
+    <td><input class="td-input right calc-qty" type="number" value="1" min="1"></td>
     <td>
       <select class="td-input calc-reason">
         <option value="Damaged">Damaged/Defective</option>
         <option value="Wrong Size">Wrong Size/Color</option>
         <option value="Not as Described">Not as Described</option>
         <option value="Duplicate Order">Duplicate Order</option>
-        <option value="Other">Other (specify in notes)</option>
+        <option value="Other">Other</option>
       </select>
     </td>
     <td><input class="td-input right calc-amount" readonly value="0.00" style="color:var(--text); font-weight:600;"></td>
   `;
   tbody.appendChild(tr);
-  const wrap = document.querySelector('.table-wrap');
-  wrap.scrollTop = wrap.scrollHeight;
+  document.querySelector('.table-wrap').scrollTop = document.querySelector('.table-wrap').scrollHeight;
   calculateReturnTotals();
 }
 
-// Function to remove a row
 function removeRow(btn) {
   btn.closest('tr').remove();
   calculateReturnTotals();
 }
 
-// Handle keydown for adding row
 document.addEventListener('keydown', function(e) {
   if (e.key === 'F2') {
     e.preventDefault();
@@ -470,7 +537,7 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-// Auto-fill GST details function from original page, relabeled IDs
+// AUTO-FETCH GST DETAILS
 function setupGSTAutoFetch(gstinId, nameId, addressId, stateId) {
   const gstinInput = document.getElementById(gstinId);
   if (!gstinInput) return;
@@ -478,8 +545,6 @@ function setupGSTAutoFetch(gstinId, nameId, addressId, stateId) {
   gstinInput.addEventListener('input', async (e) => {
     let gstin = e.target.value.toUpperCase();
     e.target.value = gstin;
-    
-    // Basic format validation
     const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
     
     if (gstin.length === 15 && gstRegex.test(gstin)) {
@@ -490,34 +555,23 @@ function setupGSTAutoFetch(gstinId, nameId, addressId, stateId) {
       try {
         const res = await fetch(`/api/gst/verify/${gstin}`);
         const result = await res.json();
-        
         if (result.success && result.data) {
           nameInput.value = result.data.business_name || '';
           document.getElementById(addressId).value = result.data.address || '';
-          
-          // Auto-select state dropdown
           const stateCode = gstin.substring(0, 2);
+          const stateMap = { '09': 'UP', '07': 'DL', '19': 'WB', '27': 'MH' };
           const stateDropdown = document.getElementById(stateId);
-          if (stateDropdown) {
-             // Basic state mapping logic
-             const stateMap = { '09': 'UP', '07': 'DL', '19': 'WB', '27': 'MH' };
-             if (stateMap[stateCode]) {
-                stateDropdown.value = stateMap[stateCode];
-             }
+          if (stateMap[stateCode] && stateDropdown) {
+             stateDropdown.value = stateMap[stateCode];
           }
-          
-        } else {
-          nameInput.value = oldName; 
-        }
-      } catch (err) {
-        nameInput.value = oldName;
-      }
+        } else { nameInput.value = oldName; }
+      } catch (err) { nameInput.value = oldName; }
     }
   });
 }
 setupGSTAutoFetch('clientGstin', 'clientName', 'clientAddress', 'buyerState');
 
-// Final Save Return Function
+// --- FINAL SAVE RETURN FUNCTION ---
 function saveReturnVoucher() {
   const returnId = document.getElementById('salesReturnId').value.trim() || 'SR-' + Date.now();
   const partyName = document.getElementById('clientName').value.trim() || 'Unknown Client';
@@ -525,19 +579,197 @@ function saveReturnVoucher() {
   const returnTotal = parseFloat(returnTotalStr) || 0;
   
   if (!partyName || returnTotal <= 0) {
-    alert('⚠️ Please ensure customer name and return value are present.');
+    showErrorModal('Please ensure customer name and a valid return value are present.');
+    return;
+  }
+
+  const items = [];
+  document.querySelectorAll('#tableBody tr').forEach(row => {
+    const inputs = row.querySelectorAll('.td-input');
+    const description = inputs[0]?.value.trim() || '';
+    const price = parseFloat(inputs[1]?.value) || 0;
+    const qty = parseFloat(inputs[2]?.value) || 0;
+    const reason = row.querySelector('.calc-reason')?.value || 'Damaged';
+    const amount = parseFloat(row.querySelector('.calc-amount')?.value) || 0;
+    
+    if (description || qty > 0) {
+      items.push({ description, price, qty, returnQty: qty, reason, amount });
+    }
+  });
+
+  const returnData = {
+    id: 'srtn_' + Date.now(),
+    docType: 'Sales Return',
+    vchNo: returnId,
+    originalInvoiceNo: document.getElementById('originalInvoiceNo').value.trim(),
+    date: document.getElementById('returnDate').value,
+    placeOfSupply: document.getElementById('placeOfSupply').value,
+    adjustmentMethod: adjustmentMethod,
+    
+    supplier: {
+      name: document.getElementById('supplierName').value,
+      gstin: document.getElementById('supplierGstin').value,
+      address: document.getElementById('supplierAddress').value,
+      state: document.getElementById('supplierState').value,
+      phone: document.getElementById('supplierPhone').value,
+      email: document.getElementById('supplierEmail').value
+    },
+    
+    party: {
+      name: partyName,
+      gstin: document.getElementById('clientGstin').value,
+      address: document.getElementById('clientAddress').value,
+      state: document.getElementById('buyerState').value,
+      phone: document.getElementById('clientPhone').value,
+      email: document.getElementById('clientEmail').value
+    },
+    
+    items: items,
+    
+    totals: {
+      subtotal: parseFloat(document.getElementById('returnSubtotal').value) || 0,
+      restockingFee: parseFloat(document.getElementById('restockingFee').value) || 0,
+      grandTotal: returnTotal
+    },
+    
+    notes: document.getElementById('narration').value,
+    status: 'Processed',
+    createdAt: new Date().toISOString()
+  };
+
+  if (!db) {
+    showErrorModal('Database not initialized. Please refresh and try again.');
     return;
   }
   
-  // Logic to save return voucher object to IndexedDB or backend API would go here.
-  // We just confirm the save with the "lite" success message flow
-  alert('✅ Sales Return Saved Successfully!\n\nReturn ID: ' + returnId + '\nCustomer: ' + partyName + '\nReturn Value: ₹' + returnTotal.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+  const transaction = db.transaction(['invoices'], 'readwrite');
+  const store = transaction.objectStore('invoices');
+  store.add(returnData);
   
-  if (confirm('Create a new Sales Return?')) {
-    location.reload();
-  } else {
-    window.location.href = 'landing.html';
-  }
+  transaction.oncomplete = () => {
+    showSuccessModal(returnId, returnTotal);
+  };
+  
+  transaction.onerror = () => {
+    showErrorModal('Error saving sales return to the database.');
+  };
+}
+
+// --- BEAUTIFUL THEME-AWARE MODALS ---
+function showSuccessModal(titleOrDocNo, totalAmount) {
+  const existingModal = document.getElementById('successModal');
+  if (existingModal) existingModal.remove();
+  
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = 'successModal';
+  modalOverlay.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--modal-overlay); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 40000; animation: fadeInOverlay 0.3s ease;
+  `;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(20, 184, 166, 0.05) 100%);
+    border: 1px solid rgba(20, 184, 166, 0.3); border-radius: 20px;
+    padding: 40px; max-width: 400px; width: 90%;
+    box-shadow: var(--modal-shadow);
+    text-align: center; animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  `;
+  
+  const checkmarkSvg = `
+    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 24px;">
+      <circle cx="50" cy="50" r="48" fill="rgba(20, 184, 166, 0.15)" stroke="#14b8a6" stroke-width="2"/>
+      <path d="M32 52L45 65L70 35" stroke="#14b8a6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+  `;
+  
+  const formattedAmount = totalAmount !== null ? totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00';
+  
+  modal.innerHTML = `
+    ${checkmarkSvg}
+    <h2 style="color: var(--text); font-size: 24px; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.5px;">Saved Successfully!</h2>
+    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">Your sales return has been securely recorded to the database.</p>
+    
+    <div style="background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div style="text-align: left;">
+          <p style="color: var(--text-dim); font-size: 11px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Return #</p>
+          <p style="color: var(--text); font-size: 16px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">${titleOrDocNo}</p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-dim); font-size: 11px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Refund Value</p>
+          <p style="color: var(--teal); font-size: 16px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">₹${formattedAmount}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div style="display: flex; gap: 10px;">
+      <button id="closeSuccessBtn" style="flex: 1; padding: 14px 10px; background: transparent; border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+        Close
+      </button>
+      <button id="newReturnBtn" style="flex: 2; padding: 14px 10px; background: var(--teal); border: none; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+        Create New Return
+      </button>
+    </div>
+  `;
+  
+  modalOverlay.appendChild(modal);
+  document.body.appendChild(modalOverlay);
+  
+  document.getElementById('closeSuccessBtn').addEventListener('click', () => {
+    modalOverlay.remove();
+  });
+
+  document.getElementById('newReturnBtn').addEventListener('click', () => {
+    modalOverlay.remove();
+    location.reload(); 
+  });
+  
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) modalOverlay.remove();
+  });
+}
+
+function showErrorModal(message) {
+  const existingModal = document.getElementById('errorModal');
+  if (existingModal) existingModal.remove();
+  
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = 'errorModal';
+  modalOverlay.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--modal-overlay); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 40000; animation: fadeInOverlay 0.3s ease;
+  `;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(239, 68, 68, 0.05) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 20px;
+    padding: 40px; max-width: 400px; width: 90%;
+    box-shadow: var(--modal-shadow);
+    text-align: center; animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  `;
+  
+  modal.innerHTML = `
+    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 24px;">
+      <circle cx="50" cy="50" r="48" fill="rgba(239, 68, 68, 0.15)" stroke="#ef4444" stroke-width="2"/>
+      <path d="M35 35L65 65M65 35L35 65" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <h2 style="color: var(--text); font-size: 24px; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.5px;">Error!</h2>
+    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">${message}</p>
+    <button id="closeErrorBtn" style="width: 100%; padding: 14px 20px; background: #ef4444; border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+      Try Again
+    </button>
+  `;
+  
+  modalOverlay.appendChild(modal);
+  document.body.appendChild(modalOverlay);
+  
+  document.getElementById('closeErrorBtn').addEventListener('click', () => modalOverlay.remove());
 }
 </script>
 </body>
