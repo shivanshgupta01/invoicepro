@@ -98,10 +98,12 @@ th:last-child, td:last-child { text-align: right; }
 .del-btn:hover { opacity: 1; }
 
 /* ─── BOTTOM PANELS ─── */
-.bottom-section { display: grid; grid-template-columns: 1fr 1fr 1.3fr 1.2fr; gap: 10px; flex-shrink: 0; }
+/* Added min-width: 0 to all panels to fix the squished CSS Grid bug */
+.bottom-section { display: grid; grid-template-columns: 1fr 1fr 1.3fr 1fr; gap: 10px; flex-shrink: 0; }
+.bottom-section .panel { min-width: 0; } 
 .summary-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.summary-row label { font-size: 12px; font-weight: 600; color: var(--text); }
-.summary-row .input { width: 110px; text-align: right; font-weight: 600; }
+.summary-row label { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; }
+.summary-row .input { width: 90px; text-align: right; font-weight: 600; }
 .grand-total-box { display: flex; flex-direction: column; justify-content: space-between; }
 .gt-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
 .gt-title { font-size: 10px; font-weight: 700; color: var(--text-dim); letter-spacing: 0.05em; }
@@ -205,12 +207,49 @@ th:last-child, td:last-child { text-align: right; }
     <div class="panel">
       <div class="panel-title green">YOUR DETAILS (BUYER)</div>
       <div class="grid" style="grid-template-columns: 1fr 1fr;">
-        <input class="input" id="buyerName" placeholder="Company Name" disabled>
-        <input class="input" id="buyerGstin" placeholder="GSTIN" disabled>
-        <input class="input" id="buyerAddress" placeholder="Registered Address" disabled>
-        <input class="input" id="buyerState" placeholder="State" disabled>
-        <input class="input" id="buyerPhone" placeholder="Phone No." disabled>
-        <input class="input" id="buyerEmail" placeholder="Email ID" disabled>
+        <input class="input" id="buyerName" placeholder="Company Name">
+        <input class="input" id="buyerGstin" placeholder="GSTIN">
+        <input class="input" id="buyerAddress" placeholder="Registered Address">
+        <select class="input" id="buyerState">
+          <option value="AN">Andaman & Nicobar Islands</option>
+          <option value="AP">Andhra Pradesh</option>
+          <option value="AR">Arunachal Pradesh</option>
+          <option value="AS">Assam</option>
+          <option value="BR">Bihar</option>
+          <option value="CH">Chandigarh</option>
+          <option value="CG">Chhattisgarh</option>
+          <option value="DN">Dadra & Nagar Haveli and Daman & Diu</option>
+          <option value="DL">Delhi</option>
+          <option value="GA">Goa</option>
+          <option value="GJ">Gujarat</option>
+          <option value="HR">Haryana</option>
+          <option value="HP">Himachal Pradesh</option>
+          <option value="JK">Jammu & Kashmir</option>
+          <option value="JH">Jharkhand</option>
+          <option value="KA">Karnataka</option>
+          <option value="KL">Kerala</option>
+          <option value="LA">Ladakh</option>
+          <option value="LD">Lakshadweep</option>
+          <option value="MP">Madhya Pradesh</option>
+          <option value="MH">Maharashtra</option>
+          <option value="MN">Manipur</option>
+          <option value="ML">Meghalaya</option>
+          <option value="MZ">Mizoram</option>
+          <option value="NL">Nagaland</option>
+          <option value="OR">Odisha</option>
+          <option value="PY">Puducherry</option>
+          <option value="PB">Punjab</option>
+          <option value="RJ">Rajasthan</option>
+          <option value="SK">Sikkim</option>
+          <option value="TN">Tamil Nadu</option>
+          <option value="TS">Telangana</option>
+          <option value="TR">Tripura</option>
+          <option value="UP" selected>Uttar Pradesh</option>
+          <option value="UK">Uttarakhand</option>
+          <option value="WB">West Bengal</option>
+        </select>
+        <input class="input" id="buyerPhone" placeholder="Phone No.">
+        <input class="input" id="buyerEmail" placeholder="Email ID">
       </div>
     </div>
   </div>
@@ -255,10 +294,10 @@ th:last-child, td:last-child { text-align: right; }
   <div class="bottom-section">
     <div class="panel">
       <div class="panel-title amber">RECOVERY SUMMARY</div>
-      <div class="summary-row"><label>Items Subtotal (₹)</label><input class="input" id="returnSubtotal" value="0.00" readonly style="color: var(--text-dim);"></div>
-      <div class="summary-row"><label>Tax Refunded (₹)</label><input class="input" type="number" id="returnTax" placeholder="0.00" onchange="calculateReturnTotals()"></div>
+      <div class="summary-row"><label>Items Subtotal</label><input class="input" id="returnSubtotal" value="0.00" readonly style="color: var(--text-dim);"></div>
+      <div class="summary-row"><label>Tax Refunded</label><input class="input" type="number" id="returnTax" placeholder="0.00" onchange="calculateReturnTotals()"></div>
       <div class="summary-row" style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 8px;">
-        <label style="color:var(--text-dim);">Deductions / Fees (-)</label><input class="input" type="number" id="deductions" placeholder="0.00" onchange="calculateReturnTotals()">
+        <label style="color:var(--text-dim);">Deductions (-)</label><input class="input" type="number" id="deductions" placeholder="0.00" onchange="calculateReturnTotals()">
       </div>
     </div>
 
@@ -266,18 +305,18 @@ th:last-child, td:last-child { text-align: right; }
       <div class="panel-title purple">ADJUSTMENT TYPE</div>
       <div class="gt-actions" style="display:flex; flex-direction: column; gap: 8px; flex: 1; justify-content: center;">
         <button class="adj-btn active" id="btnRefund" onclick="setAdjustmentMethod('Refund')">Refund (Bank/Cash)</button>
-        <button class="adj-btn" id="btnCredit" onclick="setAdjustmentMethod('Vendor Credit')">Vendor Credit (Deduct next bill)</button>
+        <button class="adj-btn" id="btnCredit" onclick="setAdjustmentMethod('Vendor Credit')">Vendor Credit</button>
       </div>
     </div>
 
     <div class="panel" style="display: flex; flex-direction: column;">
       <div class="panel-title">RETURN NOTES</div>
-      <textarea class="input" id="returnNotes" style="flex: 1; resize: none; padding-top: 8px;" placeholder="Notes for the vendor regarding the return..."></textarea>
+      <textarea class="input" id="returnNotes" style="flex: 1; resize: none; padding-top: 8px; width: 100%;" placeholder="Notes for the vendor regarding the return..."></textarea>
     </div>
 
     <div class="panel grand-total-box">
       <div class="gt-header">
-        <div class="gt-title">TOTAL REFUNDABLE AMOUNT</div>
+        <div class="gt-title">TOTAL REFUNDABLE</div>
         <div class="gt-amount" id="finalReturnTotal">₹0.00</div>
       </div>
       <div class="gt-actions">
@@ -325,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(e) {}
   }
 
-  // Auto-fill "Your Details (Buyer)" from LocalStorage Firm
+  // Auto-fill "Your Details (Buyer)" from LocalStorage Firm AND map the state correctly
   const firms = JSON.parse(localStorage.getItem('ip_firms') || '[]');
   const activeFirmId = localStorage.getItem('ip_active_firm');
   if (firms.length > 0 && activeFirmId) {
@@ -334,6 +373,11 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('buyerName').value    = activeFirm.name || '';
       document.getElementById('buyerAddress').value = activeFirm.address || '';
       document.getElementById('buyerGstin').value   = activeFirm.gstin || '';
+      
+      if (activeFirm.state) {
+          document.getElementById('buyerState').value = activeFirm.state;
+      }
+      
       document.getElementById('buyerPhone').value   = activeFirm.mainMobile || '';
       document.getElementById('buyerEmail').value   = activeFirm.email || '';
     }
@@ -432,7 +476,6 @@ function fetchOriginalBill() {
 
   request.onsuccess = () => {
     const inv = request.result;
-    // Assuming 'Purchase Invoice' docType exists, or falling back to searching anyway
     if (!inv || (inv.docType && inv.docType !== 'Purchase Invoice' && inv.docType !== 'Purchase')) {
       alert(`Bill/PO ${vchNo} not found in your purchase records.`);
       return;
@@ -515,7 +558,6 @@ function savePurchaseReturn() {
   const items = [];
   document.querySelectorAll('#tableBody tr').forEach(row => {
     const inputs = row.querySelectorAll('.td-input');
-    // Check if imported (disabled input) or manual (enabled input)
     const description = inputs[0]?.value.trim() || '';
     const price = parseFloat(inputs[1]?.value) || 0;
     const qty = parseFloat(inputs[2]?.value) || 0;
