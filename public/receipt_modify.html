@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>InvoicePro | Modify Receipt</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  const savedTheme = localStorage.getItem('ip_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+</script>
+<style>
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blue: #4f6ef7; --green: #10b981; --red: #ef4444; --amber: #f59e0b;
+  --r: 6px; --r-panel: 8px;
+}
+/* DARK MODE COLORS */
+[data-theme="dark"] {
+  --bg: #11141e; --panel: #1b202e; --input-bg: #11141e;
+  --border: #2a3143; --border-focus: #4f6ef7;
+  --text: #e2e8f0; --text-dim: #8c96a8;
+  --modal-overlay: rgba(0, 0, 0, 0.6);
+  --modal-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+/* LIGHT MODE COLORS */
+[data-theme="light"] {
+  --bg: #f1f5f9; --panel: #ffffff; --input-bg: #f8fafc;
+  --border: #cbd5e1; --border-focus: #4f6ef7;
+  --text: #0f172a; --text-dim: #64748b;
+  --modal-overlay: rgba(15, 23, 42, 0.4);
+  --modal-shadow: 0 20px 60px rgba(100, 116, 139, 0.15);
+}
+
+body {
+  font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+  height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* ─── TOP BAR ─── */
+.topbar {
+  height: 50px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.brand { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 6px; }
+.brand em { color: var(--blue); font-style: normal; }
+.brand-sub { color: var(--text-dim); font-size: 13px; font-weight: 400; }
+.top-actions { display: flex; align-items: center; gap: 10px; }
+.user-email { font-size: 12px; color: var(--text-dim); margin: 0 8px; }
+.btn {
+  padding: 6px 12px; border-radius: var(--r); border: 1px solid var(--border);
+  background: transparent; color: var(--text); cursor: pointer;
+  font-size: 12px; font-weight: 500; transition: 0.2s;
+}
+.btn:hover { background: var(--border); }
+.btn.green { background: #0e9f6e; border-color: #0e9f6e; color: #fff; }
+.btn.green:hover { background: #057a55; }
+.btn.red { background: var(--red); border-color: var(--red); color: #fff; }
+.btn.red:hover { background: #dc2626; }
+.btn.outline-red { color: var(--red); border-color: transparent; }
+.btn.outline-red:hover { background: rgba(239,68,68,0.1); }
+
+/* ─── MAIN LAYOUT ─── */
+.main-content { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 10px; min-height: 0; overflow-y: auto; }
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); padding: 12px; position: relative;}
+.panel-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; color: var(--text-dim); }
+.panel-title.blue { color: #3b82f6; }
+.panel-title.green { color: #10b981; }
+.grid { display: grid; gap: 10px; }
+
+/* ─── INPUTS ─── */
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; }
+.input {
+  background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--r);
+  color: var(--text); padding: 0 10px; height: 32px; font-size: 13px; width: 100%; outline: none; transition: 0.2s;
+}
+.input:focus { border-color: var(--border-focus); }
+.input:disabled { opacity: 0.7; cursor: not-allowed; }
+.input::placeholder { color: #94a3b8; }
+.input[readonly] { color: var(--text-dim); }
+
+/* ─── TOP PANELS ─── */
+.top-section { display: grid; grid-template-columns: 0.9fr 1.3fr 1.3fr; gap: 10px; flex-shrink: 0; }
+
+/* ─── TABLE SECTION ─── */
+.table-section { flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); display: flex; flex-direction: column; min-height: 200px; }
+.table-wrap { flex: 1; overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { position: sticky; top: 0; background: var(--bg); z-index: 10; font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+th:last-child, td:last-child { text-align: right; }
+.td-input { background: transparent; border: 1px solid transparent; color: var(--text); height: 28px; width: 100%; font-size: 13px; padding: 0 6px; outline: none; border-radius: 4px; font-family: 'Inter', sans-serif;}
+.td-input:focus, .td-input:hover { border-color: var(--border); background: var(--input-bg); }
+.td-input.right { text-align: right; }
+.table-footer { padding: 10px; border-top: 1px solid var(--border); background: var(--panel); flex-shrink: 0; }
+.add-btn { background: transparent; border: 1px solid var(--blue); color: var(--blue); padding: 6px 12px; border-radius: var(--r); font-size: 12px; font-weight: 500; cursor: pointer; transition: 0.2s; }
+.add-btn:hover { background: rgba(79,110,247,0.1); }
+.del-btn { color: var(--red); cursor: pointer; background: transparent; border: none; font-size: 16px; opacity: 0.5; transition: 0.2s; }
+.del-btn:hover { opacity: 1; }
+
+/* ─── BOTTOM PANELS ─── */
+.bottom-section { display: grid; grid-template-columns: 1fr 1fr 1.3fr 1.2fr; gap: 10px; flex-shrink: 0; }
+.summary-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.summary-row label { font-size: 12px; font-weight: 600; color: var(--text); }
+.summary-row .input { width: 110px; text-align: right; font-weight: 600; }
+.grand-total-box { display: flex; flex-direction: column; justify-content: space-between; }
+.gt-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
+.gt-title { font-size: 10px; font-weight: 700; color: var(--text-dim); letter-spacing: 0.05em; }
+.gt-amount { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; color: var(--green); }
+.gt-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* PAID STAMP */
+.paid-stamp {
+  position: absolute; top: 12px; right: 12px;
+  border: 3px solid var(--green); color: var(--green);
+  font-size: 20px; font-weight: 800; font-family: 'Inter', sans-serif;
+  letter-spacing: 2px; padding: 4px 16px; border-radius: 8px;
+  transform: rotate(-15deg); opacity: 0; pointer-events: none;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  scale: 1.5;
+}
+.paid-stamp.show { opacity: 0.8; scale: 1; }
+
+/* ─── CENTER LIST ─── */
+.center-list { position: fixed; top: 50px; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; background: var(--bg); z-index: 100; transition: opacity 0.3s, visibility 0.3s; padding: 28px 32px; overflow: hidden; }
+.center-list.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.list-container { width: 100%; height: 100%; display: flex; flex-direction: column; }
+.list-header { margin-bottom: 28px; animation: fadeInDown 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.list-header h2 { font-size: 28px; font-weight: 800; margin-bottom: 4px; color: var(--text); letter-spacing: -0.5px; }
+.list-header p { font-size: 13px; color: var(--text-dim); font-weight: 500; }
+.list-search { width: 100%; margin-bottom: 28px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 120px; gap: 12px; animation: fadeInUp 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s backwards; flex-shrink: 0; }
+.list-search > div { display: flex; flex-direction: column; gap: 6px; }
+.list-search label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.05em; }
+.list-search input { width: 100%; padding: 10px 12px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 12px; outline: none; transition: all 0.3s ease; }
+.list-search input:focus { border-color: var(--blue); background: rgba(79, 110, 247, 0.05); }
+.list-search button { padding: 10px 16px; background: linear-gradient(135deg, var(--blue) 0%, #06b6d4 100%); border: none; border-radius: 8px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; align-self: flex-end; }
+.list-search button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(79, 110, 247, 0.3); }
+.list-table-section { flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; animation: fadeInUp 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s backwards; }
+.list-table-title { padding: 16px 20px; border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 700; color: var(--text); }
+.list-table-wrap { flex: 1; overflow-y: auto; }
+.list-table { width: 100%; border-collapse: collapse; }
+.list-table thead { position: sticky; top: 0; background: var(--bg); z-index: 10; }
+.list-table th { padding: 12px 16px; font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-dim); text-align: left; border-bottom: 1px solid var(--border); letter-spacing: 0.05em; }
+.list-table td { padding: 14px 16px; font-size: 13px; color: var(--text); border-bottom: 1px solid var(--border); }
+.list-table tr:hover { background: rgba(79, 110, 247, 0.06); }
+.list-table tr { transition: background 0.3s ease; cursor: pointer; }
+.list-vch { font-weight: 800; font-family: 'JetBrains Mono'; color: var(--blue); }
+.list-party { font-weight: 600; }
+.list-amount { font-weight: 700; font-family: 'JetBrains Mono'; color: var(--green); }
+.list-status { display: inline-block; padding: 4px 10px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; color: var(--green); font-size: 11px; font-weight: 600; }
+.list-status.partial { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); color: var(--amber); }
+.list-status.unpaid { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: var(--red); }
+.list-actions { display: flex; gap: 6px; }
+.list-action-btn { padding: 6px 12px; background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+.list-action-btn:hover { border-color: var(--blue); color: var(--blue); background: rgba(79, 110, 247, 0.08); }
+.list-action-btn.delete { color: var(--red); border-color: transparent; }
+.list-action-btn.delete:hover { color: var(--red); background: rgba(239, 68, 68, 0.1); border-color: var(--red); }
+.empty-list { padding: 60px 20px; text-align: center; color: var(--text-dim); }
+.list-table-wrap::-webkit-scrollbar { width: 8px; }
+.list-table-wrap::-webkit-scrollbar-track { background: transparent; }
+.list-table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.list-table-wrap::-webkit-scrollbar-thumb:hover { background: var(--border-focus); }
+@keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeInOverlay { from { opacity: 0; backdrop-filter: blur(0px); } to { opacity: 1; backdrop-filter: blur(4px); } }
+@keyframes slideUpModal { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-focus); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">Invoice<em>Pro</em> <span class="brand-sub">| Receipt Modification</span></div>
+  <div class="top-actions">
+    <button class="btn" onclick="window.location.href='landing.html'">← Back to Hub</button>
+    <span class="user-email" id="topEmail">loading...</span>
+    <button class="btn outline-red" onclick="logout()">Log out</button>
+  </div>
+</header>
+
+<div class="center-list" id="centerList">
+  <div class="list-container">
+    <div class="list-header">
+      <h2>All Saved Receipts</h2>
+      <p>Manage your incoming payments</p>
+    </div>
+    
+    <div class="list-search">
+      <div><label>Search Receipt #</label><input type="text" id="searchBox" placeholder="REC-001" onkeyup="filterInvoices()"></div>
+      <div><label>Search Client Name</label><input type="text" id="searchParty" placeholder="Client Name" onkeyup="filterInvoices()"></div>
+      <div><label>From Date</label><input type="date" id="searchFromDate" onchange="filterInvoices()"></div>
+      <div><label>To Date</label><input type="date" id="searchToDate" onchange="filterInvoices()"></div>
+      <button onclick="resetFilters()">Reset</button>
+    </div>
+
+    <div class="list-table-section">
+      <div class="list-table-title">📋 Saved Receipts</div>
+      <div class="list-table-wrap">
+        <table class="list-table">
+          <thead>
+            <tr>
+              <th style="width: 15%;">DATE</th>
+              <th style="width: 15%;">RECEIPT NO.</th>
+              <th style="width: 25%;">CLIENT NAME</th>
+              <th style="width: 15%;">AMOUNT REC'D (₹)</th>
+              <th style="width: 15%;">STATUS</th>
+              <th style="width: 15%;">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="invoiceList">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main-content" id="editView" style="display:none;">
+  
+  <div class="top-section">
+    <div class="panel">
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="field"><label>RECEIPT NO.</label><input class="input" id="receiptNo" disabled></div>
+        <div class="field"><label>PAYMENT DATE</label><input class="input" type="date" id="paymentDate"></div>
+        <div class="field"><label>PAYMENT METHOD</label>
+          <select class="input" id="paymentMethod">
+            <option>Cash</option>
+            <option>Bank Transfer</option>
+            <option>UPI</option>
+            <option>Credit Card</option>
+            <option>Cheque</option>
+          </select>
+        </div>
+        <div class="field"><label>REFERENCE NO.</label><input class="input" id="referenceNo" placeholder="Txn ID / Cheque No."></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title blue">YOUR DETAILS (ISSUER)</div>
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <input class="input" id="supplierName" placeholder="Company Name">
+        <input class="input" id="supplierGstin" placeholder="GSTIN (Optional)">
+        <input class="input" id="supplierAddress" placeholder="Registered Address">
+        <input class="input" id="supplierState" placeholder="State">
+        <input class="input" id="supplierPhone" placeholder="Phone No.">
+        <input class="input" id="supplierEmail" placeholder="Email ID">
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title green">RECEIVED FROM (CLIENT)</div>
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <input class="input" id="clientName" placeholder="Client Name">
+        <input class="input" id="clientGstin" placeholder="CLIENT GSTIN (Optional)" maxlength="15">
+        <input class="input" id="clientAddress" placeholder="Billing Address">
+        <input class="input" id="buyerState" placeholder="State">
+        <input class="input" id="clientPhone" placeholder="Client Phone No.">
+        <input class="input" id="clientEmail" placeholder="Client Email ID">
+      </div>
+    </div>
+  </div>
+
+  <div class="table-section">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 40px; text-align: center;">X</th>
+            <th style="width: 50%;">Item / Service Description</th>
+            <th style="width: 100px;">Qty</th>
+            <th style="width: 120px;">Price (₹)</th>
+            <th style="width: 140px;">Total (₹)</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          </tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <button class="add-btn" onclick="addRow()">+ Add Line Item (F2)</button>
+    </div>
+  </div>
+
+  <div class="bottom-section">
+    <div class="panel">
+      <div class="panel-title">SUMMARY</div>
+      <div class="summary-row"><label>Subtotal (₹)</label><input class="input" id="sumSubtotal" value="0.00" readonly></div>
+      <div class="summary-row"><label>Tax / Fees (₹)</label><input class="input" type="number" id="inTax" placeholder="0.00"></div>
+      <div class="summary-row"><label>Discount (-) (₹)</label><input class="input" type="number" id="inDiscount" placeholder="0.00"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">RECEIPT TOTALS</div>
+      <div class="summary-row"><label>Total Amount</label><input class="input" id="sumTotalDue" value="0.00" readonly style="border:none; background:transparent;"></div>
+      <div class="summary-row"><label style="color:var(--green);">Amount Received (₹)</label><input class="input" type="number" id="inPaid" placeholder="0.00" style="border-color:var(--green); color:var(--green);"></div>
+      <div class="summary-row" style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 8px;">
+        <label>Balance Due</label><input class="input" id="sumBalance" value="0.00" readonly style="color:var(--amber);">
+      </div>
+    </div>
+
+    <div class="panel" style="display: flex; flex-direction: column;">
+      <div class="panel-title blue">REMARKS / NOTES</div>
+      <textarea class="input" id="receiptNotes" style="flex: 1; resize: none; padding-top: 8px; min-height: 80px;" placeholder="Thank you for your payment!"></textarea>
+    </div>
+
+    <div class="panel grand-total-box">
+      <div class="paid-stamp" id="paidStamp">PAID</div>
+      <div class="gt-header">
+        <div class="gt-title">AMOUNT RECEIVED</div>
+        <div class="gt-amount" id="grandTotal">₹0.00</div>
+      </div>
+      <div class="gt-actions">
+        <button class="btn" style="flex:1;" onclick="backToList()">← Back</button>
+        <button class="btn red" style="flex:1;" onclick="deleteInv()">Delete</button>
+        <button class="btn green" style="flex:1;" onclick="saveReceipt()">Save Receipt</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let db = null;
+let allInvoices = [];
+let currentId = null;
+
+// Initialize IndexedDB
+function initDB() {
+  const request = indexedDB.open('InvoiceProDB', 1);
+  request.onerror = () => console.error('Database initialization failed');
+  request.onsuccess = (e) => {
+    db = e.target.result;
+    loadInvoices();
+  };
+}
+
+function loadInvoices() {
+  if (!db) return;
+  const transaction = db.transaction(['invoices'], 'readonly');
+  const store = transaction.objectStore('invoices');
+  const request = store.getAll();
+  
+  request.onsuccess = () => {
+    // Filter only Receipts
+    allInvoices = request.result.filter(i => i.docType === 'Receipt');
+    renderList();
+  };
+}
+
+function resetFilters() {
+  document.getElementById('searchBox').value = '';
+  document.getElementById('searchParty').value = '';
+  document.getElementById('searchFromDate').value = '';
+  document.getElementById('searchToDate').value = '';
+  renderList();
+}
+
+function renderList() {
+  const list = document.getElementById('invoiceList');
+  
+  if (allInvoices.length === 0) {
+    list.innerHTML = '<tr><td colspan="6" class="empty-list">📭 No saved receipts</td></tr>';
+    return;
+  }
+
+  list.innerHTML = allInvoices.map(inv => {
+    let statusClass = '';
+    if (inv.status === 'Paid') statusClass = '';
+    else if (inv.status === 'Partial') statusClass = 'partial';
+    else statusClass = 'unpaid';
+
+    return `
+    <tr onclick="openInvoice('${inv.id}')">
+      <td>${new Date(inv.date).toLocaleDateString('en-IN')}</td>
+      <td class="list-vch">${inv.vchNo}</td>
+      <td class="list-party">${inv.party?.name || 'Unknown'}</td>
+      <td class="list-amount">₹${(inv.totals?.amountReceived || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+      <td><span class="list-status ${statusClass}">${inv.status || 'Partial'}</span></td>
+      <td class="list-actions">
+        <button class="list-action-btn" onclick="event.stopPropagation(); openInvoice('${inv.id}')">Edit</button>
+        <button class="list-action-btn delete" onclick="event.stopPropagation(); currentId='${inv.id}'; deleteInv();">Delete</button>
+      </td>
+    </tr>
+  `}).join('');
+}
+
+function filterInvoices() {
+  const vchSearch = document.getElementById('searchBox').value.toLowerCase();
+  const partySearch = document.getElementById('searchParty').value.toLowerCase();
+  const fromDate = document.getElementById('searchFromDate').value;
+  const toDate = document.getElementById('searchToDate').value;
+
+  const filtered = allInvoices.filter(inv => {
+    const matchVch = (inv.vchNo || '').toLowerCase().includes(vchSearch);
+    const matchParty = (inv.party?.name || '').toLowerCase().includes(partySearch);
+    const matchFromDate = !fromDate || inv.date >= fromDate;
+    const matchToDate = !toDate || inv.date <= toDate;
+    return matchVch && matchParty && matchFromDate && matchToDate;
+  });
+
+  const list = document.getElementById('invoiceList');
+  if (filtered.length === 0) {
+    list.innerHTML = '<tr><td colspan="6" class="empty-list">No results found</td></tr>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(inv => {
+    let statusClass = '';
+    if (inv.status === 'Paid') statusClass = '';
+    else if (inv.status === 'Partial') statusClass = 'partial';
+    else statusClass = 'unpaid';
+
+    return `
+    <tr onclick="openInvoice('${inv.id}')">
+      <td>${new Date(inv.date).toLocaleDateString('en-IN')}</td>
+      <td class="list-vch">${inv.vchNo}</td>
+      <td class="list-party">${inv.party?.name || 'Unknown'}</td>
+      <td class="list-amount">₹${(inv.totals?.amountReceived || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+      <td><span class="list-status ${statusClass}">${inv.status || 'Partial'}</span></td>
+      <td class="list-actions">
+        <button class="list-action-btn" onclick="event.stopPropagation(); openInvoice('${inv.id}')">Edit</button>
+        <button class="list-action-btn delete" onclick="event.stopPropagation(); currentId='${inv.id}'; deleteInv();">Delete</button>
+      </td>
+    </tr>
+  `}).join('');
+}
+
+function openInvoice(id) {
+  currentId = id;
+  const inv = allInvoices.find(i => i.id === id);
+  if (!inv) return;
+
+  // Load standard data
+  document.getElementById('receiptNo').value = inv.vchNo || '';
+  document.getElementById('paymentDate').value = inv.date || '';
+  document.getElementById('paymentMethod').value = inv.paymentMethod || 'Cash';
+  document.getElementById('referenceNo').value = inv.referenceNo || '';
+  
+  // Issuer Details
+  document.getElementById('supplierName').value = inv.supplier?.name || '';
+  document.getElementById('supplierGstin').value = inv.supplier?.gstin || '';
+  document.getElementById('supplierAddress').value = inv.supplier?.address || '';
+  document.getElementById('supplierState').value = inv.supplier?.state || '';
+  document.getElementById('supplierPhone').value = inv.supplier?.phone || '';
+  document.getElementById('supplierEmail').value = inv.supplier?.email || '';
+
+  // Client Details
+  document.getElementById('clientName').value = inv.party?.name || '';
+  document.getElementById('clientGstin').value = inv.party?.gstin || '';
+  document.getElementById('clientAddress').value = inv.party?.address || '';
+  document.getElementById('buyerState').value = inv.party?.state || '';
+  document.getElementById('clientPhone').value = inv.party?.phone || '';
+  document.getElementById('clientEmail').value = inv.party?.email || '';
+
+  // Load items
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  (inv.items || []).forEach(item => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
+      <td><input class="td-input" value="${item.description || ''}"></td>
+      <td><input class="td-input right calc-qty" type="number" value="${item.qty}" min="1"></td>
+      <td><input class="td-input right calc-price" type="number" value="${item.price}"></td>
+      <td><input class="td-input right calc-amount" value="${(item.amount || 0).toFixed(2)}" readonly style="color:var(--text); font-weight:600;"></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Load Bottom Fields
+  document.getElementById('inTax').value = inv.totals?.tax || 0;
+  document.getElementById('inDiscount').value = inv.totals?.discount || 0;
+  document.getElementById('inPaid').value = inv.totals?.amountReceived || 0;
+  document.getElementById('receiptNotes').value = inv.notes || '';
+
+  // Hide list, show edit
+  document.getElementById('centerList').classList.add('hidden');
+  document.getElementById('editView').style.display = 'flex';
+
+  document.addEventListener('keydown', (e) => { if(e.key==='F2') { e.preventDefault(); addRow(); }});
+
+  calculateReceipt();
+}
+
+function backToList() {
+  document.getElementById('editView').style.display = 'none';
+  document.getElementById('centerList').classList.remove('hidden');
+  currentId = null;
+}
+
+function addRow() {
+  const tbody = document.getElementById('tableBody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
+    <td><input class="td-input" placeholder="e.g. Web Design Advance"></td>
+    <td><input class="td-input right calc-qty" type="number" value="1" min="1"></td>
+    <td><input class="td-input right calc-price" type="number" placeholder="0.00"></td>
+    <td><input class="td-input right calc-amount" readonly value="0.00" style="color:var(--text); font-weight:600;"></td>
+  `;
+  tbody.appendChild(tr);
+  document.querySelector('.table-wrap').scrollTop = document.querySelector('.table-wrap').scrollHeight;
+  calculateReceipt();
+}
+
+function removeRow(btn) {
+  btn.closest('tr').remove();
+  calculateReceipt();
+}
+
+function calculateReceipt() {
+  let subtotal = 0;
+  const rows = document.querySelectorAll('#tableBody tr');
+
+  rows.forEach(row => {
+    const qty = parseFloat(row.querySelector('.calc-qty').value) || 0;
+    const price = parseFloat(row.querySelector('.calc-price').value) || 0;
+    const amountInput = row.querySelector('.calc-amount');
+
+    const amount = qty * price;
+    if(amountInput) amountInput.value = amount.toFixed(2);
+    subtotal += amount;
+  });
+
+  const tax = parseFloat(document.getElementById('inTax').value) || 0;
+  const discount = parseFloat(document.getElementById('inDiscount').value) || 0;
+  
+  const totalAmount = Math.max(0, subtotal + tax - discount);
+  const amountReceived = parseFloat(document.getElementById('inPaid').value) || 0;
+  const balance = Math.max(0, totalAmount - amountReceived);
+
+  document.getElementById('sumSubtotal').value = subtotal.toFixed(2);
+  document.getElementById('sumTotalDue').value = totalAmount.toFixed(2);
+  document.getElementById('sumBalance').value = balance.toFixed(2);
+
+  document.getElementById('grandTotal').textContent = '₹' + amountReceived.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+  // Stamp logic
+  const stamp = document.getElementById('paidStamp');
+  if (amountReceived > 0 && balance <= 0) {
+    stamp.classList.add('show');
+  } else {
+    stamp.classList.remove('show');
+  }
+}
+
+// Global Event Listener for Instant Calculations
+document.addEventListener('input', function(e) {
+  if (
+    e.target.classList.contains('calc-qty') || 
+    e.target.classList.contains('calc-price') ||
+    e.target.id === 'inTax' || 
+    e.target.id === 'inDiscount' || 
+    e.target.id === 'inPaid'
+  ) {
+    calculateReceipt();
+  }
+});
+
+function saveReceipt() {
+  if (!currentId) return;
+  const inv = allInvoices.find(i => i.id === currentId);
+  if (!inv) return;
+
+  inv.date = document.getElementById('paymentDate').value;
+  inv.paymentMethod = document.getElementById('paymentMethod').value;
+  inv.referenceNo = document.getElementById('referenceNo').value;
+  
+  inv.supplier = inv.supplier || {};
+  inv.supplier.name = document.getElementById('supplierName').value;
+  inv.supplier.gstin = document.getElementById('supplierGstin').value;
+  inv.supplier.address = document.getElementById('supplierAddress').value;
+  inv.supplier.state = document.getElementById('supplierState').value;
+  inv.supplier.phone = document.getElementById('supplierPhone').value;
+  inv.supplier.email = document.getElementById('supplierEmail').value;
+  
+  inv.party = inv.party || {};
+  inv.party.name = document.getElementById('clientName').value;
+  inv.party.gstin = document.getElementById('clientGstin').value;
+  inv.party.address = document.getElementById('clientAddress').value;
+  inv.party.state = document.getElementById('buyerState').value;
+  inv.party.phone = document.getElementById('clientPhone').value;
+  inv.party.email = document.getElementById('clientEmail').value;
+
+  inv.items = [];
+  document.querySelectorAll('#tableBody tr').forEach(r => {
+    const inputs = r.querySelectorAll('.td-input');
+    const description = inputs[0]?.value || '';
+    const qty = parseFloat(r.querySelector('.calc-qty').value) || 0;
+    const price = parseFloat(r.querySelector('.calc-price').value) || 0;
+    const amount = parseFloat(r.querySelector('.calc-amount').value) || 0;
+    
+    if (description.trim() || qty > 0) {
+      inv.items.push({ description, qty, price, amount });
+    }
+  });
+
+  const amountReceived = parseFloat(document.getElementById('inPaid').value) || 0;
+
+  inv.totals = inv.totals || {};
+  inv.totals.subtotal = parseFloat(document.getElementById('sumSubtotal').value) || 0;
+  inv.totals.tax = parseFloat(document.getElementById('inTax').value) || 0;
+  inv.totals.discount = parseFloat(document.getElementById('inDiscount').value) || 0;
+  inv.totals.totalDue = parseFloat(document.getElementById('sumTotalDue').value) || 0;
+  inv.totals.amountReceived = amountReceived;
+  inv.totals.balance = parseFloat(document.getElementById('sumBalance').value) || 0;
+  inv.totals.grandTotal = amountReceived; // For dashboard sync
+
+  inv.notes = document.getElementById('receiptNotes').value;
+  inv.status = parseFloat(document.getElementById('sumBalance').value) <= 0 ? 'Paid' : 'Partial';
+  inv.updatedAt = new Date().toISOString();
+
+  const transaction = db.transaction(['invoices'], 'readwrite');
+  const store = transaction.objectStore('invoices');
+  const request = store.put(inv);
+  
+  request.onsuccess = () => {
+    showSuccessModal(inv.vchNo, amountReceived);
+  };
+  
+  request.onerror = () => {
+    showErrorModal('Error updating receipt. Please try again.');
+  };
+}
+
+function deleteInv() {
+  if (!currentId) {
+    showErrorModal('No receipt selected');
+    return;
+  }
+  const inv = allInvoices.find(i => i.id === currentId);
+  if (!inv) return;
+  
+  const existingModal = document.getElementById('deleteModal');
+  if (existingModal) existingModal.remove();
+
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = 'deleteModal';
+  modalOverlay.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--modal-overlay); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 40000; animation: fadeInOverlay 0.3s ease;
+  `;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(239, 68, 68, 0.05) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 20px;
+    padding: 40px; max-width: 400px; width: 90%;
+    box-shadow: var(--modal-shadow);
+    text-align: center; animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  `;
+
+  modal.innerHTML = `
+    <div style="width: 80px; height: 80px; margin: 0 auto 24px; background: rgba(239, 68, 68, 0.1); border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" style="width: 40px; height: 40px;">
+        <path d="M12 8v8M8 12h8M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2"/>
+      </svg>
+    </div>
+    <h2 style="color: var(--text); font-size: 24px; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.5px;">Delete Receipt?</h2>
+    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">This cannot be undone.</p>
+    
+    <div style="background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+      <strong style="color: var(--text); display: block; margin-bottom: 6px; font-size: 14px; font-weight: 600;">#${inv.vchNo}</strong>
+      <span style="color: var(--text-dim); font-size: 12px;">${inv.party?.name || 'Unknown Client'}</span>
+    </div>
+    
+    <div style="display: flex; gap: 12px;">
+      <button id="cancelDeleteBtn" style="flex: 1; padding: 14px; background: var(--input-bg); border: 1px solid var(--border); color: var(--text); border-radius: 10px; font-weight: 600; cursor: pointer;">Cancel</button>
+      <button id="confirmDeleteBtn" style="flex: 1; padding: 14px; background: #ef4444; border: none; color: #fff; border-radius: 10px; font-weight: 600; cursor: pointer;">Delete</button>
+    </div>
+  `;
+  
+  modalOverlay.appendChild(modal);
+  document.body.appendChild(modalOverlay);
+
+  document.getElementById('cancelDeleteBtn').addEventListener('click', () => modalOverlay.remove());
+  document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+    modalOverlay.remove();
+    confirmDelete();
+  });
+}
+
+function confirmDelete() {
+  if (!currentId) return;
+  const transaction = db.transaction(['invoices'], 'readwrite');
+  const store = transaction.objectStore('invoices');
+  const deleteRequest = store.delete(currentId);
+  
+  deleteRequest.onsuccess = () => {
+    allInvoices = allInvoices.filter(i => i.id !== currentId);
+    currentId = null;
+    loadInvoices();
+    backToList();
+    showSuccessModal('Deleted Successfully', null);
+  };
+  
+  deleteRequest.onerror = () => {
+    showErrorModal('Error deleting receipt. Please try again.');
+  };
+}
+
+// --- BEAUTIFUL THEME-AWARE MODALS ---
+function showSuccessModal(titleOrDocNo, amountReceived) {
+  const existingModal = document.getElementById('successModal');
+  if (existingModal) existingModal.remove();
+  
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = 'successModal';
+  modalOverlay.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--modal-overlay); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 40000; animation: fadeInOverlay 0.3s ease;
+  `;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(16, 185, 129, 0.05) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 20px;
+    padding: 40px; max-width: 400px; width: 90%;
+    box-shadow: var(--modal-shadow);
+    text-align: center; animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  `;
+  
+  const checkmarkSvg = `
+    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 24px;">
+      <circle cx="50" cy="50" r="48" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="2"/>
+      <path d="M32 52L45 65L70 35" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+  `;
+  
+  const isDeleted = String(titleOrDocNo).includes('Deleted');
+  const titleText = isDeleted ? 'Deleted Successfully!' : 'Saved Successfully!';
+  const messageText = isDeleted ? 'The receipt has been securely removed.' : 'Your receipt has been successfully updated and saved.';
+  const docNo = isDeleted ? '-' : titleOrDocNo;
+  const formattedAmount = amountReceived !== null ? amountReceived.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00';
+  
+  modal.innerHTML = `
+    ${checkmarkSvg}
+    <h2 style="color: var(--text); font-size: 24px; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.5px;">${titleText}</h2>
+    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">${messageText}</p>
+    
+    ${!isDeleted ? `
+    <div style="background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div style="text-align: left;">
+          <p style="color: var(--text-dim); font-size: 11px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Receipt #</p>
+          <p style="color: var(--text); font-size: 16px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">${docNo}</p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-dim); font-size: 11px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Amount Rec'd</p>
+          <p style="color: #10b981; font-size: 16px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">₹${formattedAmount}</p>
+        </div>
+      </div>
+    </div>
+    ` : ''}
+    
+    <button id="closeSuccessBtn" style="width: 100%; padding: 14px 20px; background: #10b981; border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+      Continue
+    </button>
+  `;
+  
+  modalOverlay.appendChild(modal);
+  document.body.appendChild(modalOverlay);
+  
+  document.getElementById('closeSuccessBtn').addEventListener('click', () => {
+    modalOverlay.remove();
+    if (typeof loadInvoices === 'function') loadInvoices();
+    if (typeof backToList === 'function') backToList();
+  });
+}
+
+function showErrorModal(message) {
+  const existingModal = document.getElementById('errorModal');
+  if (existingModal) existingModal.remove();
+  
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = 'errorModal';
+  modalOverlay.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--modal-overlay); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 40000; animation: fadeInOverlay 0.3s ease;
+  `;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(239, 68, 68, 0.05) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 20px;
+    padding: 40px; max-width: 400px; width: 90%;
+    box-shadow: var(--modal-shadow);
+    text-align: center; animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  `;
+  
+  modal.innerHTML = `
+    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 24px;">
+      <circle cx="50" cy="50" r="48" fill="rgba(239, 68, 68, 0.15)" stroke="#ef4444" stroke-width="2"/>
+      <path d="M35 35L65 65M65 35L35 65" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <h2 style="color: var(--text); font-size: 24px; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.5px;">Error!</h2>
+    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">${message}</p>
+    <button id="closeErrorBtn" style="width: 100%; padding: 14px 20px; background: #ef4444; border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+      Try Again
+    </button>
+  `;
+  
+  modalOverlay.appendChild(modal);
+  document.body.appendChild(modalOverlay);
+  
+  document.getElementById('closeErrorBtn').addEventListener('click', () => modalOverlay.remove());
+}
+
+// Load user email and setup on page load
+document.addEventListener('DOMContentLoaded', function() {
+  const userEmail = localStorage.getItem('userEmail') || localStorage.getItem('email') || 'user@example.com';
+  document.getElementById('topEmail').textContent = userEmail;
+  initDB();
+});
+</script>
+</body>
+</html>
