@@ -12,7 +12,7 @@
 <style>
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --blue: #4f6ef7; --green: #10b981; --red: #ef4444;
+  --blue: #4f6ef7; --green: #10b981; --red: #ef4444; --amber: #f59e0b;
   --r: 6px; --r-panel: 8px;
 }
 /* DARK MODE COLORS */
@@ -20,17 +20,23 @@
   --bg: #11141e; --panel: #1b202e; --input-bg: #11141e;
   --border: #2a3143; --border-focus: #4f6ef7;
   --text: #e2e8f0; --text-dim: #8c96a8;
+  --modal-overlay: rgba(0, 0, 0, 0.6);
+  --modal-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 /* LIGHT MODE COLORS */
 [data-theme="light"] {
   --bg: #f1f5f9; --panel: #ffffff; --input-bg: #f8fafc;
   --border: #cbd5e1; --border-focus: #4f6ef7;
   --text: #0f172a; --text-dim: #64748b;
+  --modal-overlay: rgba(15, 23, 42, 0.4);
+  --modal-shadow: 0 20px 60px rgba(100, 116, 139, 0.15);
 }
+
 body {
   font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
   height: 100vh; display: flex; flex-direction: column; overflow: hidden;
 }
+
 /* ─── TOP BAR ─── */
 .topbar {
   height: 50px; display: flex; align-items: center; justify-content: space-between;
@@ -53,6 +59,7 @@ body {
 .btn.red:hover { background: #dc2626; }
 .btn.outline-red { color: var(--red); border-color: transparent; }
 .btn.outline-red:hover { background: rgba(239,68,68,0.1); }
+
 /* ─── MAIN LAYOUT ─── */
 .main-content { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 10px; min-height: 0; overflow-y: auto; }
 .panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); padding: 12px; }
@@ -61,6 +68,7 @@ body {
 .panel-title.green { color: #10b981; }
 .panel-title.amber { color: #f59e0b; }
 .grid { display: grid; gap: 10px; }
+
 /* ─── INPUTS ─── */
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; }
@@ -71,6 +79,7 @@ body {
 .input:focus { border-color: var(--border-focus); }
 .input::placeholder { color: #94a3b8; }
 .input[readonly] { color: #10b981; }
+
 /* ─── TOP PANELS ─── */
 .top-section { display: grid; grid-template-columns: 0.9fr 1.3fr 1.3fr; gap: 10px; flex-shrink: 0; }
 .payment-type {
@@ -78,6 +87,7 @@ body {
   display: flex; align-items: center; gap: 14px; background: var(--input-bg);
   padding: 6px 10px; border-radius: var(--r); border: 1px solid var(--border);
 }
+
 /* ─── TABLE SECTION ─── */
 .table-section { flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); display: flex; flex-direction: column; min-height: 200px; }
 .table-wrap { flex: 1; overflow-y: auto; }
@@ -93,6 +103,7 @@ th:last-child, td:last-child { text-align: right; }
 .add-btn:hover { background: rgba(79,110,247,0.1); }
 .del-btn { color: var(--red); cursor: pointer; background: transparent; border: none; font-size: 16px; opacity: 0.5; transition: 0.2s; }
 .del-btn:hover { opacity: 1; }
+
 /* ─── BOTTOM PANELS ─── */
 .bottom-section { display: grid; grid-template-columns: 1fr 1fr 1.3fr 1.2fr; gap: 10px; flex-shrink: 0; }
 .summary-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
@@ -103,6 +114,11 @@ th:last-child, td:last-child { text-align: right; }
 .gt-title { font-size: 10px; font-weight: 700; color: var(--text-dim); letter-spacing: 0.05em; }
 .gt-amount { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; color: var(--text); }
 .gt-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ─── MODAL ANIMATIONS ─── */
+@keyframes fadeInOverlay { from { opacity: 0; backdrop-filter: blur(0px); } to { opacity: 1; backdrop-filter: blur(4px); } }
+@keyframes slideUpModal { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -390,13 +406,9 @@ function logout() {
 // --- CALCULATIONS ENGINE (LITE) ---
 function calculatePayment() {
   let subtotal = 0;
-  const rowsData = [];
   const rows = document.querySelectorAll('#tableBody tr');
 
   rows.forEach(row => {
-    const inputs = row.querySelectorAll('.td-input');
-    const itemService = inputs[0]?.value || '';
-    const description = inputs[1]?.value || '';
     const qty = parseFloat(row.querySelector('.calc-qty').value) || 0;
     const price = parseFloat(row.querySelector('.calc-price').value) || 0;
     const amountInput = row.querySelector('.calc-amount');
@@ -404,8 +416,6 @@ function calculatePayment() {
     const amount = qty * price;
     if(amountInput) amountInput.value = amount.toFixed(2);
     subtotal += amount;
-
-    rowsData.push({ itemService, description, qty, price, amount });
   });
 
   const tax = parseFloat(document.getElementById('inTax').value) || 0;
@@ -422,6 +432,21 @@ function calculatePayment() {
 
   document.getElementById('grandTotal').textContent = '₹' + balance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
+
+// Global Event Listener for Instant Calculations
+document.addEventListener('input', function(e) {
+  if (
+    e.target.classList.contains('calc-qty') || 
+    e.target.classList.contains('calc-price') ||
+    e.target.id === 'inTax' || 
+    e.target.id === 'inDiscount' || 
+    e.target.id === 'inPaid' ||
+    e.target.id === 'supplierState' ||
+    e.target.id === 'buyerState'
+  ) {
+    calculatePayment();
+  }
+});
 
 function addRow() {
   const tbody = document.getElementById('tableBody');
@@ -529,14 +554,13 @@ function savePayment() {
   const amountPaid = parseFloat(document.getElementById('inPaid').value) || 0;
   const balance = parseFloat(document.getElementById('sumBalance').value) || 0;
   
-  // Logic to determine status based on payment amount
   let paymentStatus = 'Unpaid';
   if (amountPaid >= totalDue && totalDue > 0) paymentStatus = 'Paid';
   else if (amountPaid > 0 && amountPaid < totalDue) paymentStatus = 'Partial';
 
   const paymentData = {
     id: 'payment_' + Date.now(),
-    docType: 'Payment', // Differentiates it from standard invoices in DB
+    docType: 'Payment',
     vchNo: paymentNo,
     date: document.getElementById('issueDate').value,
     dueDate: document.getElementById('dueDate').value,
@@ -569,7 +593,7 @@ function savePayment() {
       totalDue: totalDue,
       amountPaid: amountPaid,
       balance: balance,
-      grandTotal: totalDue // mapped for list compatibility
+      grandTotal: totalDue 
     },
     
     instructions: {
@@ -583,7 +607,7 @@ function savePayment() {
   };
 
   if (!db) {
-    alert('❌ Database not initialized. Please refresh and try again.');
+    showErrorModal('Database not initialized. Please refresh and try again.');
     return;
   }
   
@@ -592,17 +616,133 @@ function savePayment() {
   const request = store.add(paymentData);
   
   request.onsuccess = () => {
-    alert('✅ Payment Voucher saved successfully!\n\nNo: ' + paymentNo + '\nBalance Due: ₹' + balance.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-    if (confirm('Would you like to create a new payment voucher?')) {
-      location.reload();
-    } else {
-      window.location.href = 'landing.html';
-    }
+    showSuccessModal(paymentNo, balance);
   };
   
   request.onerror = () => {
-    alert('❌ Error saving payment voucher. Please try again.');
+    showErrorModal('Error saving payment voucher. Please try again.');
   };
+}
+
+// --- BEAUTIFUL THEME-AWARE MODALS ---
+function showSuccessModal(titleOrDocNo, balance) {
+  const existingModal = document.getElementById('successModal');
+  if (existingModal) existingModal.remove();
+  
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = 'successModal';
+  modalOverlay.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--modal-overlay); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 40000; animation: fadeInOverlay 0.3s ease;
+  `;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(16, 185, 129, 0.05) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 20px;
+    padding: 40px; max-width: 400px; width: 90%;
+    box-shadow: var(--modal-shadow);
+    text-align: center; animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  `;
+  
+  const checkmarkSvg = `
+    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 24px;">
+      <circle cx="50" cy="50" r="48" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="2"/>
+      <path d="M32 52L45 65L70 35" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+  `;
+  
+  const formattedAmount = balance !== null ? balance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00';
+  
+  modal.innerHTML = `
+    ${checkmarkSvg}
+    <h2 style="color: var(--text); font-size: 24px; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.5px;">Saved Successfully!</h2>
+    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">Your payment voucher has been successfully updated and saved.</p>
+    
+    <div style="background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div style="text-align: left;">
+          <p style="color: var(--text-dim); font-size: 11px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Payment #</p>
+          <p style="color: var(--text); font-size: 16px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">${titleOrDocNo}</p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-dim); font-size: 11px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Balance Remaining</p>
+          <p style="color: #f59e0b; font-size: 16px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">₹${formattedAmount}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div style="display: flex; gap: 10px;">
+      <button id="closeSuccessBtn" style="flex: 1; padding: 14px 10px; background: transparent; border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+        Close
+      </button>
+      <button id="newPaymentBtn" style="flex: 2; padding: 14px 10px; background: #10b981; border: none; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+        Create New Payment
+      </button>
+    </div>
+  `;
+  
+  modalOverlay.appendChild(modal);
+  document.body.appendChild(modalOverlay);
+  
+  // Handlers to give you control over redirects
+  document.getElementById('closeSuccessBtn').addEventListener('click', () => {
+    modalOverlay.remove();
+  });
+  
+  document.getElementById('newPaymentBtn').addEventListener('click', () => {
+    modalOverlay.remove();
+    location.reload(); 
+  });
+  
+  // Click outside to dismiss
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) {
+      modalOverlay.remove();
+    }
+  });
+}
+
+function showErrorModal(message) {
+  const existingModal = document.getElementById('errorModal');
+  if (existingModal) existingModal.remove();
+  
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = 'errorModal';
+  modalOverlay.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--modal-overlay); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 40000; animation: fadeInOverlay 0.3s ease;
+  `;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(239, 68, 68, 0.05) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 20px;
+    padding: 40px; max-width: 400px; width: 90%;
+    box-shadow: var(--modal-shadow);
+    text-align: center; animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  `;
+  
+  modal.innerHTML = `
+    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 24px;">
+      <circle cx="50" cy="50" r="48" fill="rgba(239, 68, 68, 0.15)" stroke="#ef4444" stroke-width="2"/>
+      <path d="M35 35L65 65M65 35L35 65" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <h2 style="color: var(--text); font-size: 24px; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.5px;">Error!</h2>
+    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">${message}</p>
+    <button id="closeErrorBtn" style="width: 100%; padding: 14px 20px; background: #ef4444; border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+      Try Again
+    </button>
+  `;
+  
+  modalOverlay.appendChild(modal);
+  document.body.appendChild(modalOverlay);
+  
+  document.getElementById('closeErrorBtn').addEventListener('click', () => modalOverlay.remove());
 }
 </script>
 </body>
