@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>InvoicePro | Balance Sheet</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  const savedTheme = localStorage.getItem('ip_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+</script>
+<style>
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blue: #4f6ef7; --green: #10b981; --red: #ef4444; --amber: #f59e0b; --purple: #8b5cf6;
+  --r: 6px; --r-panel: 8px;
+}
+[data-theme="dark"] {
+  --bg: #11141e; --panel: #1b202e; --input-bg: #11141e;
+  --border: #2a3143; --text: #e2e8f0; --text-dim: #8c96a8;
+}
+[data-theme="light"] {
+  --bg: #f1f5f9; --panel: #ffffff; --input-bg: #f8fafc;
+  --border: #cbd5e1; --text: #0f172a; --text-dim: #64748b;
+}
+
+body {
+  font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+  height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* ─── TOP BAR ─── */
+.topbar {
+  height: 50px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.brand { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 6px; }
+.brand em { color: var(--blue); font-style: normal; }
+.top-actions { display: flex; gap: 10px; }
+.btn {
+  padding: 6px 12px; border-radius: var(--r); border: 1px solid var(--border);
+  background: transparent; color: var(--text); cursor: pointer; font-size: 12px; font-weight: 500; transition: 0.2s;
+}
+.btn:hover { background: var(--border); }
+.btn.blue { background: var(--blue); border-color: var(--blue); color: #fff; }
+.btn.blue:hover { background: #3b82f6; }
+
+/* ─── MAIN CONTENT ─── */
+.main-content { flex: 1; padding: 20px; overflow-y: auto; max-width: 1000px; margin: 0 auto; width: 100%; }
+.header-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px;}
+.title-block { display: flex; flex-direction: column; gap: 4px; }
+.page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.page-sub { color: var(--text-dim); font-size: 13px; }
+.date-filter { background: var(--input-bg); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: var(--r); outline: none; font-family: inherit; font-size: 13px; font-weight: 500;}
+
+/* ─── T-FORMAT GRID ─── */
+.bs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 768px) { .bs-grid { grid-template-columns: 1fr; } }
+
+.bs-column { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); display: flex; flex-direction: column; overflow: hidden;}
+.col-header { background: rgba(0,0,0,0.2); padding: 12px 16px; font-size: 12px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;}
+
+.bs-section { padding: 16px; border-bottom: 1px dotted var(--border); }
+.bs-section:last-child { border-bottom: none; }
+.sec-title { font-size: 14px; font-weight: 600; color: var(--blue); margin-bottom: 12px; }
+
+.st-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.st-row:last-child { margin-bottom: 0; }
+.st-label { font-size: 13px; color: var(--text); display: flex; flex-direction: column;}
+.st-label span.sub { font-size: 11px; color: var(--text-dim); margin-top: 2px;}
+.st-amount { font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 13.5px; }
+
+.col-total { background: rgba(0,0,0,0.1); padding: 16px; display: flex; justify-content: space-between; align-items: center; border-top: 2px solid var(--border); margin-top: auto; }
+.col-total .st-label { font-size: 14px; font-weight: 700; text-transform: uppercase; }
+.col-total .st-amount { font-size: 18px; font-weight: 700; border-bottom: 3px double var(--text); padding-bottom: 2px;}
+
+/* Match Indicator */
+.balance-indicator { margin-bottom: 20px; padding: 12px 16px; border-radius: var(--r); font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.balance-indicator.matched { background: rgba(16,185,129,0.1); color: var(--green); border: 1px solid rgba(16,185,129,0.2); }
+.balance-indicator.unmatched { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">Invoice<em>Pro</em></div>
+  <div class="top-actions">
+    <button class="btn" onclick="window.location.href='landing.html'">← Back to Dashboard</button>
+    <button class="btn blue" onclick="window.print()">Print Report</button>
+  </div>
+</header>
+
+<div class="main-content">
+  <div class="header-row">
+    <div class="title-block">
+      <div class="page-title">Balance Sheet</div>
+      <div class="page-sub" id="firmNameSub">Standard T-Format</div>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+      <label style="font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">As Of Date</label>
+      <input type="date" class="date-filter" id="asOfDate" onchange="calculateBalanceSheet()">
+    </div>
+  </div>
+
+  <div id="balanceAlert" class="balance-indicator matched">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+    Balance Sheet is tallied.
+  </div>
+
+  <div class="bs-grid">
+    
+    <div class="bs-column">
+      <div class="col-header">
+        <span>Liabilities & Equity</span>
+        <span>Amount (₹)</span>
+      </div>
+      
+      <div class="bs-section">
+        <div class="sec-title">Capital & Equity</div>
+        <div class="st-row">
+          <div class="st-label">Opening Capital<span class="sub">Owner's Investment</span></div>
+          <div class="st-amount">0.00</div>
+        </div>
+        <div class="st-row">
+          <div class="st-label">Net Profit / (Loss)<span class="sub" id="lblPlDate">Current Period Earnings</span></div>
+          <div class="st-amount" id="valNetProfit">0.00</div>
+        </div>
+      </div>
+
+      <div class="bs-section">
+        <div class="sec-title" style="color: var(--amber);">Current Liabilities</div>
+        <div class="st-row">
+          <div class="st-label">Sundry Creditors<span class="sub">Accounts Payable (Unpaid Bills)</span></div>
+          <div class="st-amount" id="valAP">0.00</div>
+        </div>
+        </div>
+
+      <div class="col-total">
+        <div class="st-label">Total Liabilities</div>
+        <div class="st-amount" id="totalLiabilities">₹0.00</div>
+      </div>
+    </div>
+
+    <div class="bs-column">
+      <div class="col-header">
+        <span>Assets</span>
+        <span>Amount (₹)</span>
+      </div>
+
+      <div class="bs-section">
+        <div class="sec-title" style="color: var(--green);">Current Assets</div>
+        <div class="st-row">
+          <div class="st-label">Cash & Bank Balance<span class="sub">Receipts minus Payments</span></div>
+          <div class="st-amount" id="valCash">0.00</div>
+        </div>
+        <div class="st-row">
+          <div class="st-label">Sundry Debtors<span class="sub">Accounts Receivable (Unpaid Invoices)</span></div>
+          <div class="st-amount" id="valAR">0.00</div>
+        </div>
+      </div>
+
+      <div class="bs-section">
+        <div class="sec-title" style="color: var(--purple);">Fixed Assets & Inventory</div>
+        <div class="st-row">
+          <div class="st-label">Closing Stock<span class="sub">Requires manual valuation</span></div>
+          <div class="st-amount" style="color: var(--text-dim);">0.00</div>
+        </div>
+      </div>
+
+      <div class="col-total">
+        <div class="st-label">Total Assets</div>
+        <div class="st-amount" id="totalAssets">₹0.00</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Set default date to today
+document.getElementById('asOfDate').valueAsDate = new Date();
+
+let db = null;
+
+function initDB() {
+  const request = indexedDB.open('InvoiceProDB', 1);
+  request.onsuccess = (e) => { 
+    db = e.target.result; 
+    calculateBalanceSheet(); 
+  };
+}
+
+function calculateBalanceSheet() {
+  if (!db) return;
+  
+  const asOfDate = new Date(document.getElementById('asOfDate').value);
+  asOfDate.setHours(23, 59, 59, 999); // Include the whole day
+  
+  // Variables for tracking
+  let sales = 0, salesReturns = 0;
+  let purchases = 0, purchaseReturns = 0;
+  let cashReceived = 0, cashPaid = 0;
+
+  const transaction = db.transaction(['invoices'], 'readonly');
+  const store = transaction.objectStore('invoices');
+  const request = store.getAll();
+
+  request.onsuccess = () => {
+    const records = request.result;
+
+    records.forEach(record => {
+      const recordDate = new Date(record.date || record.createdAt);
+      if (recordDate > asOfDate) return; // Ignore future records
+
+      const type = record.docType || 'Invoice';
+      // Use grandTotal or specific payment fields
+      const grandTotal = record.totals?.grandTotal || record.totals?.taxable || 0;
+      
+      if (type === 'Invoice' || type === 'Sales Invoice') {
+        sales += grandTotal;
+      } else if (type === 'Sales Return') {
+        salesReturns += grandTotal;
+      } else if (type === 'Purchase Invoice' || type === 'Purchase') {
+        purchases += grandTotal;
+      } else if (type === 'Purchase Return') {
+        purchaseReturns += grandTotal;
+      } else if (type === 'Receipt') {
+        cashReceived += (record.totals?.amountReceived || grandTotal);
+      } else if (type === 'Payment') {
+        cashPaid += (record.totals?.amountPaid || grandTotal);
+      }
+    });
+
+    /* --- THE MATH ENGINE --- */
+    
+    // 1. Net Profit (Revenue - Expenses)
+    const netProfit = (sales - salesReturns) - (purchases - purchaseReturns);
+    
+    // 2. Cash & Bank (Inflow - Outflow)
+    // Note: If payments exceed receipts, cash becomes negative (overdraft)
+    let cashBalance = cashReceived - cashPaid;
+    
+    // 3. Accounts Receivable (Sundry Debtors)
+    // Money owed to us = (Total Sales - Returns) - Cash we received for them
+    let accountsReceivable = (sales - salesReturns) - cashReceived;
+    if (accountsReceivable < 0) accountsReceivable = 0; // If they overpaid, technically an advance/liability, kept simple for now
+    
+    // 4. Accounts Payable (Sundry Creditors)
+    // Money we owe = (Total Purchases - Returns) - Cash we paid out
+    let accountsPayable = (purchases - purchaseReturns) - cashPaid;
+    if (accountsPayable < 0) accountsPayable = 0; 
+
+    // CALCULATE TOTALS
+    const totalLiabilitiesEquity = netProfit + accountsPayable;
+    const totalAssets = cashBalance + accountsReceivable;
+
+    // --- UPDATE DOM ---
+    document.getElementById('valNetProfit').textContent = netProfit.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    document.getElementById('valNetProfit').style.color = netProfit >= 0 ? 'var(--green)' : 'var(--red)';
+    
+    document.getElementById('valAP').textContent = accountsPayable.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    document.getElementById('valAR').textContent = accountsReceivable.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    
+    document.getElementById('valCash').textContent = cashBalance.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    document.getElementById('valCash').style.color = cashBalance >= 0 ? 'var(--text)' : 'var(--red)';
+
+    document.getElementById('totalLiabilities').textContent = '₹' + totalLiabilitiesEquity.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    document.getElementById('totalAssets').textContent = '₹' + totalAssets.toLocaleString('en-IN', {minimumFractionDigits: 2});
+
+    // Check Balance Condition (allow 1 decimal cent floating point variance)
+    const alertBox = document.getElementById('balanceAlert');
+    if (Math.abs(totalLiabilitiesEquity - totalAssets) < 0.1) {
+      alertBox.className = 'balance-indicator matched';
+      alertBox.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Balance Sheet is tallied perfectly.`;
+    } else {
+      alertBox.className = 'balance-indicator unmatched';
+      alertBox.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01"/></svg> Warning: Imbalance detected. Check manual adjustments.`;
+    }
+  };
+}
+
+// Get Active Firm Name for Header
+document.addEventListener('DOMContentLoaded', () => {
+  const firms = JSON.parse(localStorage.getItem('ip_firms') || '[]');
+  const activeFirmId = localStorage.getItem('ip_active_firm');
+  if (firms.length > 0 && activeFirmId) {
+    const activeFirm = firms.find(f => String(f.id) === String(activeFirmId));
+    if (activeFirm) document.getElementById('firmNameSub').textContent = activeFirm.name;
+  }
+  initDB();
+});
+</script>
+</body>
+</html>
