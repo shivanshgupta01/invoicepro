@@ -422,16 +422,14 @@ function fetchOriginalInvoice() {
 
   const transaction = db.transaction(['invoices'], 'readonly');
   const store = transaction.objectStore('invoices');
-  const request = store.getAll(); // Fetch all to allow flexible/case-insensitive searching
+  const request = store.getAll(); 
 
   request.onsuccess = () => {
     const invoices = request.result;
     
-    // Find standard Sales Invoice by flexible, case-insensitive voucher number
-    const inv = invoices.find(i => 
-      (i.docType === 'Invoice' || i.docType === 'Sales Invoice') && 
-      (i.vchNo || '').toLowerCase() === searchNo
-    );
+    // THE FIX: Removed the strict 'docType' check. 
+    // Now it just looks for ANY document with a matching voucher number (case-insensitive).
+    const inv = invoices.find(i => String(i.vchNo || '').trim().toLowerCase() === searchNo);
 
     if (!inv) {
       showErrorModal(`Invoice '${document.getElementById('originalInvoiceNo').value.trim()}' not found in your sales records.`);
@@ -475,15 +473,19 @@ function fetchOriginalInvoice() {
       
       // Visual feedback that the fetch was successful
       const fetchBtn = document.querySelector('.btn.teal[onclick="fetchOriginalInvoice()"]');
-      const originalText = fetchBtn.innerHTML;
-      fetchBtn.innerHTML = '✓ Loaded';
-      fetchBtn.style.background = 'var(--green)';
-      fetchBtn.style.borderColor = 'var(--green)';
-      setTimeout(() => {
-        fetchBtn.innerHTML = originalText;
-        fetchBtn.style.background = '';
-        fetchBtn.style.borderColor = '';
-      }, 2000);
+      if(fetchBtn) {
+        const originalText = fetchBtn.innerHTML;
+        fetchBtn.innerHTML = '✓ Loaded';
+        fetchBtn.style.background = 'var(--green)';
+        fetchBtn.style.borderColor = 'var(--green)';
+        setTimeout(() => {
+          fetchBtn.innerHTML = originalText;
+          fetchBtn.style.background = '';
+          fetchBtn.style.borderColor = '';
+        }, 2000);
+      }
+    } else {
+      showErrorModal("Invoice found, but it has no items to return.");
     }
   };
 }
