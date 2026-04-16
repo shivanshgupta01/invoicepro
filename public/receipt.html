@@ -156,7 +156,44 @@ th:last-child, td:last-child { text-align: right; }
         <input class="input" id="supplierName" placeholder="Company Name">
         <input class="input" id="supplierGstin" placeholder="GSTIN (Optional)">
         <input class="input" id="supplierAddress" placeholder="Registered Address">
-        <input class="input" id="supplierState" placeholder="State">
+        <select class="input" id="supplierState" onchange="calculatePayment()">
+          <option value="AN">Andaman & Nicobar Islands</option>
+          <option value="AP">Andhra Pradesh</option>
+          <option value="AR">Arunachal Pradesh</option>
+          <option value="AS">Assam</option>
+          <option value="BR">Bihar</option>
+          <option value="CH">Chandigarh</option>
+          <option value="CG">Chhattisgarh</option>
+          <option value="DN">Dadra & Nagar Haveli and Daman & Diu</option>
+          <option value="DL">Delhi</option>
+          <option value="GA">Goa</option>
+          <option value="GJ">Gujarat</option>
+          <option value="HR">Haryana</option>
+          <option value="HP">Himachal Pradesh</option>
+          <option value="JK">Jammu & Kashmir</option>
+          <option value="JH">Jharkhand</option>
+          <option value="KA">Karnataka</option>
+          <option value="KL">Kerala</option>
+          <option value="LA">Ladakh</option>
+          <option value="LD">Lakshadweep</option>
+          <option value="MP">Madhya Pradesh</option>
+          <option value="MH">Maharashtra</option>
+          <option value="MN">Manipur</option>
+          <option value="ML">Meghalaya</option>
+          <option value="MZ">Mizoram</option>
+          <option value="NL">Nagaland</option>
+          <option value="OR">Odisha</option>
+          <option value="PY">Puducherry</option>
+          <option value="PB">Punjab</option>
+          <option value="RJ">Rajasthan</option>
+          <option value="SK">Sikkim</option>
+          <option value="TN">Tamil Nadu</option>
+          <option value="TS">Telangana</option>
+          <option value="TR">Tripura</option>
+          <option value="UP" selected>Uttar Pradesh</option>
+          <option value="UK">Uttarakhand</option>
+          <option value="WB">West Bengal</option>
+          </select>
         <input class="input" id="supplierPhone" placeholder="Phone No.">
         <input class="input" id="supplierEmail" placeholder="Email ID">
       </div>
@@ -168,7 +205,44 @@ th:last-child, td:last-child { text-align: right; }
         <input class="input" id="clientName" placeholder="Client Name">
         <input class="input" id="clientGstin" placeholder="CLIENT GSTIN (Optional)" maxlength="15">
         <input class="input" id="clientAddress" placeholder="Billing Address">
-        <input class="input" id="buyerState" placeholder="State">
+        <select class="input" id="buyerState" onchange="calculatePayment()">
+          <option value="AN">Andaman & Nicobar Islands</option>
+          <option value="AP">Andhra Pradesh</option>
+          <option value="AR">Arunachal Pradesh</option>
+          <option value="AS">Assam</option>
+          <option value="BR">Bihar</option>
+          <option value="CH">Chandigarh</option>
+          <option value="CG">Chhattisgarh</option>
+          <option value="DN">Dadra & Nagar Haveli and Daman & Diu</option>
+          <option value="DL">Delhi</option>
+          <option value="GA">Goa</option>
+          <option value="GJ">Gujarat</option>
+          <option value="HR">Haryana</option>
+          <option value="HP">Himachal Pradesh</option>
+          <option value="JK">Jammu & Kashmir</option>
+          <option value="JH">Jharkhand</option>
+          <option value="KA">Karnataka</option>
+          <option value="KL">Kerala</option>
+          <option value="LA">Ladakh</option>
+          <option value="LD">Lakshadweep</option>
+          <option value="MP">Madhya Pradesh</option>
+          <option value="MH">Maharashtra</option>
+          <option value="MN">Manipur</option>
+          <option value="ML">Meghalaya</option>
+          <option value="MZ">Mizoram</option>
+          <option value="NL">Nagaland</option>
+          <option value="OR">Odisha</option>
+          <option value="PY">Puducherry</option>
+          <option value="PB">Punjab</option>
+          <option value="RJ">Rajasthan</option>
+          <option value="SK">Sikkim</option>
+          <option value="TN">Tamil Nadu</option>
+          <option value="TS">Telangana</option>
+          <option value="TR">Tripura</option>
+          <option value="UP" selected>Uttar Pradesh</option>
+          <option value="UK">Uttarakhand</option>
+          <option value="WB">West Bengal</option>
+        </select>
         <input class="input" id="clientPhone" placeholder="Client Phone No.">
         <input class="input" id="clientEmail" placeholder="Client Email ID">
       </div>
