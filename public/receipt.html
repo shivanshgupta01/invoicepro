@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>InvoicePro | Receipt Voucher</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  const savedTheme = localStorage.getItem('ip_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+</script>
+<style>
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blue: #4f6ef7; --green: #10b981; --red: #ef4444; --amber: #f59e0b;
+  --r: 6px; --r-panel: 8px;
+}
+[data-theme="dark"] {
+  --bg: #11141e; --panel: #1b202e; --input-bg: #11141e;
+  --border: #2a3143; --border-focus: #4f6ef7;
+  --text: #e2e8f0; --text-dim: #8c96a8;
+}
+[data-theme="light"] {
+  --bg: #f1f5f9; --panel: #ffffff; --input-bg: #f8fafc;
+  --border: #cbd5e1; --border-focus: #4f6ef7;
+  --text: #0f172a; --text-dim: #64748b;
+}
+
+body {
+  font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+  height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* ─── TOP BAR ─── */
+.topbar {
+  height: 50px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.brand { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 6px; }
+.brand em { color: var(--blue); font-style: normal; }
+.brand-sub { color: var(--text-dim); font-size: 13px; font-weight: 400; }
+.top-actions { display: flex; align-items: center; gap: 10px; }
+.user-email { font-size: 12px; color: var(--text-dim); margin: 0 8px; }
+.btn {
+  padding: 6px 12px; border-radius: var(--r); border: 1px solid var(--border);
+  background: transparent; color: var(--text); cursor: pointer;
+  font-size: 12px; font-weight: 500; transition: 0.2s;
+}
+.btn:hover { background: var(--border); }
+.btn.green { background: #0e9f6e; border-color: #0e9f6e; color: #fff; }
+.btn.green:hover { background: #057a55; }
+.btn.outline-red { color: var(--red); border-color: transparent; }
+.btn.outline-red:hover { background: rgba(239,68,68,0.1); }
+
+/* ─── MAIN LAYOUT ─── */
+.main-content { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 10px; min-height: 0; overflow-y: auto; }
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); padding: 12px; position: relative; }
+.panel-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; color: var(--text-dim); }
+.panel-title.blue { color: #3b82f6; }
+.panel-title.green { color: #10b981; }
+.grid { display: grid; gap: 10px; }
+
+/* ─── INPUTS ─── */
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; }
+.input {
+  background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--r);
+  color: var(--text); padding: 0 10px; height: 32px; font-size: 13px; width: 100%; outline: none; transition: 0.2s;
+}
+.input:focus { border-color: var(--border-focus); }
+.input::placeholder { color: #94a3b8; }
+.input[readonly] { color: var(--text-dim); }
+
+/* ─── TOP PANELS ─── */
+.top-section { display: grid; grid-template-columns: 0.9fr 1.3fr 1.3fr; gap: 10px; flex-shrink: 0; }
+
+/* ─── TABLE SECTION ─── */
+.table-section { flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); display: flex; flex-direction: column; min-height: 200px; }
+.table-wrap { flex: 1; overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { position: sticky; top: 0; background: var(--bg); z-index: 10; font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+th:last-child, td:last-child { text-align: right; }
+.td-input { background: transparent; border: 1px solid transparent; color: var(--text); height: 28px; width: 100%; font-size: 13px; padding: 0 6px; outline: none; border-radius: 4px; font-family: 'Inter', sans-serif;}
+.td-input:focus, .td-input:hover { border-color: var(--border); background: var(--input-bg); }
+.td-input.right { text-align: right; }
+.table-footer { padding: 10px; border-top: 1px solid var(--border); background: var(--panel); flex-shrink: 0; }
+.add-btn { background: transparent; border: 1px solid var(--blue); color: var(--blue); padding: 6px 12px; border-radius: var(--r); font-size: 12px; font-weight: 500; cursor: pointer; transition: 0.2s; }
+.add-btn:hover { background: rgba(79,110,247,0.1); }
+.del-btn { color: var(--red); cursor: pointer; background: transparent; border: none; font-size: 16px; opacity: 0.5; transition: 0.2s; }
+.del-btn:hover { opacity: 1; }
+
+/* ─── BOTTOM PANELS ─── */
+.bottom-section { display: grid; grid-template-columns: 1fr 1fr 1.3fr 1.2fr; gap: 10px; flex-shrink: 0; }
+.summary-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.summary-row label { font-size: 12px; font-weight: 600; color: var(--text); }
+.summary-row .input { width: 110px; text-align: right; font-weight: 600; }
+.grand-total-box { display: flex; flex-direction: column; justify-content: space-between; }
+.gt-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
+.gt-title { font-size: 10px; font-weight: 700; color: var(--text-dim); letter-spacing: 0.05em; }
+.gt-amount { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; color: var(--green); }
+.gt-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* PAID STAMP */
+.paid-stamp {
+  position: absolute; top: 12px; right: 12px;
+  border: 3px solid var(--green); color: var(--green);
+  font-size: 20px; font-weight: 800; font-family: 'Inter', sans-serif;
+  letter-spacing: 2px; padding: 4px 16px; border-radius: 8px;
+  transform: rotate(-15deg); opacity: 0; pointer-events: none;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  scale: 1.5;
+}
+.paid-stamp.show { opacity: 0.8; scale: 1; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-focus); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">Invoice<em>Pro</em> <span class="brand-sub">| Receipt Voucher</span></div>
+  <div class="top-actions">
+    <button class="btn" onclick="window.location.href='landing.html'">← Back to Hub</button>
+    <span class="user-email" id="topEmail">loading...</span>
+    <button class="btn outline-red" onclick="logout()">Log out</button>
+  </div>
+</header>
+
+<div class="main-content">
+  
+  <div class="top-section">
+    <div class="panel">
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="field"><label>RECEIPT NO.</label><input class="input" id="receiptNo" placeholder="REC-001"></div>
+        <div class="field"><label>PAYMENT DATE</label><input class="input" type="date" id="paymentDate"></div>
+        <div class="field"><label>PAYMENT METHOD</label>
+          <select class="input" id="paymentMethod">
+            <option>Cash</option>
+            <option>Bank Transfer</option>
+            <option>UPI</option>
+            <option>Credit Card</option>
+            <option>Cheque</option>
+          </select>
+        </div>
+        <div class="field"><label>REFERENCE NO.</label><input class="input" id="referenceNo" placeholder="Txn ID / Cheque No."></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title blue">YOUR DETAILS (ISSUER)</div>
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <input class="input" id="supplierName" placeholder="Company Name">
+        <input class="input" id="supplierGstin" placeholder="GSTIN (Optional)">
+        <input class="input" id="supplierAddress" placeholder="Registered Address">
+        <input class="input" id="supplierState" placeholder="State">
+        <input class="input" id="supplierPhone" placeholder="Phone No.">
+        <input class="input" id="supplierEmail" placeholder="Email ID">
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title green">RECEIVED FROM (CLIENT)</div>
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <input class="input" id="clientName" placeholder="Client Name">
+        <input class="input" id="clientGstin" placeholder="CLIENT GSTIN (Optional)" maxlength="15">
+        <input class="input" id="clientAddress" placeholder="Billing Address">
+        <input class="input" id="buyerState" placeholder="State">
+        <input class="input" id="clientPhone" placeholder="Client Phone No.">
+        <input class="input" id="clientEmail" placeholder="Client Email ID">
+      </div>
+    </div>
+  </div>
+
+  <div class="table-section">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 40px; text-align: center;">X</th>
+            <th style="width: 50%;">Item / Service Description</th>
+            <th style="width: 100px;">Qty</th>
+            <th style="width: 120px;">Price (₹)</th>
+            <th style="width: 140px;">Total (₹)</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr>
+            <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
+            <td><input class="td-input" placeholder="e.g. Web Design Advance" onchange="calculateReceipt()"></td>
+            <td><input class="td-input right calc-qty" type="number" value="1" min="1" onchange="calculateReceipt()"></td>
+            <td><input class="td-input right calc-price" type="number" placeholder="0.00" onchange="calculateReceipt()"></td>
+            <td><input class="td-input right calc-amount" readonly value="0.00" style="color:var(--text); font-weight:600;"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <button class="add-btn" onclick="addRow()">+ Add Line Item (F2)</button>
+    </div>
+  </div>
+
+  <div class="bottom-section">
+    <div class="panel">
+      <div class="panel-title">SUMMARY</div>
+      <div class="summary-row"><label>Subtotal (₹)</label><input class="input" id="sumSubtotal" value="0.00" readonly></div>
+      <div class="summary-row"><label>Tax / Fees (₹)</label><input class="input" type="number" id="inTax" placeholder="0.00" onchange="calculateReceipt()"></div>
+      <div class="summary-row"><label>Discount (-) (₹)</label><input class="input" type="number" id="inDiscount" placeholder="0.00" onchange="calculateReceipt()"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">RECEIPT TOTALS</div>
+      <div class="summary-row"><label>Total Amount</label><input class="input" id="sumTotalDue" value="0.00" readonly style="border:none; background:transparent;"></div>
+      <div class="summary-row"><label style="color:var(--green);">Amount Received (₹)</label><input class="input" type="number" id="inPaid" placeholder="0.00" onchange="calculateReceipt()" style="border-color:var(--green); color:var(--green);"></div>
+      <div class="summary-row" style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 8px;">
+        <label>Balance Due</label><input class="input" id="sumBalance" value="0.00" readonly style="color:var(--amber);">
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title blue">REMARKS / NOTES</div>
+      <textarea class="input" id="receiptNotes" rows="4" style="height: 100%; resize: none; padding-top: 8px;" placeholder="Thank you for your payment!"></textarea>
+    </div>
+
+    <div class="panel grand-total-box">
+      <div class="paid-stamp" id="paidStamp">PAID</div>
+      <div class="gt-header">
+        <div class="gt-title">AMOUNT RECEIVED</div>
+        <div class="gt-amount" id="grandTotal">₹0.00</div>
+      </div>
+      <div class="gt-actions">
+        <button class="btn" style="flex:1;" onclick="window.location.href='landing.html'">Cancel</button>
+        <button class="btn green" style="flex:1;" onclick="saveReceipt()">Save Receipt</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Auto-fill dates
+document.getElementById('paymentDate').valueAsDate = new Date();
+
+let db = null;
+
+// Initialize IndexedDB
+function initDB() {
+  const request = indexedDB.open('InvoiceProDB', 1);
+  request.onerror = () => console.error('Database initialization failed');
+  request.onsuccess = (e) => { db = e.target.result; };
+}
+
+// --- AUTH & INITIALIZATION ---
+document.addEventListener('DOMContentLoaded', () => {
+  initDB();
+  const token = localStorage.getItem('invoicepro_token');
+  const emailEl = document.getElementById('topEmail');
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (emailEl) emailEl.textContent = payload.user?.email || 'No email';
+    } catch(e) {}
+  }
+
+  // Auto-fill "Issuer Details"
+  const firms = JSON.parse(localStorage.getItem('ip_firms') || '[]');
+  const activeFirmId = localStorage.getItem('ip_active_firm');
+  if (firms.length > 0 && activeFirmId) {
+    const activeFirm = firms.find(f => String(f.id) === String(activeFirmId));
+    if (activeFirm) {
+      document.getElementById('supplierName').value    = activeFirm.name || '';
+      document.getElementById('supplierAddress').value = activeFirm.address || '';
+      document.getElementById('supplierGstin').value   = activeFirm.gstin || '';
+      document.getElementById('supplierPhone').value   = activeFirm.mainMobile || '';
+      document.getElementById('supplierEmail').value   = activeFirm.email || '';
+    }
+  }
+});
+
+function logout() {
+  localStorage.removeItem('invoicepro_token');
+  window.location.href = 'auth.html';
+}
+
+// --- CALCULATIONS ENGINE (LITE) ---
+function calculateReceipt() {
+  let subtotal = 0;
+  const rows = document.querySelectorAll('#tableBody tr');
+
+  rows.forEach(row => {
+    const qty = parseFloat(row.querySelector('.calc-qty').value) || 0;
+    const price = parseFloat(row.querySelector('.calc-price').value) || 0;
+    const amountInput = row.querySelector('.calc-amount');
+
+    const amount = qty * price;
+    if(amountInput) amountInput.value = amount.toFixed(2);
+    subtotal += amount;
+  });
+
+  const tax = parseFloat(document.getElementById('inTax').value) || 0;
+  const discount = parseFloat(document.getElementById('inDiscount').value) || 0;
+  
+  const totalAmount = Math.max(0, subtotal + tax - discount);
+  const amountReceived = parseFloat(document.getElementById('inPaid').value) || 0;
+  const balance = Math.max(0, totalAmount - amountReceived);
+
+  document.getElementById('sumSubtotal').value = subtotal.toFixed(2);
+  document.getElementById('sumTotalDue').value = totalAmount.toFixed(2);
+  document.getElementById('sumBalance').value = balance.toFixed(2);
+
+  document.getElementById('grandTotal').textContent = '₹' + amountReceived.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+  // Stamp logic
+  const stamp = document.getElementById('paidStamp');
+  if (amountReceived > 0 && balance <= 0) {
+    stamp.classList.add('show');
+  } else {
+    stamp.classList.remove('show');
+  }
+}
+
+function addRow() {
+  const tbody = document.getElementById('tableBody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="text-align: center;"><button class="del-btn" onclick="removeRow(this)">×</button></td>
+    <td><input class="td-input" placeholder="e.g. Web Design" onchange="calculateReceipt()"></td>
+    <td><input class="td-input right calc-qty" type="number" value="1" min="1" onchange="calculateReceipt()"></td>
+    <td><input class="td-input right calc-price" type="number" placeholder="0.00" onchange="calculateReceipt()"></td>
+    <td><input class="td-input right calc-amount" readonly value="0.00" style="color:var(--text); font-weight:600;"></td>
+  `;
+  tbody.appendChild(tr);
+  document.querySelector('.table-wrap').scrollTop = document.querySelector('.table-wrap').scrollHeight;
+  calculateReceipt();
+}
+
+function removeRow(btn) {
+  btn.closest('tr').remove();
+  calculateReceipt();
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'F2') {
+    e.preventDefault();
+    addRow();
+  }
+});
+
+// --- SAVE RECEIPT FUNCTION ---
+function saveReceipt() {
+  const receiptNo = document.getElementById('receiptNo').value.trim() || 'REC-' + Date.now();
+  
+  const items = [];
+  document.querySelectorAll('#tableBody tr').forEach(row => {
+    const inputs = row.querySelectorAll('.td-input');
+    const description = inputs[0]?.value.trim() || '';
+    const qty = parseFloat(row.querySelector('.calc-qty').value) || 0;
+    const price = parseFloat(row.querySelector('.calc-price').value) || 0;
+    const amount = parseFloat(row.querySelector('.calc-amount').value) || 0;
+
+    if (description || qty > 0) {
+      items.push({ description, qty, price, amount });
+    }
+  });
+
+  if (items.length === 0) {
+    alert('⚠️ Please add at least one line item');
+    return;
+  }
+
+  const amountReceived = parseFloat(document.getElementById('inPaid').value) || 0;
+  if (amountReceived <= 0) {
+    alert('⚠️ Please enter an Amount Received greater than 0.');
+    return;
+  }
+
+  const receiptData = {
+    id: 'rect_' + Date.now(),
+    docType: 'Receipt',
+    vchNo: receiptNo,
+    date: document.getElementById('paymentDate').value,
+    paymentMethod: document.getElementById('paymentMethod').value,
+    referenceNo: document.getElementById('referenceNo').value,
+    
+    supplier: {
+      name: document.getElementById('supplierName').value,
+      gstin: document.getElementById('supplierGstin').value,
+      address: document.getElementById('supplierAddress').value,
+      state: document.getElementById('supplierState').value,
+      phone: document.getElementById('supplierPhone').value,
+      email: document.getElementById('supplierEmail').value
+    },
+    
+    party: {
+      name: document.getElementById('clientName').value,
+      gstin: document.getElementById('clientGstin').value,
+      address: document.getElementById('clientAddress').value,
+      state: document.getElementById('buyerState').value,
+      phone: document.getElementById('clientPhone').value,
+      email: document.getElementById('clientEmail').value
+    },
+    
+    items: items,
+    
+    totals: {
+      subtotal: parseFloat(document.getElementById('sumSubtotal').value) || 0,
+      tax: parseFloat(document.getElementById('inTax').value) || 0,
+      discount: parseFloat(document.getElementById('inDiscount').value) || 0,
+      totalDue: parseFloat(document.getElementById('sumTotalDue').value) || 0,
+      amountReceived: amountReceived,
+      balance: parseFloat(document.getElementById('sumBalance').value) || 0,
+      grandTotal: amountReceived 
+    },
+    
+    notes: document.getElementById('receiptNotes').value,
+    status: parseFloat(document.getElementById('sumBalance').value) <= 0 ? 'Paid' : 'Partial',
+    createdAt: new Date().toISOString()
+  };
+
+  if (!db) {
+    alert('❌ Database not initialized. Please refresh.');
+    return;
+  }
+  
+  const transaction = db.transaction(['invoices'], 'readwrite');
+  const store = transaction.objectStore('invoices');
+  const request = store.add(receiptData);
+  
+  request.onsuccess = () => {
+    alert('✅ Receipt saved successfully!\n\nReceipt #: ' + receiptNo + '\nAmount Received: ₹' + amountReceived.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+    if (confirm('Would you like to create a new receipt?')) {
+      location.reload();
+    } else {
+      window.location.href = 'landing.html';
+    }
+  };
+}
+</script>
+</body>
+</html>
