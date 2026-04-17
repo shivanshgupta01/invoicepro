@@ -1643,6 +1643,34 @@ async function pullCloudData() {
 checkAuth();
 updateFirmPill();
 fetchLiveNews();
+
+
+// --- FOOLPROOF AUTO-START TRIGGER ---
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    if (typeof loadDashboardData === 'function') {
+      loadDashboardData();
+    } else {
+      alert("CRASH: The loadDashboardData function is missing!");
+    }
+  }, 1000);
+});
+
+
 </script>
+
+
+// --- FOOLPROOF AUTO-START TRIGGER ---
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    if (typeof loadDashboardData === 'function') {
+      loadDashboardData();
+    } else {
+      alert("CRASH: The loadDashboardData function is missing!");
+    }
+  }, 1000);
+});
+
+
 </body>
 </html>
