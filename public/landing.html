@@ -1382,6 +1382,7 @@ if (tokenFromUrl) {
 
 
 // --- CLOUD SYNC & DASHBOARD RENDERING ---
+// --- CLOUD SYNC & DASHBOARD RENDERING (UPGRADED) ---
 async function loadDashboardData() {
   const token = localStorage.getItem('invoicepro_token');
   if (!token) return;
@@ -1390,33 +1391,32 @@ async function loadDashboardData() {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const userEmail = payload.user?.email || payload.email;
 
-// 1. Pull data from MongoDB (Bypasses the Vercel .com trap!)
-    const res = await fetch(`/api/invoices?email=${encodeURIComponent(userEmail)}`);
+    // 1. The Cache-Buster: Adding &t=Date.now() forces a fresh pull every time
+    const fetchUrl = `/api/invoices?email=${encodeURIComponent(userEmail)}&t=${Date.now()}`;
+    const res = await fetch(fetchUrl);
     const result = await res.json();
 
     if (result.success && result.data) {
       const cloudInvoices = result.data;
-      console.log(`📥 Downloaded ${cloudInvoices.length} documents from cloud!`);
       
-      // 2. Save them to local IndexedDB so the phone/laptop stays fast
-      const transaction = db.transaction(['invoices'], 'readwrite');
-      const store = transaction.objectStore('invoices');
+      // 2. INSTANT UI UPDATE (Don't wait for the local DB to spin up)
+      renderDashboardStats(cloudInvoices);
       
-      cloudInvoices.forEach(inv => {
-        delete inv._id; // Remove MongoDB internal ID
-        delete inv.__v;
-        store.put(inv); 
-      });
-
-      transaction.oncomplete = () => {
-        // 3. Render the Dashboard UI!
-        renderDashboardStats(cloudInvoices);
-      };
+      // 3. Silently save to local DB in the background
+      if (db) {
+        const transaction = db.transaction(['invoices'], 'readwrite');
+        const store = transaction.objectStore('invoices');
+        cloudInvoices.forEach(inv => {
+          delete inv._id; 
+          delete inv.__v;
+          store.put(inv); 
+        });
+      }
     }
   } catch (error) {
     console.error('Failed to pull cloud data:', error);
-    // If offline, try to render from local IndexedDB anyway
-    loadLocalDashboardData();
+    // If offline, fallback to local data
+    if (db) loadLocalDashboardData();
   }
 }
 
