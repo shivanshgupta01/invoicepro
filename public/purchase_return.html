@@ -19,11 +19,15 @@
   --bg: #11141e; --panel: #1b202e; --input-bg: #11141e;
   --border: #2a3143; --border-focus: #4f6ef7;
   --text: #e2e8f0; --text-dim: #8c96a8;
+  --modal-overlay: rgba(0, 0, 0, 0.6);
+  --modal-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 [data-theme="light"] {
   --bg: #f1f5f9; --panel: #ffffff; --input-bg: #f8fafc;
   --border: #cbd5e1; --border-focus: #4f6ef7;
   --text: #0f172a; --text-dim: #64748b;
+  --modal-overlay: rgba(15, 23, 42, 0.4);
+  --modal-shadow: 0 20px 60px rgba(100, 116, 139, 0.15);
 }
 
 body {
@@ -58,7 +62,7 @@ body {
 
 /* ─── MAIN LAYOUT ─── */
 .main-content { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 10px; min-height: 0; overflow-y: auto; }
-.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); padding: 12px; }
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-panel); padding: 12px; min-width: 0;}
 .panel-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; color: var(--text-dim); }
 .panel-title.blue { color: #3b82f6; }
 .panel-title.green { color: #10b981; }
@@ -98,7 +102,6 @@ th:last-child, td:last-child { text-align: right; }
 .del-btn:hover { opacity: 1; }
 
 /* ─── BOTTOM PANELS ─── */
-/* Added min-width: 0 to all panels to fix the squished CSS Grid bug */
 .bottom-section { display: grid; grid-template-columns: 1fr 1fr 1.3fr 1fr; gap: 10px; flex-shrink: 0; }
 .bottom-section .panel { min-width: 0; } 
 .summary-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
@@ -119,6 +122,10 @@ th:last-child, td:last-child { text-align: right; }
 .adj-btn.active {
   background: var(--purple); border-color: var(--purple); color: #fff;
 }
+
+/* Modal Animations */
+@keyframes fadeInOverlay { from { opacity: 0; backdrop-filter: blur(0px); } to { opacity: 1; backdrop-filter: blur(4px); } }
+@keyframes slideUpModal { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -311,7 +318,7 @@ th:last-child, td:last-child { text-align: right; }
 
     <div class="panel" style="display: flex; flex-direction: column;">
       <div class="panel-title">RETURN NOTES</div>
-      <textarea class="input" id="returnNotes" style="flex: 1; resize: none; padding-top: 8px; width: 100%;" placeholder="Notes for the vendor regarding the return..."></textarea>
+      <textarea class="input" id="returnNotes" style="flex: 1; resize: none; padding-top: 8px; width: 100%; min-width: 80px;" placeholder="Notes for the vendor regarding the return..."></textarea>
     </div>
 
     <div class="panel grand-total-box">
@@ -364,7 +371,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(e) {}
   }
 
-  // Auto-fill "Your Details (Buyer)" from LocalStorage Firm AND map the state correctly
   const firms = JSON.parse(localStorage.getItem('ip_firms') || '[]');
   const activeFirmId = localStorage.getItem('ip_active_firm');
   if (firms.length > 0 && activeFirmId) {
@@ -422,6 +428,18 @@ function calculateReturnTotals() {
   document.getElementById('finalReturnTotal').textContent = '₹' + finalTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
 
+// Global Event Listener for Instant Calculations
+document.addEventListener('input', function(e) {
+  if (
+    e.target.classList.contains('calc-qty') || 
+    e.target.classList.contains('calc-price') ||
+    e.target.id === 'returnTax' ||
+    e.target.id === 'deductions'
+  ) {
+    calculateReturnTotals();
+  }
+});
+
 function addRow() {
   const tbody = document.getElementById('tableBody');
   const tr = document.createElement('tr');
@@ -459,25 +477,29 @@ document.addEventListener('keydown', function(e) {
 
 // --- FETCH ORIGINAL BILL ---
 function fetchOriginalBill() {
-  const vchNo = document.getElementById('searchBillNo').value.trim();
-  if (!vchNo) {
-    alert("Please enter an Original Bill / PO Number to search.");
+  const searchNo = document.getElementById('searchBillNo').value.trim().toLowerCase();
+  
+  if (!searchNo) {
+    showErrorModal("Please enter an Original Bill / PO Number to search.");
     return;
   }
   if (!db) {
-    alert("Database not ready.");
+    showErrorModal("Database not ready. Please wait a moment.");
     return;
   }
 
   const transaction = db.transaction(['invoices'], 'readonly');
   const store = transaction.objectStore('invoices');
-  const index = store.index('vchNo');
-  const request = index.get(vchNo);
+  const request = store.getAll(); 
 
   request.onsuccess = () => {
-    const inv = request.result;
+    const invoices = request.result;
+    
+    // Flexible search ignoring strict tags
+    const inv = invoices.find(i => String(i.vchNo || '').trim().toLowerCase() === searchNo);
+
     if (!inv || (inv.docType && inv.docType !== 'Purchase Invoice' && inv.docType !== 'Purchase')) {
-      alert(`Bill/PO ${vchNo} not found in your purchase records.`);
+      showErrorModal(`Bill/PO '${document.getElementById('searchBillNo').value.trim()}' not found in your purchase records.`);
       return;
     }
 
@@ -515,6 +537,19 @@ function fetchOriginalBill() {
         </tr>
       `).join('');
       calculateReturnTotals();
+      
+      const fetchBtn = document.querySelector('.btn.purple[onclick="fetchOriginalBill()"]');
+      if(fetchBtn) {
+        const originalText = fetchBtn.innerHTML;
+        fetchBtn.innerHTML = '✓ Loaded';
+        fetchBtn.style.background = 'var(--green)';
+        fetchBtn.style.borderColor = 'var(--green)';
+        setTimeout(() => {
+          fetchBtn.innerHTML = originalText;
+          fetchBtn.style.background = '';
+          fetchBtn.style.borderColor = '';
+        }, 2000);
+      }
     }
   };
 }
@@ -549,8 +584,6 @@ function setupGSTAutoFetch(gstinId, nameId, addressId, stateId) {
   });
 }
 setupGSTAutoFetch('vendorGstin', 'vendorName', 'vendorAddress', 'vendorState');
-
-// ADD THIS NEW LINE FOR "YOUR DETAILS":
 setupGSTAutoFetch('buyerGstin', 'buyerName', 'buyerAddress', 'buyerState');
 
 // --- SAVE RETURN FUNCTION ---
@@ -573,7 +606,7 @@ function savePurchaseReturn() {
   });
 
   if (items.length === 0) {
-    alert('⚠️ Please add at least one line item to return');
+    showErrorModal('Please add at least one line item to return.');
     return;
   }
 
@@ -617,7 +650,7 @@ function savePurchaseReturn() {
   };
 
   if (!db) {
-    alert('❌ Database not initialized. Please refresh.');
+    showErrorModal('Database not initialized. Please refresh.');
     return;
   }
   
@@ -626,17 +659,135 @@ function savePurchaseReturn() {
   store.add(returnData);
   
   transaction.oncomplete = () => {
-    alert(`✅ Purchase Return Processed!\n\nDebit Note / Return ID: ${returnId}\nRefund Value: ₹${finalTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}\nMethod: ${adjustmentMethod}`);
-    if (confirm('Create a new Purchase Return?')) {
-      location.reload();
-    } else {
-      window.location.href = 'landing.html';
-    }
+    showSuccessModal(returnId, finalTotal);
   };
   
   transaction.onerror = () => {
-    alert('❌ Error saving purchase return. Please try again.');
+    showErrorModal('Error saving purchase return to the database. Please try again.');
   };
+}
+
+// --- BEAUTIFUL THEME-AWARE MODALS ---
+function showSuccessModal(titleOrDocNo, grandTotal) {
+  const existingModal = document.getElementById('successModal');
+  if (existingModal) existingModal.remove();
+  
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = 'successModal';
+  modalOverlay.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--modal-overlay); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 40000; animation: fadeInOverlay 0.3s ease;
+  `;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(16, 185, 129, 0.05) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 20px;
+    padding: 40px; max-width: 400px; width: 90%;
+    box-shadow: var(--modal-shadow);
+    text-align: center; animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  `;
+  
+  const checkmarkSvg = `
+    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 24px;">
+      <circle cx="50" cy="50" r="48" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="2"/>
+      <path d="M32 52L45 65L70 35" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+  `;
+  
+  const isDeleted = String(titleOrDocNo).includes('Deleted');
+  const titleText = isDeleted ? 'Deleted Successfully!' : 'Saved Successfully!';
+  const messageText = isDeleted ? 'The purchase return has been securely removed.' : 'Your purchase return has been successfully updated and saved.';
+  const docNo = isDeleted ? '-' : titleOrDocNo;
+  const formattedAmount = grandTotal !== null ? grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00';
+  
+  modal.innerHTML = `
+    ${checkmarkSvg}
+    <h2 style="color: var(--text); font-size: 24px; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.5px;">${titleText}</h2>
+    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">${messageText}</p>
+    
+    ${!isDeleted ? `
+    <div style="background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div style="text-align: left;">
+          <p style="color: var(--text-dim); font-size: 11px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Return #</p>
+          <p style="color: var(--text); font-size: 16px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">${docNo}</p>
+        </div>
+        <div style="text-align: right;">
+          <p style="color: var(--text-dim); font-size: 11px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Refund Value</p>
+          <p style="color: #10b981; font-size: 16px; font-weight: 700; margin: 0; font-family: 'JetBrains Mono', monospace;">₹${formattedAmount}</p>
+        </div>
+      </div>
+    </div>
+    ` : ''}
+    
+    <div style="display: flex; gap: 10px;">
+      <button id="closeSuccessBtn" style="flex: 1; padding: 14px 10px; background: transparent; border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+        Close
+      </button>
+      <button id="newReturnBtn" style="flex: 2; padding: 14px 10px; background: #10b981; border: none; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+        Create New Return
+      </button>
+    </div>
+  `;
+  
+  modalOverlay.appendChild(modal);
+  document.body.appendChild(modalOverlay);
+  
+  document.getElementById('closeSuccessBtn').addEventListener('click', () => {
+    modalOverlay.remove();
+  });
+
+  document.getElementById('newReturnBtn').addEventListener('click', () => {
+    modalOverlay.remove();
+    location.reload(); 
+  });
+  
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) modalOverlay.remove();
+  });
+}
+
+function showErrorModal(message) {
+  const existingModal = document.getElementById('errorModal');
+  if (existingModal) existingModal.remove();
+  
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = 'errorModal';
+  modalOverlay.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--modal-overlay); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 40000; animation: fadeInOverlay 0.3s ease;
+  `;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(239, 68, 68, 0.05) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 20px;
+    padding: 40px; max-width: 400px; width: 90%;
+    box-shadow: var(--modal-shadow);
+    text-align: center; animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  `;
+  
+  modal.innerHTML = `
+    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto 24px;">
+      <circle cx="50" cy="50" r="48" fill="rgba(239, 68, 68, 0.15)" stroke="#ef4444" stroke-width="2"/>
+      <path d="M35 35L65 65M65 35L35 65" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <h2 style="color: var(--text); font-size: 24px; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.5px;">Error!</h2>
+    <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">${message}</p>
+    <button id="closeErrorBtn" style="width: 100%; padding: 14px 20px; background: #ef4444; border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+      Try Again
+    </button>
+  `;
+  
+  modalOverlay.appendChild(modal);
+  document.body.appendChild(modalOverlay);
+  
+  document.getElementById('closeErrorBtn').addEventListener('click', () => modalOverlay.remove());
 }
 </script>
 </body>
