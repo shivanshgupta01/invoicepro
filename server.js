@@ -267,3 +267,6 @@ if (process.env.NODE_ENV !== 'production') {
     console.log('');
   });
 }
+
+// Export the app for Vercel Serverless
+module.exports = app;
