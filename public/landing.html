@@ -1382,16 +1382,30 @@ if (tokenFromUrl) {
 
 
 // --- CLOUD SYNC & DASHBOARD RENDERING ---
-// --- CLOUD SYNC & DASHBOARD RENDERING (UPGRADED) ---
+// --- CLOUD SYNC & DASHBOARD RENDERING (PHONE X-RAY VERSION) ---
 async function loadDashboardData() {
+  
+  // 1. FORCE GRAB TOKEN FROM URL (Crucial for Google/GitHub Mobile Login)
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlToken = urlParams.get('token');
+  if (urlToken) {
+    localStorage.setItem('invoicepro_token', urlToken);
+    // Clean up the URL so it looks professional
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
   const token = localStorage.getItem('invoicepro_token');
-  if (!token) return;
+  if (!token) {
+    // If this pops up, the phone never saved the login!
+    alert("Phone X-Ray: No login token found in phone storage!");
+    return;
+  }
 
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const userEmail = payload.user?.email || payload.email;
 
-    // 1. The Cache-Buster: Adding &t=Date.now() forces a fresh pull every time
+    // 2. Fetch from Cloud
     const fetchUrl = `/api/invoices?email=${encodeURIComponent(userEmail)}&t=${Date.now()}`;
     const res = await fetch(fetchUrl);
     const result = await res.json();
@@ -1399,10 +1413,12 @@ async function loadDashboardData() {
     if (result.success && result.data) {
       const cloudInvoices = result.data;
       
-      // 2. INSTANT UI UPDATE (Don't wait for the local DB to spin up)
+      // X-RAY ALERT: Tells us exactly what MongoDB returned!
+      // (You can delete this alert line later once it's working)
+      alert(`Phone X-Ray: Connected! Found ${cloudInvoices.length} invoices for ${userEmail}`);
+      
       renderDashboardStats(cloudInvoices);
       
-      // 3. Silently save to local DB in the background
       if (db) {
         const transaction = db.transaction(['invoices'], 'readwrite');
         const store = transaction.objectStore('invoices');
@@ -1412,10 +1428,11 @@ async function loadDashboardData() {
           store.put(inv); 
         });
       }
+    } else {
+      alert("Phone X-Ray: Reached Vercel, but got success=false. " + result.message);
     }
   } catch (error) {
-    console.error('Failed to pull cloud data:', error);
-    // If offline, fallback to local data
+    alert('Phone X-Ray Crash: ' + error.message);
     if (db) loadLocalDashboardData();
   }
 }
