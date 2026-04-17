@@ -22,13 +22,18 @@ mongoose.connect(process.env.MONGODB_URI, {
 const Invoice = require('./models/Invoice');
 
 // ==========================================
-// 3. API ROUTES
+// 3. YOUR RESTORED API ROUTES
 // ==========================================
 
-// Health check — visit /api/health to test
+// Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'InvoicePro server is running on MongoDB!' });
 });
+
+// RESTORED: Auth, GST, and News Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/gst', require('./routes/gst'));
+app.use('/api/news', require('./routes/news')); // Restored your live news route!
 
 // --- CLOUD SYNC API ROUTES (INVOICES) ---
 
@@ -41,7 +46,6 @@ app.post('/api/invoices', async (req, res) => {
       return res.status(400).json({ success: false, message: 'User email required for cloud sync.' });
     }
 
-    // Upsert: If the invoice ID exists, update it. If not, create a new one.
     await Invoice.findOneAndUpdate(
       { id: invoiceData.id },
       { ...invoiceData, userEmail: userEmail },
@@ -67,20 +71,11 @@ app.get('/api/invoices/:email', async (req, res) => {
   }
 });
 
-// --- AUTH & EXTERNAL API ROUTES ---
-try {
-  // If you have these route files created, this will connect them
-  app.use('/api/auth', require('./routes/auth'));
-  app.use('/api/gst', require('./routes/gst'));
-} catch (err) {
-  console.log('⚠️ Note: Auth or GST route files not found or disabled. Continuing without them.');
-}
-
 // ==========================================
 // 4. FRONTEND FALLBACK & ERROR HANDLING
 // ==========================================
 
-// Serve static frontend files (if your public folder is inside backend)
+// Serve static frontend files
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Serve landing.html for all other frontend routes (React/SPA fallback)
@@ -98,16 +93,15 @@ app.use((err, req, res, next) => {
 // 5. START SERVER / VERCEL EXPORT
 // ==========================================
 
-// EXPORT THE APP FOR VERCEL (Crucial for live deployment)
+// EXPORT THE APP FOR VERCEL
 module.exports = app;
 
-// ONLY LISTEN LOCALLY (Vercel manages the port automatically in production)
+// ONLY LISTEN LOCALLY
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log('');
     console.log('🚀 InvoicePro is running locally!');
     console.log(`   http://localhost:${PORT}`);
-    console.log(`   http://localhost:${PORT}/api/health`);
   });
 }
