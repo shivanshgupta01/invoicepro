@@ -1390,8 +1390,8 @@ async function loadDashboardData() {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const userEmail = payload.user?.email || payload.email;
 
-    // 1. Pull data from MongoDB
-    const res = await fetch(`/api/invoices/${userEmail}`);
+// 1. Pull data from MongoDB (Bypasses the Vercel .com trap!)
+    const res = await fetch(`/api/invoices?email=${encodeURIComponent(userEmail)}`);
     const result = await res.json();
 
     if (result.success && result.data) {

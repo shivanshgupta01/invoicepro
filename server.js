@@ -60,9 +60,14 @@ app.post('/api/invoices', async (req, res) => {
 });
 
 // FETCH ALL INVOICES FOR A LOGGED-IN USER
-app.get('/api/invoices/:email', async (req, res) => {
+app.get('/api/invoices', async (req, res) => {
   try {
-    const userEmail = req.params.email;
+    const userEmail = req.query.email; // Changed from req.params to req.query
+    
+    if (!userEmail) {
+      return res.status(400).json({ success: false, message: 'Email required' });
+    }
+    
     const userInvoices = await Invoice.find({ userEmail: userEmail });
     res.status(200).json({ success: true, data: userInvoices });
   } catch (error) {
