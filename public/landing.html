@@ -1380,6 +1380,49 @@ if (tokenFromUrl) {
 }
 
 function checkAuth() {
+
+
+// --- FETCH CLOUD DATA ON LOGIN ---
+async function pullCloudData() {
+  const token = localStorage.getItem('invoicepro_token');
+  if (!token) return;
+
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const userEmail = payload.user?.email || payload.email;
+
+    // Fetch from your backend route
+    const res = await fetch(`/api/invoices/${userEmail}`);
+    const result = await res.json();
+
+    if (result.success && result.data.length > 0) {
+      console.log(`📥 Downloaded ${result.data.length} invoices from cloud!`);
+      
+      // Save them all into the local IndexedDB so the app stays fast
+      const transaction = db.transaction(['invoices'], 'readwrite');
+      const store = transaction.objectStore('invoices');
+      
+      result.data.forEach(cloudInvoice => {
+        // Remove MongoDB's internal _id to avoid conflicts
+        delete cloudInvoice._id; 
+        delete cloudInvoice.__v;
+        // Use put() so it updates existing local files or creates new ones
+        store.put(cloudInvoice); 
+      });
+
+      transaction.oncomplete = () => {
+        console.log('✅ Local database synchronized with cloud.');
+        // If you have a function that renders recent invoices, call it here!
+        // renderRecentInvoices(); 
+      };
+    }
+  } catch (error) {
+    console.error('Failed to pull cloud data:', error);
+  }
+}
+
+
+
   const token = localStorage.getItem('invoicepro_token');
   const authButtons = document.getElementById('authButtons');
   const userAvatarContainer = document.getElementById('userAvatarContainer');

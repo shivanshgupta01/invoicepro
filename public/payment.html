@@ -574,109 +574,117 @@ setupGSTAutoFetch('supplierGstin', 'supplierName', 'supplierAddress', 'supplierS
 
 // --- SAVE PAYMENT FUNCTION ---
 function savePayment() {
-
-// 1. SECURITY CHECK: Are they logged in?
-  const token = localStorage.getItem('invoicepro_token');
-  if (!token) {
-    document.getElementById('authReqModal').classList.add('show');
-    return; // Stop the function from saving
-  }
-
-
-
-  const paymentNo = document.getElementById('paymentNo').value.trim() || 'PAY-' + Date.now();
-  
-  const items = [];
-  document.querySelectorAll('#tableBody tr').forEach(row => {
-    const inputs = row.querySelectorAll('.td-input');
-    const itemService = inputs[0]?.value.trim() || '';
-    const description = inputs[1]?.value.trim() || '';
-    const qty = parseFloat(row.querySelector('.calc-qty').value) || 0;
-    const price = parseFloat(row.querySelector('.calc-price').value) || 0;
-    const amount = parseFloat(row.querySelector('.calc-amount').value) || 0;
-
-    if (itemService || qty > 0) {
-      items.push({ itemService, description, qty, price, amount });
+  try {
+    // 🛑 1. THE GATEKEEPER: Check if logged in before doing anything!
+    const token = localStorage.getItem('invoicepro_token');
+    if (!token) {
+      const authModal = document.getElementById('authReqModal');
+      if (authModal) authModal.classList.add('show');
+      else alert("You must be logged in to save data. You can still export as PDF!");
+      return; 
     }
-  });
 
-  if (items.length === 0) {
-    alert('⚠️ Please add at least one line item');
-    return;
+    const paymentNo = document.getElementById('paymentNo').value.trim() || 'PAY-' + Date.now();
+    
+    const items = [];
+    document.querySelectorAll('#tableBody tr').forEach(row => {
+      const inputs = row.querySelectorAll('.td-input');
+      const itemService = inputs[0]?.value.trim() || '';
+      const description = inputs[1]?.value.trim() || '';
+      const qty = parseFloat(row.querySelector('.calc-qty').value) || 0;
+      const price = parseFloat(row.querySelector('.calc-price').value) || 0;
+      const amount = parseFloat(row.querySelector('.calc-amount').value) || 0;
+
+      if (itemService || qty > 0) {
+        items.push({ itemService, description, qty, price, amount });
+      }
+    });
+
+    if (items.length === 0) {
+      alert('⚠️ Please add at least one line item');
+      return;
+    }
+
+    const totalDue = parseFloat(document.getElementById('sumTotalDue').value) || 0;
+    const amountPaid = parseFloat(document.getElementById('inPaid').value) || 0;
+    const balance = parseFloat(document.getElementById('sumBalance').value) || 0;
+    
+    let paymentStatus = 'Unpaid';
+    if (amountPaid >= totalDue && totalDue > 0) paymentStatus = 'Paid';
+    else if (amountPaid > 0 && amountPaid < totalDue) paymentStatus = 'Partial';
+
+    const paymentData = {
+      id: 'payment_' + Date.now(),
+      docType: 'Payment',
+      vchNo: paymentNo,
+      date: document.getElementById('issueDate').value,
+      dueDate: document.getElementById('dueDate').value,
+      paymentMode: document.getElementById('paymentMode').value,
+      
+      supplier: {
+        name: document.getElementById('supplierName').value,
+        gstin: document.getElementById('supplierGstin').value,
+        address: document.getElementById('supplierAddress').value,
+        state: document.getElementById('supplierState').value,
+        phone: document.getElementById('supplierPhone').value,
+        email: document.getElementById('supplierEmail').value
+      },
+      party: {
+        name: document.getElementById('clientName').value,
+        gstin: document.getElementById('clientGstin').value,
+        address: document.getElementById('clientAddress').value,
+        state: document.getElementById('buyerState').value,
+        phone: document.getElementById('clientPhone').value,
+        email: document.getElementById('clientEmail').value
+      },
+      items: items,
+      totals: {
+        subtotal: parseFloat(document.getElementById('sumSubtotal').value) || 0,
+        tax: parseFloat(document.getElementById('inTax').value) || 0,
+        discount: parseFloat(document.getElementById('inDiscount').value) || 0,
+        totalDue: totalDue,
+        amountPaid: amountPaid,
+        balance: balance,
+        grandTotal: totalDue 
+      },
+      instructions: {
+        bankDetails: document.getElementById('bankDetails').value,
+        upiDetails: document.getElementById('upiDetails').value,
+        notes: document.getElementById('paymentNotes').value
+      },
+      status: paymentStatus,
+      createdAt: new Date().toISOString()
+    };
+
+    // 💾 2. LOCAL SAVE
+    if (!db) {
+      showErrorModal('Database not initialized. Please refresh and try again.');
+      return;
+    }
+    
+    const transaction = db.transaction(['invoices'], 'readwrite');
+    const store = transaction.objectStore('invoices');
+    const request = store.add(paymentData);
+    
+    request.onerror = () => {
+      showErrorModal('Error saving payment locally. Please try again.');
+    };
+    
+    transaction.oncomplete = () => {
+      // ☁️ 3. CLOUD SYNC TRIGGER
+      syncToCloud(paymentData);
+      // Show Aesthetic Modal
+      showSuccessModal(paymentNo, balance);
+    };
+    
+    transaction.onerror = () => {
+      showErrorModal('Transaction failed. Please try again.');
+    };
+
+  } catch (err) {
+    console.error("CRITICAL SAVE ERROR:", err);
+    alert("Code Crash: " + err.message + "\n\nCheck the Developer Console.");
   }
-
-  const totalDue = parseFloat(document.getElementById('sumTotalDue').value) || 0;
-  const amountPaid = parseFloat(document.getElementById('inPaid').value) || 0;
-  const balance = parseFloat(document.getElementById('sumBalance').value) || 0;
-  
-  let paymentStatus = 'Unpaid';
-  if (amountPaid >= totalDue && totalDue > 0) paymentStatus = 'Paid';
-  else if (amountPaid > 0 && amountPaid < totalDue) paymentStatus = 'Partial';
-
-  const paymentData = {
-    id: 'payment_' + Date.now(),
-    docType: 'Payment',
-    vchNo: paymentNo,
-    date: document.getElementById('issueDate').value,
-    dueDate: document.getElementById('dueDate').value,
-    paymentMode: document.getElementById('paymentMode').value,
-    
-    supplier: {
-      name: document.getElementById('supplierName').value,
-      gstin: document.getElementById('supplierGstin').value,
-      address: document.getElementById('supplierAddress').value,
-      state: document.getElementById('supplierState').value,
-      phone: document.getElementById('supplierPhone').value,
-      email: document.getElementById('supplierEmail').value
-    },
-    
-    party: {
-      name: document.getElementById('clientName').value,
-      gstin: document.getElementById('clientGstin').value,
-      address: document.getElementById('clientAddress').value,
-      state: document.getElementById('buyerState').value,
-      phone: document.getElementById('clientPhone').value,
-      email: document.getElementById('clientEmail').value
-    },
-    
-    items: items,
-    
-    totals: {
-      subtotal: parseFloat(document.getElementById('sumSubtotal').value) || 0,
-      tax: parseFloat(document.getElementById('inTax').value) || 0,
-      discount: parseFloat(document.getElementById('inDiscount').value) || 0,
-      totalDue: totalDue,
-      amountPaid: amountPaid,
-      balance: balance,
-      grandTotal: totalDue 
-    },
-    
-    instructions: {
-      bankDetails: document.getElementById('bankDetails').value,
-      upiDetails: document.getElementById('upiDetails').value,
-      notes: document.getElementById('paymentNotes').value
-    },
-    
-    status: paymentStatus,
-    createdAt: new Date().toISOString()
-  };
-
-  if (!db) {
-    showErrorModal('Database not initialized. Please refresh and try again.');
-    return;
-  }
-  
-  const transaction = db.transaction(['invoices'], 'readwrite');
-  const store = transaction.objectStore('invoices');
-  const request = store.add(paymentData);
-  
-  request.onsuccess = () => {
-    showSuccessModal(paymentNo, balance);
-  };
-  
-  request.onerror = () => {
-    showErrorModal('Error saving payment voucher. Please try again.');
-  };
 }
 
 // --- BEAUTIFUL THEME-AWARE MODALS ---
@@ -799,6 +807,45 @@ function showErrorModal(message) {
   
   document.getElementById('closeErrorBtn').addEventListener('click', () => modalOverlay.remove());
 }
+
+
+// --- CLOUD SYNC HELPER ---
+async function syncToCloud(invoiceData) {
+  const token = localStorage.getItem('invoicepro_token');
+  if (!token) return; // Failsafe
+
+  try {
+    // Decode token to get the user's email
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const userEmail = payload.user?.email || payload.email;
+
+    if (!userEmail) return;
+
+    // Send to your MongoDB backend
+    const res = await fetch('/api/invoices', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
+      body: JSON.stringify({ 
+        invoiceData: invoiceData, 
+        userEmail: userEmail 
+      })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      console.log('☁️ Successfully synced to MongoDB Atlas!');
+    } else {
+      console.error('☁️ Cloud Sync Failed:', data.message);
+    }
+  } catch (error) {
+    console.error('☁️ Cloud Sync Error:', error);
+  }
+}
+
+
 </script>
 </body>
 </html>

@@ -640,95 +640,105 @@ setupGSTAutoFetch('supplierGstin', 'supplierName', 'supplierAddress', 'supplierS
 
 // --- FINAL SAVE RETURN FUNCTION ---
 function saveReturnVoucher() {
-// 1. SECURITY CHECK: Are they logged in?
-  const token = localStorage.getItem('invoicepro_token');
-  if (!token) {
-    document.getElementById('authReqModal').classList.add('show');
-    return; // Stop the function from saving
-  }
-
-
-
-  const returnId = document.getElementById('salesReturnId').value.trim() || 'SR-' + Date.now();
-  const partyName = document.getElementById('clientName').value.trim() || 'Unknown Client';
-  const returnTotalStr = document.getElementById('finalReturnTotal').textContent.replace('₹', '').replace(/,/g, '');
-  const returnTotal = parseFloat(returnTotalStr) || 0;
-  
-  if (!partyName || returnTotal <= 0) {
-    showErrorModal('Please ensure customer name and a valid return value are present.');
-    return;
-  }
-
-  const items = [];
-  document.querySelectorAll('#tableBody tr').forEach(row => {
-    const inputs = row.querySelectorAll('.td-input');
-    const description = inputs[0]?.value.trim() || '';
-    const price = parseFloat(inputs[1]?.value) || 0;
-    const qty = parseFloat(inputs[2]?.value) || 0;
-    const reason = row.querySelector('.calc-reason')?.value || 'Damaged';
-    const amount = parseFloat(row.querySelector('.calc-amount')?.value) || 0;
-    
-    if (description || qty > 0) {
-      items.push({ description, price, qty, returnQty: qty, reason, amount });
+  try {
+    // 🛑 1. THE GATEKEEPER: Check if logged in before doing anything!
+    const token = localStorage.getItem('invoicepro_token');
+    if (!token) {
+      const authModal = document.getElementById('authReqModal');
+      if (authModal) authModal.classList.add('show');
+      else alert("You must be logged in to save data. You can still export as PDF!");
+      return; // Stop the function from saving
     }
-  });
 
-  const returnData = {
-    id: 'srtn_' + Date.now(),
-    docType: 'Sales Return',
-    vchNo: returnId,
-    originalInvoiceNo: document.getElementById('originalInvoiceNo').value.trim(),
-    date: document.getElementById('returnDate').value,
-    placeOfSupply: document.getElementById('placeOfSupply').value,
-    adjustmentMethod: adjustmentMethod,
+    const returnId = document.getElementById('salesReturnId').value.trim() || 'SR-' + Date.now();
+    const partyName = document.getElementById('clientName').value.trim() || 'Unknown Client';
+    const returnTotalStr = document.getElementById('finalReturnTotal').textContent.replace('₹', '').replace(/,/g, '');
+    const returnTotal = parseFloat(returnTotalStr) || 0;
     
-    supplier: {
-      name: document.getElementById('supplierName').value,
-      gstin: document.getElementById('supplierGstin').value,
-      address: document.getElementById('supplierAddress').value,
-      state: document.getElementById('supplierState').value,
-      phone: document.getElementById('supplierPhone').value,
-      email: document.getElementById('supplierEmail').value
-    },
-    
-    party: {
-      name: partyName,
-      gstin: document.getElementById('clientGstin').value,
-      address: document.getElementById('clientAddress').value,
-      state: document.getElementById('buyerState').value,
-      phone: document.getElementById('clientPhone').value,
-      email: document.getElementById('clientEmail').value
-    },
-    
-    items: items,
-    
-    totals: {
-      subtotal: parseFloat(document.getElementById('returnSubtotal').value) || 0,
-      restockingFee: parseFloat(document.getElementById('restockingFee').value) || 0,
-      grandTotal: returnTotal
-    },
-    
-    notes: document.getElementById('narration').value,
-    status: 'Processed',
-    createdAt: new Date().toISOString()
-  };
+    if (!partyName || returnTotal <= 0) {
+      showErrorModal('Please ensure customer name and a valid return value are present.');
+      return;
+    }
 
-  if (!db) {
-    showErrorModal('Database not initialized. Please refresh and try again.');
-    return;
+    const items = [];
+    document.querySelectorAll('#tableBody tr').forEach(row => {
+      const inputs = row.querySelectorAll('.td-input');
+      const description = inputs[0]?.value.trim() || '';
+      const price = parseFloat(inputs[1]?.value) || 0;
+      const qty = parseFloat(inputs[2]?.value) || 0;
+      const reason = row.querySelector('.calc-reason')?.value || 'Damaged';
+      const amount = parseFloat(row.querySelector('.calc-amount')?.value) || 0;
+      
+      if (description || qty > 0) {
+        items.push({ description, price, qty, returnQty: qty, reason, amount });
+      }
+    });
+
+    const returnData = {
+      id: 'srtn_' + Date.now(),
+      docType: 'Sales Return',
+      vchNo: returnId,
+      originalInvoiceNo: document.getElementById('originalInvoiceNo').value.trim(),
+      date: document.getElementById('returnDate').value,
+      placeOfSupply: document.getElementById('placeOfSupply').value,
+      adjustmentMethod: adjustmentMethod,
+      
+      supplier: {
+        name: document.getElementById('supplierName').value,
+        gstin: document.getElementById('supplierGstin').value,
+        address: document.getElementById('supplierAddress').value,
+        state: document.getElementById('supplierState').value,
+        phone: document.getElementById('supplierPhone').value,
+        email: document.getElementById('supplierEmail').value
+      },
+      party: {
+        name: partyName,
+        gstin: document.getElementById('clientGstin').value,
+        address: document.getElementById('clientAddress').value,
+        state: document.getElementById('buyerState').value,
+        phone: document.getElementById('clientPhone').value,
+        email: document.getElementById('clientEmail').value
+      },
+      items: items,
+      totals: {
+        subtotal: parseFloat(document.getElementById('returnSubtotal').value) || 0,
+        restockingFee: parseFloat(document.getElementById('restockingFee').value) || 0,
+        grandTotal: returnTotal
+      },
+      notes: document.getElementById('narration').value,
+      status: 'Processed',
+      createdAt: new Date().toISOString()
+    };
+
+    // 💾 2. LOCAL SAVE
+    if (!db) {
+      showErrorModal('Database not initialized. Please refresh and try again.');
+      return;
+    }
+    
+    const transaction = db.transaction(['invoices'], 'readwrite');
+    const store = transaction.objectStore('invoices');
+    const request = store.add(returnData);
+    
+    request.onerror = () => {
+      showErrorModal('Error saving sales return locally.');
+    };
+    
+    transaction.oncomplete = () => {
+      // ☁️ 3. CLOUD SYNC TRIGGER
+      syncToCloud(returnData);
+      // Show Aesthetic Modal
+      showSuccessModal(returnId, returnTotal);
+    };
+    
+    transaction.onerror = () => {
+      showErrorModal('Transaction failed. Please try again.');
+    };
+
+  } catch (err) {
+    console.error("CRITICAL SAVE ERROR:", err);
+    alert("Code Crash: " + err.message + "\n\nCheck the Developer Console.");
   }
-  
-  const transaction = db.transaction(['invoices'], 'readwrite');
-  const store = transaction.objectStore('invoices');
-  store.add(returnData);
-  
-  transaction.oncomplete = () => {
-    showSuccessModal(returnId, returnTotal);
-  };
-  
-  transaction.onerror = () => {
-    showErrorModal('Error saving sales return to the database.');
-  };
 }
 
 // --- BEAUTIFUL THEME-AWARE MODALS ---
@@ -847,6 +857,47 @@ function showErrorModal(message) {
   
   document.getElementById('closeErrorBtn').addEventListener('click', () => modalOverlay.remove());
 }
+
+
+
+// --- CLOUD SYNC HELPER ---
+async function syncToCloud(invoiceData) {
+  const token = localStorage.getItem('invoicepro_token');
+  if (!token) return; // Failsafe
+
+  try {
+    // Decode token to get the user's email
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const userEmail = payload.user?.email || payload.email;
+
+    if (!userEmail) return;
+
+    // Send to your MongoDB backend
+    const res = await fetch('/api/invoices', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
+      body: JSON.stringify({ 
+        invoiceData: invoiceData, 
+        userEmail: userEmail 
+      })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      console.log('☁️ Successfully synced to MongoDB Atlas!');
+    } else {
+      console.error('☁️ Cloud Sync Failed:', data.message);
+    }
+  } catch (error) {
+    console.error('☁️ Cloud Sync Error:', error);
+  }
+}
+
+
+
 </script>
 </body>
 </html>

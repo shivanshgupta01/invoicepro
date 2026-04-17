@@ -476,100 +476,110 @@ setupGSTAutoFetch('supplierGstin', 'supplierName', 'supplierAddress', 'supplierS
 
 // --- SAVE RECEIPT FUNCTION ---
 function saveReceipt() {
-
-// 1. SECURITY CHECK: Are they logged in?
-  const token = localStorage.getItem('invoicepro_token');
-  if (!token) {
-    document.getElementById('authReqModal').classList.add('show');
-    return; // Stop the function from saving
-  }
-
-
-  const receiptNo = document.getElementById('receiptNo').value.trim() || 'REC-' + Date.now();
-  
-  const items = [];
-  document.querySelectorAll('#tableBody tr').forEach(row => {
-    const inputs = row.querySelectorAll('.td-input');
-    const description = inputs[0]?.value.trim() || '';
-    const qty = parseFloat(row.querySelector('.calc-qty').value) || 0;
-    const price = parseFloat(row.querySelector('.calc-price').value) || 0;
-    const amount = parseFloat(row.querySelector('.calc-amount').value) || 0;
-
-    if (description || qty > 0) {
-      items.push({ description, qty, price, amount });
+  try {
+    // 🛑 1. THE GATEKEEPER: Check if logged in before doing anything!
+    const token = localStorage.getItem('invoicepro_token');
+    if (!token) {
+      const authModal = document.getElementById('authReqModal');
+      if (authModal) authModal.classList.add('show');
+      else alert("You must be logged in to save data. You can still export as PDF!");
+      return; // Stop the function from saving
     }
-  });
 
-  if (items.length === 0) {
-    showErrorModal('Please add at least one line item.');
-    return;
+    const receiptNo = document.getElementById('receiptNo').value.trim() || 'REC-' + Date.now();
+    
+    const items = [];
+    document.querySelectorAll('#tableBody tr').forEach(row => {
+      const inputs = row.querySelectorAll('.td-input');
+      const description = inputs[0]?.value.trim() || '';
+      const qty = parseFloat(row.querySelector('.calc-qty').value) || 0;
+      const price = parseFloat(row.querySelector('.calc-price').value) || 0;
+      const amount = parseFloat(row.querySelector('.calc-amount').value) || 0;
+
+      if (description || qty > 0) {
+        items.push({ description, qty, price, amount });
+      }
+    });
+
+    if (items.length === 0) {
+      showErrorModal('Please add at least one line item.');
+      return;
+    }
+
+    const amountReceived = parseFloat(document.getElementById('inPaid').value) || 0;
+    if (amountReceived <= 0) {
+      showErrorModal('Please enter an Amount Received greater than 0.');
+      return;
+    }
+
+    const receiptData = {
+      id: 'rect_' + Date.now(),
+      docType: 'Receipt',
+      vchNo: receiptNo,
+      date: document.getElementById('paymentDate').value,
+      paymentMethod: document.getElementById('paymentMethod').value,
+      referenceNo: document.getElementById('referenceNo').value,
+      
+      supplier: {
+        name: document.getElementById('supplierName').value,
+        gstin: document.getElementById('supplierGstin').value,
+        address: document.getElementById('supplierAddress').value,
+        state: document.getElementById('supplierState').value,
+        phone: document.getElementById('supplierPhone').value,
+        email: document.getElementById('supplierEmail').value
+      },
+      party: {
+        name: document.getElementById('clientName').value,
+        gstin: document.getElementById('clientGstin').value,
+        address: document.getElementById('clientAddress').value,
+        state: document.getElementById('buyerState').value,
+        phone: document.getElementById('clientPhone').value,
+        email: document.getElementById('clientEmail').value
+      },
+      items: items,
+      totals: {
+        subtotal: parseFloat(document.getElementById('sumSubtotal').value) || 0,
+        tax: parseFloat(document.getElementById('inTax').value) || 0,
+        discount: parseFloat(document.getElementById('inDiscount').value) || 0,
+        totalDue: parseFloat(document.getElementById('sumTotalDue').value) || 0,
+        amountReceived: amountReceived,
+        balance: parseFloat(document.getElementById('sumBalance').value) || 0,
+        grandTotal: amountReceived 
+      },
+      notes: document.getElementById('receiptNotes').value,
+      status: parseFloat(document.getElementById('sumBalance').value) <= 0 ? 'Paid' : 'Partial',
+      createdAt: new Date().toISOString()
+    };
+
+    // 💾 2. LOCAL SAVE
+    if (!db) {
+      showErrorModal('Database not initialized. Please refresh.');
+      return;
+    }
+    
+    const transaction = db.transaction(['invoices'], 'readwrite');
+    const store = transaction.objectStore('invoices');
+    const request = store.add(receiptData);
+
+    request.onerror = () => {
+      showErrorModal('Failed to save receipt locally. Please try again.');
+    };
+
+    transaction.oncomplete = () => {
+      // ☁️ 3. CLOUD SYNC TRIGGER
+      syncToCloud(receiptData);
+      // Show Aesthetic Modal
+      showSuccessModal(receiptNo, amountReceived);
+    };
+
+    transaction.onerror = () => {
+      showErrorModal('Transaction failed. Please try again.');
+    };
+
+  } catch (err) {
+    console.error("CRITICAL SAVE ERROR:", err);
+    alert("Code Crash: " + err.message + "\n\nCheck the Developer Console.");
   }
-
-  const amountReceived = parseFloat(document.getElementById('inPaid').value) || 0;
-  if (amountReceived <= 0) {
-    showErrorModal('Please enter an Amount Received greater than 0.');
-    return;
-  }
-
-  const receiptData = {
-    id: 'rect_' + Date.now(),
-    docType: 'Receipt',
-    vchNo: receiptNo,
-    date: document.getElementById('paymentDate').value,
-    paymentMethod: document.getElementById('paymentMethod').value,
-    referenceNo: document.getElementById('referenceNo').value,
-    
-    supplier: {
-      name: document.getElementById('supplierName').value,
-      gstin: document.getElementById('supplierGstin').value,
-      address: document.getElementById('supplierAddress').value,
-      state: document.getElementById('supplierState').value,
-      phone: document.getElementById('supplierPhone').value,
-      email: document.getElementById('supplierEmail').value
-    },
-    
-    party: {
-      name: document.getElementById('clientName').value,
-      gstin: document.getElementById('clientGstin').value,
-      address: document.getElementById('clientAddress').value,
-      state: document.getElementById('buyerState').value,
-      phone: document.getElementById('clientPhone').value,
-      email: document.getElementById('clientEmail').value
-    },
-    
-    items: items,
-    
-    totals: {
-      subtotal: parseFloat(document.getElementById('sumSubtotal').value) || 0,
-      tax: parseFloat(document.getElementById('inTax').value) || 0,
-      discount: parseFloat(document.getElementById('inDiscount').value) || 0,
-      totalDue: parseFloat(document.getElementById('sumTotalDue').value) || 0,
-      amountReceived: amountReceived,
-      balance: parseFloat(document.getElementById('sumBalance').value) || 0,
-      grandTotal: amountReceived 
-    },
-    
-    notes: document.getElementById('receiptNotes').value,
-    status: parseFloat(document.getElementById('sumBalance').value) <= 0 ? 'Paid' : 'Partial',
-    createdAt: new Date().toISOString()
-  };
-
-  if (!db) {
-    showErrorModal('Database not initialized. Please refresh.');
-    return;
-  }
-  
-  const transaction = db.transaction(['invoices'], 'readwrite');
-  const store = transaction.objectStore('invoices');
-  const request = store.add(receiptData);
-  
-  request.onsuccess = () => {
-    showSuccessModal(receiptNo, amountReceived);
-  };
-
-  request.onerror = () => {
-    showErrorModal('Failed to save receipt. Please try again.');
-  };
 }
 
 // --- BEAUTIFUL THEME-AWARE MODALS ---
@@ -696,6 +706,45 @@ function showErrorModal(message) {
   
   document.getElementById('closeErrorBtn').addEventListener('click', () => modalOverlay.remove());
 }
+
+
+// --- CLOUD SYNC HELPER ---
+async function syncToCloud(invoiceData) {
+  const token = localStorage.getItem('invoicepro_token');
+  if (!token) return; // Failsafe
+
+  try {
+    // Decode token to get the user's email
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const userEmail = payload.user?.email || payload.email;
+
+    if (!userEmail) return;
+
+    // Send to your MongoDB backend
+    const res = await fetch('/api/invoices', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
+      body: JSON.stringify({ 
+        invoiceData: invoiceData, 
+        userEmail: userEmail 
+      })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      console.log('☁️ Successfully synced to MongoDB Atlas!');
+    } else {
+      console.error('☁️ Cloud Sync Failed:', data.message);
+    }
+  } catch (error) {
+    console.error('☁️ Cloud Sync Error:', error);
+  }
+}
+
+
 </script>
 </body>
 </html>

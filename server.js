@@ -1,5 +1,71 @@
 require('dotenv').config();
-const express    = require('express');
+const express = require('express');
+const mongoose = require('mongoose');
+require('dotenv').config();
+
+const app = express();
+app.use(express.json());
+
+// --- CONNECT TO MONGODB ---
+// --- CONNECT TO MONGODB ---
+mongoose.connect(process.env.MONGODB_URI, {
+  serverSelectionTimeoutMS: 5000,
+  family: 4 // Forces IPv4
+})
+  .then(() => console.log('✅ Connected to MongoDB Cloud!'))
+  .catch((err) => console.error('❌ MongoDB Connection Error:', err.message));
+
+
+
+// At the top of your file, make sure you import the schema you created:
+const Invoice = require('./models/Invoice');
+
+// ─────────────────────────────────────────────────────────────
+// CLOUD SYNC API ROUTES
+// ─────────────────────────────────────────────────────────────
+
+// 1. SAVE OR UPDATE AN INVOICE
+app.post('/api/invoices', async (req, res) => {
+  try {
+    const { invoiceData, userEmail } = req.body;
+
+    if (!userEmail) {
+      return res.status(400).json({ success: false, message: 'User email required for cloud sync.' });
+    }
+
+    // Upsert: If the invoice ID exists, update it. If not, create a new one.
+    // This allows your "Modify" pages to update existing cloud documents!
+    await Invoice.findOneAndUpdate(
+      { id: invoiceData.id },
+      { ...invoiceData, userEmail: userEmail },
+      { upsert: true, returnDocument: 'after' }
+    );
+
+    res.status(200).json({ success: true, message: 'Safely synced to MongoDB!' });
+  } catch (error) {
+    console.error('Cloud Save Error:', error);
+    res.status(500).json({ success: false, message: 'Failed to sync to cloud.' });
+  }
+});
+
+// 2. FETCH ALL INVOICES FOR A LOGGED-IN USER
+app.get('/api/invoices/:email', async (req, res) => {
+  try {
+    const userEmail = req.params.email;
+    
+    // Find every invoice across all document types that belong to this user
+    const userInvoices = await Invoice.find({ userEmail: userEmail });
+    
+    res.status(200).json({ success: true, data: userInvoices });
+  } catch (error) {
+    console.error('Cloud Fetch Error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch cloud data.' });
+  }
+});  
+
+
+
+// ... rest of your server code ...
 const cors       = require('cors');
 const helmet     = require('helmet');
 const rateLimit  = require('express-rate-limit');
@@ -9,7 +75,7 @@ const path       = require('path');
 const axios      = require('axios');
 const jwt        = require('jsonwebtoken');
 
-const app  = express();
+
 const PORT = process.env.PORT || 5000;
 
 // ==========================================

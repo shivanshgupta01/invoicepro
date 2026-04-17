@@ -685,157 +685,139 @@ function setupGSTAutoFetch(gstinId, nameId, addressId, stateId) {
 }
 
 // --- SAVE VOUCHER FUNCTION ---
+// --- SAVE VOUCHER FUNCTION ---
 function saveVoucher() {
-// 1. SECURITY CHECK: Are they logged in?
-  const token = localStorage.getItem('invoicepro_token');
-  if (!token) {
-    document.getElementById('authReqModal').classList.add('show');
-    return; // Stop the function from saving
-  }
-
-  // Validation
-  const vchNo = document.getElementById('vchNo').value.trim();
-  const date = document.getElementById('invDate').value;
-  const placeOfSupply = document.getElementById('placeOfSupply').value.trim();
-  
-  const supplierName = document.getElementById('supplierName').value.trim();
-  const supplierGstin = document.getElementById('supplierGstin').value.trim();
-  const supplierAddress = document.getElementById('supplierAddress').value.trim();
-  const supplierState = document.getElementById('supplierState').value;
-  const supplierPhone = document.getElementById('supplierPhone').value.trim();
-  const supplierEmail = document.getElementById('supplierEmail').value.trim();
-  
-  const partyName = document.getElementById('clientName').value.trim();
-  const partyGstin = document.getElementById('clientGstin').value.trim();
-  const partyAddress = document.getElementById('clientAddress').value.trim();
-  const buyerState = document.getElementById('buyerState').value;
-  const partyPhone = document.getElementById('clientPhone').value.trim();
-  const partyEmail = document.getElementById('clientEmail').value.trim();
-  
-  const narration = document.getElementById('narration').value.trim();
-  const vehicleNumber = document.getElementById('vehicleNumber').value.trim();
-  const driverName = document.getElementById('driverName').value.trim();
-  const transporterId = document.getElementById('transporterId').value.trim();
-  const transporterName = document.getElementById('transporterName').value.trim();
-  
-  // Collect items
-  const items = [];
-  document.querySelectorAll('#tableBody tr').forEach(row => {
-    const description = row.querySelectorAll('td')[1].querySelector('.td-input').value.trim();
-    const hsn = row.querySelectorAll('td')[2].querySelector('.td-input').value.trim();
-    const taxRate = parseFloat(row.querySelector('.calc-tax').value) || 0;
-    const qty = parseFloat(row.querySelector('.calc-qty').value) || 0;
-    const unit = row.querySelectorAll('td')[5].querySelector('.td-input').value || 'Nos';
-    const price = parseFloat(row.querySelector('.calc-price').value) || 0;
-    const amount = parseFloat(row.querySelector('.calc-amount').value) || 0;
-    
-    if (description && qty > 0 && price > 0) {
-      items.push({ description, hsn, taxRate, qty, unit, price, amount });
+  try {
+    // 🛑 1. THE GATEKEEPER: Check if logged in before doing anything!
+    const token = localStorage.getItem('invoicepro_token');
+    if (!token) {
+      const authModal = document.getElementById('authReqModal');
+      if (authModal) authModal.classList.add('show');
+      else alert("You must be logged in to save data. You can still export as PDF!");
+      return; // Stops the save process immediately
     }
-  });
-  
-  // Validation checks
-  if (!vchNo) {
-    alert('⚠️ Please enter Invoice Number');
-    return;
+
+    // Validation
+    const vchNo = document.getElementById('vchNo').value.trim();
+    const date = document.getElementById('invDate').value;
+    const placeOfSupply = document.getElementById('placeOfSupply').value.trim();
+    
+    const supplierName = document.getElementById('supplierName').value.trim();
+    const supplierGstin = document.getElementById('supplierGstin').value.trim();
+    const supplierAddress = document.getElementById('supplierAddress').value.trim();
+    const supplierState = document.getElementById('supplierState').value;
+    const supplierPhone = document.getElementById('supplierPhone').value.trim();
+    const supplierEmail = document.getElementById('supplierEmail').value.trim();
+    
+    const partyName = document.getElementById('clientName').value.trim();
+    const partyGstin = document.getElementById('clientGstin').value.trim();
+    const partyAddress = document.getElementById('clientAddress').value.trim();
+    const buyerState = document.getElementById('buyerState').value;
+    const partyPhone = document.getElementById('clientPhone').value.trim();
+    const partyEmail = document.getElementById('clientEmail').value.trim();
+    
+    const narration = document.getElementById('narration').value.trim();
+    const vehicleNumber = document.getElementById('vehicleNumber').value.trim();
+    const driverName = document.getElementById('driverName').value.trim();
+    const transporterId = document.getElementById('transporterId').value.trim();
+    const transporterName = document.getElementById('transporterName').value.trim();
+    
+    // Collect items
+    const items = [];
+    document.querySelectorAll('#tableBody tr').forEach(row => {
+      const description = row.querySelectorAll('td')[1].querySelector('.td-input').value.trim();
+      const hsn = row.querySelectorAll('td')[2].querySelector('.td-input').value.trim();
+      const taxRate = parseFloat(row.querySelector('.calc-tax').value) || 0;
+      const qty = parseFloat(row.querySelector('.calc-qty').value) || 0;
+      const unit = row.querySelectorAll('td')[5].querySelector('.td-input').value || 'Nos';
+      const price = parseFloat(row.querySelector('.calc-price').value) || 0;
+      const amount = parseFloat(row.querySelector('.calc-amount').value) || 0;
+      
+      if (description && qty > 0 && price > 0) {
+        items.push({ description, hsn, taxRate, qty, unit, price, amount });
+      }
+    });
+    
+    // Validation checks
+    if (!vchNo) { alert('⚠️ Please enter Invoice Number'); return; }
+    if (!date) { alert('⚠️ Please select Invoice Date'); return; }
+    if (!supplierName) { alert('⚠️ Please enter your Company Name'); return; }
+    if (!partyName) { alert('⚠️ Please enter Party/Client Name'); return; }
+    if (items.length === 0) { alert('⚠️ Please add at least one item to the invoice'); return; }
+    
+    // Get totals from UI
+    const totalTaxable = parseFloat(document.getElementById('sumTaxable').value) || 0;
+    const isInterState = supplierState !== buyerState;
+    const cgstSgst = isInterState ? 0 : (parseFloat(document.getElementById('sumCgst').value) || 0);
+    const igst = isInterState ? (parseFloat(document.getElementById('sumCgst').value) || 0) : 0;
+    const freight = parseFloat(document.getElementById('inFreight').value) || 0;
+    const discount = parseFloat(document.getElementById('inDiscount').value) || 0;
+    const grandTotal = parseFloat(document.getElementById('grandTotal').textContent.replace('₹', '').replace(/,/g, '')) || 0;
+    
+    const priceType = document.getElementById('ptExclusive').checked ? 'exclusive' : 'inclusive';
+    const revCharge = document.getElementById('revCharge').value;
+    
+    // Create invoice object
+    const invoice = {
+      id: 'inv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+      docType: 'Sales Invoice', // Explicitly tag the doc type for the database
+      vchNo,
+      date,
+      placeOfSupply,
+      priceType,
+      revCharge,
+      status: 'Saved',
+      supplier: {
+        name: supplierName, gstin: supplierGstin, address: supplierAddress,
+        state: supplierState, phone: supplierPhone, email: supplierEmail
+      },
+      party: {
+        name: partyName, gstin: partyGstin, address: partyAddress,
+        state: buyerState, phone: partyPhone, email: partyEmail
+      },
+      items,
+      totals: {
+        taxable: totalTaxable, cgst: cgstSgst, sgst: cgstSgst,
+        igst: igst, freight, discount, grandTotal
+      },
+      transport: {
+        vehicleNumber, driverName, transporterId, transporterName
+      },
+      narration,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    // 💾 2. LOCAL SAVE
+    if (!db) {
+      showErrorModal('Database not initialized. Please refresh and try again.');
+      return;
+    }
+    
+    const transaction = db.transaction(['invoices'], 'readwrite');
+    const store = transaction.objectStore('invoices');
+    const request = store.add(invoice);
+    
+    request.onerror = () => {
+      showErrorModal('Error saving invoice locally. Please try again.');
+    };
+    
+    // This triggers when the local save is 100% complete
+    transaction.oncomplete = () => {
+      // ☁️ 3. CLOUD SYNC TRIGGER
+      syncToCloud(invoice);
+      // Show the aesthetic success modal
+      showSuccessModal(vchNo, grandTotal);
+    };
+    
+    transaction.onerror = () => {
+      showErrorModal('Transaction failed. Please try again.');
+    };
+
+  } catch (err) {
+    console.error("CRITICAL SAVE ERROR:", err);
+    alert("Code Crash: " + err.message + "\n\nCheck the Developer Console for more details.");
   }
-  if (!date) {
-    alert('⚠️ Please select Invoice Date');
-    return;
-  }
-  if (!supplierName) {
-    alert('⚠️ Please enter your Company Name');
-    return;
-  }
-  if (!partyName) {
-    alert('⚠️ Please enter Party/Client Name');
-    return;
-  }
-  if (items.length === 0) {
-    alert('⚠️ Please add at least one item to the invoice');
-    return;
-  }
-  
-  // Get totals from UI
-  const totalTaxable = parseFloat(document.getElementById('sumTaxable').value) || 0;
-  const isInterState = supplierState !== buyerState;
-  const cgstSgst = isInterState ? 0 : (parseFloat(document.getElementById('sumCgst').value) || 0);
-  const igst = isInterState ? (parseFloat(document.getElementById('sumCgst').value) || 0) : 0;
-  const freight = parseFloat(document.getElementById('inFreight').value) || 0;
-  const discount = parseFloat(document.getElementById('inDiscount').value) || 0;
-  const grandTotal = parseFloat(document.getElementById('grandTotal').textContent.replace('₹', '').replace(/,/g, '')) || 0;
-  
-  const priceType = document.getElementById('ptExclusive').checked ? 'exclusive' : 'inclusive';
-  const revCharge = document.getElementById('revCharge').value;
-  
-  // Create invoice object
-  const invoice = {
-    id: 'inv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-    vchNo,
-    date,
-    placeOfSupply,
-    priceType,
-    revCharge,
-    status: 'Saved',
-    supplier: {
-      name: supplierName,
-      gstin: supplierGstin,
-      address: supplierAddress,
-      state: supplierState,
-      phone: supplierPhone,
-      email: supplierEmail
-    },
-    party: {
-      name: partyName,
-      gstin: partyGstin,
-      address: partyAddress,
-      state: buyerState,
-      phone: partyPhone,
-      email: partyEmail
-    },
-    items,
-    totals: {
-      taxable: totalTaxable,
-      cgst: cgstSgst,
-      sgst: cgstSgst,
-      igst: igst,
-      freight,
-      discount,
-      grandTotal
-    },
-    transport: {
-      vehicleNumber,
-      driverName,
-      transporterId,
-      transporterName
-    },
-    narration,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-  
-  // Save to IndexedDB
-  if (!db) {
-    alert('❌ Database not initialized. Please refresh and try again.');
-    return;
-  }
-  
-  const transaction = db.transaction(['invoices'], 'readwrite');
-  const store = transaction.objectStore('invoices');
-  const request = store.add(invoice);
-  
-  request.onerror = () => {
-    showErrorModal('Error saving invoice. Please try again.');
-    console.error('Save error:', request.error);
-  };
-  
-  request.onsuccess = () => {
-    showSuccessModal(vchNo, grandTotal);
-  };
-  
-  transaction.onerror = () => {
-    showErrorModal('Transaction failed. Please try again.');
-  };
 }
 
 // Beautiful Success Modal
@@ -1035,6 +1017,46 @@ setupGSTAutoFetch('clientGstin', 'clientName', 'clientAddress', 'buyerState');
 setupGSTAutoFetch('supplierGstin', 'supplierName', 'supplierAddress', 'supplierState');
 
 calculateInvoice();
+
+
+// --- CLOUD SYNC HELPER ---
+async function syncToCloud(invoiceData) {
+  const token = localStorage.getItem('invoicepro_token');
+  if (!token) return; // Failsafe
+
+  try {
+    // Decode token to get the user's email
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const userEmail = payload.user?.email || payload.email;
+
+    if (!userEmail) return;
+
+    // Send to your MongoDB backend
+    const res = await fetch('/api/invoices', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
+      body: JSON.stringify({ 
+        invoiceData: invoiceData, 
+        userEmail: userEmail 
+      })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      console.log('☁️ Successfully synced to MongoDB Atlas!');
+    } else {
+      console.error('☁️ Cloud Sync Failed:', data.message);
+    }
+  } catch (error) {
+    console.error('☁️ Cloud Sync Error:', error);
+  }
+}
+
+
+
 </script>
 </body>
 </html>
