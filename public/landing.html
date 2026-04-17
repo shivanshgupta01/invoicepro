@@ -1379,9 +1379,114 @@ if (tokenFromUrl) {
   window.history.replaceState({}, document.title, window.location.pathname);
 }
 
+
+
+// --- CLOUD SYNC & DASHBOARD RENDERING ---
+async function loadDashboardData() {
+  const token = localStorage.getItem('invoicepro_token');
+  if (!token) return;
+
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const userEmail = payload.user?.email || payload.email;
+
+    // 1. Pull data from MongoDB
+    const res = await fetch(`/api/invoices/${userEmail}`);
+    const result = await res.json();
+
+    if (result.success && result.data) {
+      const cloudInvoices = result.data;
+      console.log(`📥 Downloaded ${cloudInvoices.length} documents from cloud!`);
+      
+      // 2. Save them to local IndexedDB so the phone/laptop stays fast
+      const transaction = db.transaction(['invoices'], 'readwrite');
+      const store = transaction.objectStore('invoices');
+      
+      cloudInvoices.forEach(inv => {
+        delete inv._id; // Remove MongoDB internal ID
+        delete inv.__v;
+        store.put(inv); 
+      });
+
+      transaction.oncomplete = () => {
+        // 3. Render the Dashboard UI!
+        renderDashboardStats(cloudInvoices);
+      };
+    }
+  } catch (error) {
+    console.error('Failed to pull cloud data:', error);
+    // If offline, try to render from local IndexedDB anyway
+    loadLocalDashboardData();
+  }
+}
+
+function loadLocalDashboardData() {
+  if (!db) return;
+  const transaction = db.transaction(['invoices'], 'readonly');
+  const store = transaction.objectStore('invoices');
+  const request = store.getAll();
+  request.onsuccess = () => {
+    if (request.result) renderDashboardStats(request.result);
+  };
+}
+
+function renderDashboardStats(invoices) {
+  let totalRevenue = 0;
+  let totalPending = 0;
+  
+  // Get recent 5 invoices for the table
+  const recentInvoices = invoices
+    .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date))
+    .slice(0, 5);
+
+  invoices.forEach(inv => {
+    const grandTotal = inv.totals?.grandTotal || 0;
+    
+    // Revenue = Sales Invoices + Receipts
+    if (inv.docType === 'Sales Invoice' || inv.docType === 'Receipt') {
+      totalRevenue += grandTotal;
+    }
+    // Deduct Sales Returns from Revenue
+    if (inv.docType === 'Sales Return') {
+      totalRevenue -= grandTotal;
+    }
+    
+    // Calculate Pending (Just a simple example, assuming unpaid Sales Invoices)
+    if (inv.docType === 'Sales Invoice' && inv.status !== 'Paid') {
+      // In a real app, you'd subtract linked receipts here
+      totalPending += grandTotal; 
+    }
+  });
+
+  // Update the Top 4 Stat Cards
+  document.querySelector('.stat.s1 .stat-val').textContent = '₹' + Math.max(0, totalRevenue).toLocaleString('en-IN', {maximumFractionDigits: 0});
+  document.querySelector('.stat.s2 .stat-val').textContent = '₹' + Math.max(0, totalPending).toLocaleString('en-IN', {maximumFractionDigits: 0});
+  
+  // Update Recent Invoices Table
+  const tbody = document.querySelector('.card:nth-child(2) tbody');
+  if (recentInvoices.length > 0) {
+    tbody.innerHTML = recentInvoices.map(inv => {
+      let statusColor = inv.status === 'Paid' ? 'var(--green)' : 'var(--amber)';
+      if (inv.docType.includes('Return')) statusColor = 'var(--red)';
+      
+      return `
+        <tr>
+          <td style="font-family: var(--mono); font-weight: 600;">${inv.vchNo}</td>
+          <td>${inv.party?.name || 'Unknown'}</td>
+          <td><span style="font-size:10px; padding:2px 6px; background:var(--bg3); border-radius:4px;">${inv.docType}</span></td>
+          <td>${new Date(inv.date).toLocaleDateString('en-IN')}</td>
+          <td style="font-family: var(--mono); font-weight: 600;">₹${(inv.totals?.grandTotal || 0).toLocaleString('en-IN')}</td>
+          <td><span style="color: ${statusColor}; font-weight: 600; font-size: 11px; padding: 2px 6px; background: ${statusColor}22; border-radius: 4px;">${inv.status || 'Saved'}</span></td>
+          <td><button class="ghost-btn" style="padding: 4px 8px; font-size: 11px;">View</button></td>
+        </tr>
+      `;
+    }).join('');
+  }
+}
+
+
+
 function checkAuth() {
-
-
 // --- FETCH CLOUD DATA ON LOGIN ---
 async function pullCloudData() {
   const token = localStorage.getItem('invoicepro_token');
@@ -1440,6 +1545,9 @@ async function pullCloudData() {
     firms = [];
     activeFirmId = null;
     updateFirmPill();
+    // Pull data from cloud and update dashboard
+      if (db) loadDashboardData();
+      else setTimeout(loadDashboardData, 500);
     return;
   }
 
